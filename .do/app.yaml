@@ -29,6 +29,9 @@ services:
   - key: PORT
     scope: RUN_AND_BUILD_TIME
     value: "3031"
+  - key: REDIS_URL
+    scope: RUN_AND_BUILD_TIME
+    value: "redis://localhost:6379"
   - key: DB_HOST
     scope: RUN_AND_BUILD_TIME
     value: byte-me-instance-1.c1yc40cskc5f.ca-central-1.rds.amazonaws.com
@@ -64,7 +67,7 @@ services:
     value: your-admin-private-key
   - key: ALLOWED_ORIGINS
     scope: RUN_AND_BUILD_TIME
-    value: http://localhost:3000,http://localhost:3001
+    value: http://localhost:3031,http://localhost:3000,http://localhost:3001
   - key: SMTP_HOST
     scope: RUN_AND_BUILD_TIME
     value: smtp.gmail.com

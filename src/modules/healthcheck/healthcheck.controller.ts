@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpStatus } from '@nestjs/common';
 
 @Controller('healthcheck')
 export class HealthcheckController {
@@ -10,13 +10,26 @@ export class HealthcheckController {
 
   @Get()
   healthCheck() {
-    return {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      uptime: (Date.now() - this.startTime) / 1000,
-      environment: process.env.NODE_ENV || 'development',
-      version: process.env.npm_package_version || '1.0.0',
-      port: process.env.PORT || 3000
-    };
+    try {
+      const response = {
+        status: 'healthy',
+        statusCode: HttpStatus.OK,
+        timestamp: new Date().toISOString(),
+        uptime: (Date.now() - this.startTime) / 1000,
+        environment: process.env.NODE_ENV || 'development',
+        version: process.env.npm_package_version || '1.0.0',
+        port: process.env.PORT || '3031'
+      };
+      console.log('Health check response:', response);
+      return response;
+    } catch (error) {
+      console.error('Health check failed:', error);
+      return {
+        status: 'unhealthy',
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      };
+    }
   }
 }
