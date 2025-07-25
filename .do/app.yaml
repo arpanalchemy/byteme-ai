@@ -11,8 +11,9 @@ services:
       - key: PORT
         value: "3000"
         scope: RUN_AND_BUILD_TIME
-    build_command: docker build -t byteme-ai .
-    run_command: node dist/main.js
+      - key: npm_config_production
+        value: "true"
+        scope: RUN_AND_BUILD_TIME
     dockerfile_path: Dockerfile
     http_port: 3000
     instance_count: 1

@@ -4,15 +4,18 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npx nest build
+RUN npm run build
 
 # Production stage
 FROM node:20-alpine
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY --from=builder /app/dist ./dist
 ENV NODE_ENV=production
 ENV PORT=3000
+COPY package*.json ./
+RUN npm ci --only=production --no-optional
+COPY --from=builder /app/dist ./dist
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+# Force production mode and use explicit start command
+ENV NODE_ENV=production
+ENV npm_config_production=true
+CMD ["npm", "run", "start:prod"]
