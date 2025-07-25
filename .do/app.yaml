@@ -53,10 +53,7 @@ services:
     value: your-admin-private-key
   - key: NODE_ENV
     scope: RUN_AND_BUILD_TIME
-    value: production
-  - key: npm_config_production
-    scope: RUN_AND_BUILD_TIME
-    value: "true"
+    value: development
   - key: PORT
     scope: RUN_AND_BUILD_TIME
     value: "3000"
@@ -99,12 +96,13 @@ services:
     repo: arpanalchemy/byteme-ai
   health_check:
     http_path: /healthcheck
-    initial_delay_seconds: 60
-    period_seconds: 15
-    timeout_seconds: 5
+    initial_delay_seconds: 120
+    period_seconds: 30
+    timeout_seconds: 10
     success_threshold: 1
-    failure_threshold: 3
+    failure_threshold: 5
   http_port: 3000
   instance_count: 2
   instance_size_slug: apps-s-1vcpu-1gb
   name: byteme-ai
+  run_command: npm run start:dev
