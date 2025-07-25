@@ -60,13 +60,8 @@ async function bootstrap() {
     console.log(`✅ Application successfully listening on port ${port}`);
     console.log(`🚗 Drive & Earn API is running on: http://localhost:${port}`);
     console.log(`📚 API Documentation: http://localhost:${port}/api`);
-    console.log(`🏥 Health Check: http://localhost:${port}/healthcheck`);
+    console.log(`🏥 Health Check: http://localhost:${port}`);
     console.log(`🎉 Application startup completed successfully!`);
-
-    // Log server info
-    const server = app.getHttpServer();
-    const address = server.address();
-    console.log(`🌐 Server address:`, address);
   } catch (error) {
     console.error("❌ Failed to start application:", error);
     console.error("Stack trace:", error.stack);
