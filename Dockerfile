@@ -14,12 +14,14 @@ RUN npm run build
 
 # Production image
 FROM node:20-alpine as production
+ENV NODE_ENV=production
 WORKDIR /usr/src/app
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
-RUN npm install --production
+RUN npm ci --only=production
 COPY --from=builder /usr/src/app/dist ./dist
 EXPOSE 3000
-# Use node directly to run the compiled app
-CMD ["node", "dist/main"]
+# Use production start command
+ENV PORT=3000
+CMD ["npm", "run", "start:prod"]
