@@ -9,6 +9,8 @@ COPY package*.json ./
 RUN npm ci
 # Install NestJS CLI globally for build
 RUN npm install -g @nestjs/cli
+# Install missing type definitions
+RUN npm install --save-dev @types/passport-jwt
 # Copy source files
 COPY . .
 # Build the application
