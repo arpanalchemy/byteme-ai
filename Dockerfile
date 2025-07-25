@@ -6,6 +6,7 @@ RUN echo "Cache bust: ${CACHEBUST}"
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install --production=false
+RUN npm install -g @nestjs/cli
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
 COPY . .
@@ -20,4 +21,5 @@ COPY nest-cli.json ./
 RUN npm install --production
 COPY --from=builder /usr/src/app/dist ./dist
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+# Use node directly to run the compiled app
+CMD ["node", "dist/main"]
