@@ -4,7 +4,7 @@
 
 ### ✅ Environment Variables
 - [ ] `NODE_ENV=production`
-- [ ] `PORT=8080` (DigitalOcean expects this port)
+- [ ] `PORT=3000` (DigitalOcean expects this port)
 - [ ] `DB_HOST` (PostgreSQL host)
 - [ ] `DB_PORT=5432`
 - [ ] `DB_USERNAME` (Database username)
@@ -35,7 +35,7 @@
 - [ ] `.do/app.yaml` configuration is correct
 - [ ] Environment variables are set in DigitalOcean dashboard
 - [ ] Health check path is set to `/healthcheck`
-- [ ] Port is set to 8080
+- [ ] Port is set to 3000
 - [ ] Database and Redis are provisioned
 
 ## Deployment Steps
@@ -72,7 +72,7 @@ curl https://your-app-url.ondigitalocean.app/healthcheck
   "uptime": 123.456,
   "environment": "production",
   "version": "1.0.0",
-  "port": 8080
+  "port": 3000
 }
 ```
 
@@ -86,13 +86,13 @@ curl https://your-app-url.ondigitalocean.app/healthcheck
    - Look for error messages
 
 2. **Common Issues:**
-   - Port mismatch (should be 8080, not 3000)
+   - Port mismatch (should be 3000, not 3000)
    - Database connection failure
    - Missing environment variables
    - Application crashes during startup
 
 3. **Quick Fixes:**
-   - Set `PORT=8080` in environment variables
+   - Set `PORT=3000` in environment variables
    - Verify database credentials
    - Check all required environment variables are set
    - Ensure application builds successfully

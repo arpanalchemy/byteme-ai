@@ -6,7 +6,7 @@ import { AppModule } from "./app.module";
 async function bootstrap() {
   console.log("🚀 Starting Drive & Earn API...");
   console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🔧 Port: ${process.env.PORT || 8080}`);
+  console.log(`🔧 Port: ${process.env.PORT || 3000}`);
   console.log(`🌐 Process ID: ${process.pid}`);
 
   try {
@@ -53,7 +53,7 @@ async function bootstrap() {
     SwaggerModule.setup("api", app, document);
     console.log("✅ Swagger documentation configured");
 
-    const port = process.env.PORT || 8080;
+    const port = process.env.PORT || 3000;
     console.log(`🎯 Attempting to listen on port ${port}...`);
 
     await app.listen(port, "0.0.0.0");

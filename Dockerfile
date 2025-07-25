@@ -13,5 +13,6 @@ COPY package*.json ./
 RUN npm install --production
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/node_modules ./node_modules
-EXPOSE 8080
+EXPOSE 3000
+RUN npm run build
 CMD ["node", "dist/main.js"]

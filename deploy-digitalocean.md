@@ -6,10 +6,10 @@
 
 #### 1. **Port Configuration Issues**
 
-**Problem**: DigitalOcean expects port 8080, but your app runs on 3000
+**Problem**: DigitalOcean expects port 3000, but your app runs on 3000
 **Solution**:
 
-- Set `PORT=8080` in your environment variables
+- Set `PORT=3000` in your environment variables
 - Update DigitalOcean App Platform configuration
 
 #### 2. **Application Not Starting**
@@ -56,7 +56,7 @@ Set these environment variables in DigitalOcean App Platform:
 
 ```env
 NODE_ENV=production
-PORT=8080
+PORT=3000
 DB_HOST=your-db-host
 DB_PORT=5432
 DB_USERNAME=your-db-user
@@ -95,7 +95,7 @@ curl https://your-app-url.ondigitalocean.app/healthcheck
   "uptime": 123.456,
   "environment": "production",
   "version": "1.0.0",
-  "port": 8080
+  "port": 3000
 }
 ```
 

@@ -5,7 +5,7 @@ const https = require("https");
 
 // Configuration
 const config = {
-  port: process.env.PORT || 8080,
+  port: process.env.PORT || 3000,
   host: "localhost",
   healthCheckPath: "/healthcheck",
   timeout: 5000,

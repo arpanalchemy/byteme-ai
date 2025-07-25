@@ -20,7 +20,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 8080
+        value: 3000
       - key: DB_HOST
         value: ${db.DATABASE_HOST}
       - key: DB_PORT

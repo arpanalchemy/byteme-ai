@@ -6,8 +6,8 @@ import {
   UpdateDateColumn,
   Index,
   OneToMany,
-} from 'typeorm';
-import { Exclude } from 'class-transformer';
+} from "typeorm";
+import { Exclude } from "class-transformer";
 
 @Entity("users")
 export class User {
@@ -29,6 +29,9 @@ export class User {
 
   @Column({ name: "nonce", nullable: true })
   nonce?: string;
+
+  @Column({ name: "email_otp", nullable: true })
+  emailOtp?: string;
 
   @Column({ name: "last_login", nullable: true })
   lastLogin?: Date;
