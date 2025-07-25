@@ -1,5 +1,8 @@
 # Use official Node.js image as the base
 FROM node:20-alpine as builder
+# Add cache busting
+ARG CACHEBUST=1
+RUN echo "Cache bust: ${CACHEBUST}"
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install --production=false
