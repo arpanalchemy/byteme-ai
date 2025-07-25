@@ -18,7 +18,10 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          # Install sharp for linux-arm64 platform
+          npm install --os=linux --cpu=arm64 sharp
+          npm install
 
       - name: Build project
         run: npm run build
@@ -54,7 +57,7 @@ jobs:
             echo "EB_APPLICATION_NAME=byteme-ai" >> $GITHUB_ENV
             echo "EB_ENVIRONMENT_NAME=Byteme-ai-prod" >> $GITHUB_ENV
           else
-            echo "No matching branch fo deployment. Exiting."
+            echo "No matching branch for deployment. Exiting."
             exit 1
           fi
 
