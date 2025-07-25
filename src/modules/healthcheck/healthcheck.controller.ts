@@ -20,6 +20,7 @@ export class HealthcheckController {
         version: process.env.npm_package_version || '1.0.0',
         port: process.env.PORT || '3031'
       };
+      console.log('Health check response:', response);
       return response;
     } catch (error) {
       console.error('Health check failed:', error);
