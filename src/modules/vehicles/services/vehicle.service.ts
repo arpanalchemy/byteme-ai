@@ -8,27 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Vehicle, VehicleType } from '../entity/vehicle.entity';
 import { CreateVehicleFromUploadDto } from '../../odometer/dto/upload-odometer.dto';
-
-export interface CreateVehicleDto {
-  vehicleType: VehicleType;
-  make?: string;
-  model?: string;
-  year?: number;
-  plateNumber?: string;
-  emissionFactor?: number;
-  isPrimary?: boolean;
-}
-
-export interface UpdateVehicleDto {
-  vehicleType?: VehicleType;
-  make?: string;
-  model?: string;
-  year?: number;
-  plateNumber?: string;
-  emissionFactor?: number;
-  isPrimary?: boolean;
-  isActive?: boolean;
-}
+import { CreateVehicleDto, UpdateVehicleDto, SearchVehicleDto } from "../dto";
 
 @Injectable()
 export class VehicleService {
@@ -36,7 +16,7 @@ export class VehicleService {
 
   constructor(
     @InjectRepository(Vehicle)
-    private readonly vehicleRepository: Repository<Vehicle>,
+    private readonly vehicleRepository: Repository<Vehicle>
   ) {}
 
   /**
@@ -44,7 +24,7 @@ export class VehicleService {
    */
   async createVehicle(
     userId: string,
-    createDto: CreateVehicleDto,
+    createDto: CreateVehicleDto
   ): Promise<Vehicle> {
     try {
       this.logger.log(`Creating vehicle for user: ${userId}`);
@@ -60,7 +40,7 @@ export class VehicleService {
       if (isPrimary) {
         await this.vehicleRepository.update(
           { userId, isPrimary: true },
-          { isPrimary: false },
+          { isPrimary: false }
         );
       }
 
@@ -84,7 +64,7 @@ export class VehicleService {
       return savedVehicle;
     } catch (error) {
       this.logger.error(`Failed to create vehicle: ${error.message}`);
-      throw new BadRequestException('Failed to create vehicle');
+      throw new BadRequestException("Failed to create vehicle");
     }
   }
 
@@ -93,7 +73,7 @@ export class VehicleService {
    */
   async createVehicleFromUpload(
     userId: string,
-    createDto: CreateVehicleFromUploadDto,
+    createDto: CreateVehicleFromUploadDto
   ): Promise<Vehicle> {
     try {
       this.logger.log(`Creating vehicle from upload for user: ${userId}`);
@@ -110,9 +90,9 @@ export class VehicleService {
       return this.createVehicle(userId, vehicleDto);
     } catch (error) {
       this.logger.error(
-        `Failed to create vehicle from upload: ${error.message}`,
+        `Failed to create vehicle from upload: ${error.message}`
       );
-      throw new BadRequestException('Failed to create vehicle from upload');
+      throw new BadRequestException("Failed to create vehicle from upload");
     }
   }
 
@@ -122,7 +102,7 @@ export class VehicleService {
   async updateVehicle(
     vehicleId: string,
     userId: string,
-    updateDto: UpdateVehicleDto,
+    updateDto: UpdateVehicleDto
   ): Promise<Vehicle> {
     try {
       this.logger.log(`Updating vehicle: ${vehicleId}`);
@@ -132,14 +112,14 @@ export class VehicleService {
       });
 
       if (!vehicle) {
-        throw new NotFoundException('Vehicle not found');
+        throw new NotFoundException("Vehicle not found");
       }
 
       // If setting as primary, unset other primary vehicles
       if (updateDto.isPrimary) {
         await this.vehicleRepository.update(
           { userId, isPrimary: true },
-          { isPrimary: false },
+          { isPrimary: false }
         );
       }
 
@@ -151,7 +131,7 @@ export class VehicleService {
       return updatedVehicle;
     } catch (error) {
       this.logger.error(`Failed to update vehicle: ${error.message}`);
-      throw new BadRequestException('Failed to update vehicle');
+      throw new BadRequestException("Failed to update vehicle");
     }
   }
 
@@ -167,7 +147,7 @@ export class VehicleService {
       });
 
       if (!vehicle) {
-        throw new NotFoundException('Vehicle not found');
+        throw new NotFoundException("Vehicle not found");
       }
 
       // Soft delete
@@ -177,7 +157,7 @@ export class VehicleService {
       this.logger.log(`Vehicle deleted: ${vehicleId}`);
     } catch (error) {
       this.logger.error(`Failed to delete vehicle: ${error.message}`);
-      throw new BadRequestException('Failed to delete vehicle');
+      throw new BadRequestException("Failed to delete vehicle");
     }
   }
 
@@ -190,7 +170,7 @@ export class VehicleService {
     });
 
     if (!vehicle) {
-      throw new NotFoundException('Vehicle not found');
+      throw new NotFoundException("Vehicle not found");
     }
 
     return vehicle;
@@ -202,7 +182,7 @@ export class VehicleService {
   async getUserVehicles(userId: string): Promise<Vehicle[]> {
     return this.vehicleRepository.find({
       where: { userId, isActive: true },
-      order: { isPrimary: 'DESC', createdAt: 'ASC' },
+      order: { isPrimary: "DESC", createdAt: "ASC" },
     });
   }
 
@@ -225,7 +205,7 @@ export class VehicleService {
       // Unset current primary vehicle
       await this.vehicleRepository.update(
         { userId, isPrimary: true },
-        { isPrimary: false },
+        { isPrimary: false }
       );
 
       // Set new primary vehicle
@@ -234,7 +214,7 @@ export class VehicleService {
       });
 
       if (!vehicle) {
-        throw new NotFoundException('Vehicle not found');
+        throw new NotFoundException("Vehicle not found");
       }
 
       vehicle.isPrimary = true;
@@ -244,7 +224,7 @@ export class VehicleService {
       return updatedVehicle;
     } catch (error) {
       this.logger.error(`Failed to set primary vehicle: ${error.message}`);
-      throw new BadRequestException('Failed to set primary vehicle');
+      throw new BadRequestException("Failed to set primary vehicle");
     }
   }
 
@@ -254,7 +234,7 @@ export class VehicleService {
   async updateVehicleStats(
     vehicleId: string,
     mileage: number,
-    carbonSaved: number,
+    carbonSaved: number
   ): Promise<void> {
     try {
       await this.vehicleRepository.update(vehicleId, {
@@ -278,11 +258,11 @@ export class VehicleService {
 
       const totalMileage = vehicles.reduce(
         (sum, vehicle) => sum + vehicle.totalMileage,
-        0,
+        0
       );
       const totalCarbonSaved = vehicles.reduce(
         (sum, vehicle) => sum + vehicle.totalCarbonSaved,
-        0,
+        0
       );
 
       return {
@@ -293,7 +273,7 @@ export class VehicleService {
           vehicles.length > 0
             ? vehicles.reduce(
                 (sum, vehicle) => sum + vehicle.emissionFactor,
-                0,
+                0
               ) / vehicles.length
             : 0,
       };
@@ -351,37 +331,202 @@ export class VehicleService {
   }
 
   /**
-   * Search vehicles by criteria
+   * Search vehicles by criteria with pagination
    */
-  async searchVehicles(userId: string, criteria: any): Promise<Vehicle[]> {
+  async searchVehicles(
+    userId: string,
+    criteria: SearchVehicleDto
+  ): Promise<{
+    vehicles: Vehicle[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     try {
+      const {
+        page = 1,
+        limit = 10,
+        sortBy = "createdAt",
+        sortOrder = "DESC",
+        ...filters
+      } = criteria;
+      const offset = (page - 1) * limit;
+
       const query = this.vehicleRepository
-        .createQueryBuilder('vehicle')
-        .where('vehicle.userId = :userId', { userId })
-        .andWhere('vehicle.isActive = :isActive', { isActive: true });
+        .createQueryBuilder("vehicle")
+        .where("vehicle.userId = :userId", { userId })
+        .andWhere("vehicle.isActive = :isActive", { isActive: true });
 
-      if (criteria.vehicleType) {
-        query.andWhere('vehicle.vehicleType = :vehicleType', {
-          vehicleType: criteria.vehicleType,
+      // Apply filters
+      if (filters.vehicleType) {
+        query.andWhere("vehicle.vehicleType = :vehicleType", {
+          vehicleType: filters.vehicleType,
         });
       }
 
-      if (criteria.make) {
-        query.andWhere('LOWER(vehicle.make) LIKE LOWER(:make)', {
-          make: `%${criteria.make}%`,
+      if (filters.make) {
+        query.andWhere("LOWER(vehicle.make) LIKE LOWER(:make)", {
+          make: `%${filters.make}%`,
         });
       }
 
-      if (criteria.model) {
-        query.andWhere('LOWER(vehicle.model) LIKE LOWER(:model)', {
-          model: `%${criteria.model}%`,
+      if (filters.model) {
+        query.andWhere("LOWER(vehicle.model) LIKE LOWER(:model)", {
+          model: `%${filters.model}%`,
         });
       }
 
-      return query.getMany();
+      // Get total count
+      const total = await query.getCount();
+
+      // Apply sorting and pagination
+      query.orderBy(`vehicle.${sortBy}`, sortOrder);
+      query.skip(offset).take(limit);
+
+      const vehicles = await query.getMany();
+
+      return {
+        vehicles,
+        total,
+        page,
+        limit,
+      };
     } catch (error) {
       this.logger.error(`Failed to search vehicles: ${error.message}`);
+      return {
+        vehicles: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+      };
+    }
+  }
+
+  /**
+   * Get vehicle upload history
+   */
+  async getVehicleUploadHistory(
+    vehicleId: string,
+    userId: string
+  ): Promise<any[]> {
+    try {
+      // This would need to be implemented with the odometer upload repository
+      // For now, returning empty array
+      this.logger.log(`Getting upload history for vehicle: ${vehicleId}`);
       return [];
+    } catch (error) {
+      this.logger.error(
+        `Failed to get vehicle upload history: ${error.message}`
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Get vehicle analytics
+   */
+  async getVehicleAnalytics(vehicleId: string, userId: string): Promise<any> {
+    try {
+      const vehicle = await this.getVehicleById(vehicleId, userId);
+
+      // Calculate analytics
+      const analytics = {
+        vehicleId: vehicle.id,
+        totalMileage: vehicle.totalMileage,
+        totalCarbonSaved: vehicle.totalCarbonSaved,
+        averageMileagePerUpload: 0, // Would need upload data
+        carbonEfficiency: vehicle.emissionFactor,
+        lastActivity: vehicle.lastUploadDate,
+        uploadCount: 0, // Would need upload data
+      };
+
+      return analytics;
+    } catch (error) {
+      this.logger.error(`Failed to get vehicle analytics: ${error.message}`);
+      throw new BadRequestException("Failed to get vehicle analytics");
+    }
+  }
+
+  /**
+   * Bulk update vehicle emission factors
+   */
+  async updateVehicleEmissionFactors(
+    userId: string,
+    updates: Array<{ vehicleId: string; emissionFactor: number }>
+  ): Promise<void> {
+    try {
+      for (const update of updates) {
+        const vehicle = await this.getVehicleById(update.vehicleId, userId);
+        vehicle.emissionFactor = update.emissionFactor;
+        await this.vehicleRepository.save(vehicle);
+      }
+      this.logger.log(
+        `Updated emission factors for ${updates.length} vehicles`
+      );
+    } catch (error) {
+      this.logger.error(`Failed to update emission factors: ${error.message}`);
+      throw new BadRequestException("Failed to update emission factors");
+    }
+  }
+
+  /**
+   * Get vehicle types statistics
+   */
+  async getVehicleTypeStats(userId: string): Promise<any> {
+    try {
+      const stats = await this.vehicleRepository
+        .createQueryBuilder("vehicle")
+        .select("vehicle.vehicleType", "type")
+        .addSelect("COUNT(*)", "count")
+        .addSelect("SUM(vehicle.totalMileage)", "totalMileage")
+        .addSelect("SUM(vehicle.totalCarbonSaved)", "totalCarbonSaved")
+        .where("vehicle.userId = :userId", { userId })
+        .andWhere("vehicle.isActive = :isActive", { isActive: true })
+        .groupBy("vehicle.vehicleType")
+        .getRawMany();
+
+      return stats;
+    } catch (error) {
+      this.logger.error(`Failed to get vehicle type stats: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Validate plate number format
+   */
+  validatePlateNumber(plateNumber: string): boolean {
+    // Basic validation - can be enhanced based on country requirements
+    const plateRegex = /^[A-Z0-9\s\-]{2,10}$/i;
+    return plateRegex.test(plateNumber);
+  }
+
+  /**
+   * Check if plate number is unique for user
+   */
+  async isPlateNumberUnique(
+    userId: string,
+    plateNumber: string,
+    excludeVehicleId?: string
+  ): Promise<boolean> {
+    try {
+      const query = this.vehicleRepository
+        .createQueryBuilder("vehicle")
+        .where("vehicle.userId = :userId", { userId })
+        .andWhere("vehicle.plateNumber = :plateNumber", { plateNumber })
+        .andWhere("vehicle.isActive = :isActive", { isActive: true });
+
+      if (excludeVehicleId) {
+        query.andWhere("vehicle.id != :excludeVehicleId", { excludeVehicleId });
+      }
+
+      const count = await query.getCount();
+      return count === 0;
+    } catch (error) {
+      this.logger.error(
+        `Failed to check plate number uniqueness: ${error.message}`
+      );
+      return false;
     }
   }
 }
