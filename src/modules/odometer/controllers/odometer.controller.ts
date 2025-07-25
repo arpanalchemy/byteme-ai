@@ -154,7 +154,7 @@ export class OdometerController {
   ) {
     return this.odometerService.getUserUploads(user.id, limit, offset);
   }
-
+  @Public()
   @Get('uploads/:uploadId')
   @ApiResponse({
     status: 200,
@@ -164,9 +164,9 @@ export class OdometerController {
   @ApiResponse({ status: 404, description: 'Upload not found' })
   async getUploadById(
     @Param('uploadId') uploadId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user?: User,
   ) {
-    return this.odometerService.getUploadById(uploadId, user.id);
+    return this.odometerService.getUploadById(uploadId, user?.id);
   }
 
   @Get('stats')

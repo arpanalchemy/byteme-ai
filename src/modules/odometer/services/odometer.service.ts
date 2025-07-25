@@ -533,10 +533,14 @@ export class OdometerService {
    */
   async getUploadById(
     uploadId: string,
-    userId: string
+    userId?: string
   ): Promise<OdometerUpload> {
+    let whereClause: any = { id: uploadId };
+    if (userId) {
+      whereClause.userId = userId;
+    }
     const upload = await this.odometerUploadRepository.findOne({
-      where: { id: uploadId, userId },
+      where: whereClause,
     });
 
     if (!upload) {
