@@ -13,13 +13,17 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     console.log("✅ NestJS application created successfully");
 
-    // Enable CORS
+    // Enable CORS with specific origins
+    const allowedOrigins = process.env.ALLOWED_ORIGINS ? 
+      process.env.ALLOWED_ORIGINS.split(',') : 
+      ["http://localhost:3000", "http://localhost:3001"];
+
     app.enableCors({
-      origin: "*",
-      methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS,FETCH",
+      origin: allowedOrigins,
+      methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
       credentials: true,
     });
-    console.log("✅ CORS enabled");
+    console.log("✅ CORS enabled with origins:", allowedOrigins);
 
     // Global validation pipe
     app.useGlobalPipes(
@@ -54,13 +58,11 @@ async function bootstrap() {
     console.log("✅ Swagger documentation configured");
 
     const port = process.env.PORT || 3000;
-    console.log(`🎯 Attempting to listen on port ${port}...`);
-
     await app.listen(port, "0.0.0.0");
     console.log(`✅ Application successfully listening on port ${port}`);
     console.log(`🚗 Drive & Earn API is running on: http://localhost:${port}`);
     console.log(`📚 API Documentation: http://localhost:${port}/api`);
-    console.log(`🏥 Health Check: http://localhost:${port}`);
+    console.log(`🏥 Health Check: http://localhost:${port}/healthcheck`);
     console.log(`🎉 Application startup completed successfully!`);
   } catch (error) {
     console.error("❌ Failed to start application:", error);

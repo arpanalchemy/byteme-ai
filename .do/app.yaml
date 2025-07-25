@@ -105,3 +105,6 @@ services:
     timeout_seconds: 10
     success_threshold: 1
     failure_threshold: 5
+  routes:
+    - path: /
+      preserve_path_prefix: true
