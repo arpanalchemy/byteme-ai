@@ -1,34 +1,18 @@
-# Use official Node.js image as the base
-FROM node:20-alpine as builder
-# Set NODE_ENV for build stage
-ENV NODE_ENV=production
-WORKDIR /usr/src/app
-# Copy package files
+# Build stage
+FROM node:20-alpine AS builder
+WORKDIR /app
 COPY package*.json ./
-# Install dependencies including devDependencies
 RUN npm ci
-# Install NestJS CLI globally for build
-RUN npm install -g @nestjs/cli
-# Install missing type definitions
-RUN npm install --save-dev @types/passport-jwt
-# Copy source files
 COPY . .
-# Build the application
-RUN npm run build
+RUN npx nest build
 
-# Production image
-FROM node:20-alpine as production
-# Set NODE_ENV for production
-ENV NODE_ENV=production
-WORKDIR /usr/src/app
-# Copy package files
+# Production stage
+FROM node:20-alpine
+WORKDIR /app
 COPY package*.json ./
-# Install only production dependencies
-RUN npm ci --only=production --ignore-scripts
-# Copy built application
-COPY --from=builder /usr/src/app/dist ./dist
-# Expose port
+RUN npm ci --only=production
+COPY --from=builder /app/dist ./dist
+ENV NODE_ENV=production
 ENV PORT=3000
 EXPOSE 3000
-# Start the application
-CMD ["node", "dist/main"]
+CMD ["node", "dist/main.js"]
