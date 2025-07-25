@@ -34,11 +34,7 @@ export class OpenAIService {
     private readonly s3Service: S3Service,
   ) {
     const OPENAI_API_KEY =
-      this.configService.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
-    console.log(
-      '🚀 ~ OpenAIService ~ constructor ~ OPENAI_API_KEY:',
-      OPENAI_API_KEY,
-    );
+      this.configService.get("OPENAI_API_KEY") || process.env.OPENAI_API_KEY;
     if (OPENAI_API_KEY) {
       this.openai = new OpenAI({
         apiKey: OPENAI_API_KEY,
