@@ -1,0 +1,70 @@
+name: drive-earn-api
+services:
+  - name: api
+    source_dir: /
+    github:
+      repo: your-username/byteme-ai
+      branch: main
+    run_command: npm run start:prod
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    health_check:
+      http_path: /healthcheck
+      initial_delay_seconds: 30
+      interval_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: DB_HOST
+        value: ${db.DATABASE_HOST}
+      - key: DB_PORT
+        value: ${db.DATABASE_PORT}
+      - key: DB_USERNAME
+        value: ${db.DATABASE_USER}
+      - key: DB_PASSWORD
+        value: ${db.DATABASE_PASSWORD}
+      - key: DB_NAME
+        value: ${db.DATABASE_NAME}
+      - key: REDIS_URL
+        value: ${redis.REDIS_URL}
+      - key: JWT_SECRET
+        scope: RUN_AND_BUILD_TIME
+        value: ${JWT_SECRET}
+      - key: VECHAIN_NETWORK
+        value: mainnet
+      - key: VECHAIN_NODE_URL
+        value: https://mainnet.vechain.org
+      - key: B3TR_CONTRACT_ADDRESS
+        value: ${B3TR_CONTRACT_ADDRESS}
+      - key: ADMIN_PRIVATE_KEY
+        scope: RUN_AND_BUILD_TIME
+        value: ${ADMIN_PRIVATE_KEY}
+      - key: AWS_ACCESS_KEY_ID
+        scope: RUN_AND_BUILD_TIME
+        value: ${AWS_ACCESS_KEY_ID}
+      - key: AWS_SECRET_ACCESS_KEY
+        scope: RUN_AND_BUILD_TIME
+        value: ${AWS_SECRET_ACCESS_KEY}
+      - key: AWS_REGION
+        value: us-east-1
+      - key: AWS_S3_BUCKET
+        value: ${AWS_S3_BUCKET}
+      - key: OPENAI_API_KEY
+        scope: RUN_AND_BUILD_TIME
+        value: ${OPENAI_API_KEY}
+
+databases:
+  - name: db
+    engine: PG
+    version: "14"
+    production: false
+  - name: redis
+    engine: REDIS
+    version: "7"
+    production: false
