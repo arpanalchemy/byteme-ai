@@ -50,11 +50,11 @@ jobs:
         id: env_setup
         run: |
           if [ "${{ github.ref_name }}" == "main" ]; then
-            echo "S3_BUCKET=byteme-code" >> $GITHUB_ENV
+            echo "S3_BUCKET=byteme-code-s3" >> $GITHUB_ENV
             echo "EB_APPLICATION_NAME=byteme-ai" >> $GITHUB_ENV
             echo "EB_ENVIRONMENT_NAME=Byteme-ai-prod" >> $GITHUB_ENV
           else
-            echo "No matching branch for deployment. Exiting."
+            echo "No matching branch fo deployment. Exiting."
             exit 1
           fi
 
