@@ -65,16 +65,13 @@ export class AuthService {
   async verifySignature(
     verifySignatureDto: VerifySignatureDto,
   ): Promise<AuthResponseDto> {
-    const { walletAddress, message, signature } = verifySignatureDto;
+    const { walletAddress, message, signature, certificate } =
+      verifySignatureDto;
     this.logger.log(`Verifying signature for wallet: ${walletAddress}`);
 
     // Validate inputs
     if (!this.vechainSignatureHelper.isValidAddress(walletAddress)) {
       throw new UnauthorizedException('Invalid wallet address format');
-    }
-
-    if (!this.vechainSignatureHelper.isValidSignature(signature)) {
-      throw new UnauthorizedException('Invalid signature format');
     }
 
     // Find user by wallet address
@@ -90,20 +87,70 @@ export class AuthService {
       throw new UnauthorizedException('No nonce found for this wallet');
     }
 
-    // Verify the message format
-    const expectedMessage = `${user.nonce}`;
+    let isValidSignature = false;
 
-    if (message !== expectedMessage) {
-      throw new UnauthorizedException('Invalid message format');
-    }
+    // Check if certificate is provided (new method)
+    if (certificate) {
+      this.logger.log("Using VeChain Certificate verification");
 
-    // Verify VeChain signature
-    const isValidSignature =
-      await this.vechainSignatureHelper.verifyPersonalSignature(
-        message,
-        signature,
-        walletAddress,
+      // Validate certificate format
+      if (!this.vechainSignatureHelper.isValidCertificate(certificate)) {
+        throw new UnauthorizedException("Invalid certificate format");
+      }
+
+      // Verify the certificate
+      isValidSignature =
+        await this.vechainSignatureHelper.verifyCertificate(certificate);
+
+      // Additional check: verify the certificate signer matches the wallet address
+      if (
+        isValidSignature &&
+        certificate.signer.toLowerCase() !== walletAddress.toLowerCase()
+      ) {
+        this.logger.warn(
+          `Certificate signer mismatch: expected ${walletAddress}, got ${certificate.signer}`
+        );
+        throw new UnauthorizedException(
+          "Certificate signer does not match wallet address"
+        );
+      }
+
+      // Check if the certificate content matches the nonce
+      if (isValidSignature && certificate.payload.content !== user.nonce) {
+        this.logger.warn(
+          `Certificate content mismatch: expected ${user.nonce}, got ${certificate.payload.content}`
+        );
+        throw new UnauthorizedException(
+          "Certificate content does not match expected nonce"
+        );
+      }
+    } else if (signature && message) {
+      // Legacy method using signature and message
+      this.logger.log("Using legacy signature verification");
+
+      if (!this.vechainSignatureHelper.isValidSignature(signature)) {
+        throw new UnauthorizedException("Invalid signature format");
+      }
+
+      // Verify the message format
+      const expectedMessage = `${user.nonce}`;
+
+      if (message !== expectedMessage) {
+        throw new UnauthorizedException("Invalid message format");
+      }
+
+      // Verify VeChain signature
+      isValidSignature =
+        await this.vechainSignatureHelper.verifyPersonalSignature(
+          message,
+          signature,
+          walletAddress
+        );
+    } else {
+      throw new UnauthorizedException(
+        "Either certificate or signature+message must be provided"
       );
+    }
 
     if (!isValidSignature) {
       this.logger.warn(`Invalid signature for wallet: ${walletAddress}`);

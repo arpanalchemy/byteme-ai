@@ -1,0 +1,733 @@
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import {
+  Reward,
+  RewardType,
+  RewardStatus,
+  BlockchainStatus,
+} from "../entity/reward.entity";
+import { User } from "../../users/entity/user.entity";
+import { VeChainService } from "../../../common/blockchain/vechain.service";
+import {
+  CreateRewardDto,
+  UpdateRewardDto,
+  RewardResponseDto,
+  RewardQueryDto,
+  RewardStatsDto,
+  BatchRewardDto,
+} from "../dto/reward.dto";
+import { Cron, CronExpression } from "@nestjs/schedule";
+
+@Injectable()
+export class RewardService {
+  private readonly logger = new Logger(RewardService.name);
+
+  constructor(
+    @InjectRepository(Reward)
+    private readonly rewardRepository: Repository<Reward>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly vechainService: VeChainService
+  ) {}
+
+  // Reward Management (Admin)
+
+  /**
+   * Create a reward entry
+   */
+  async createReward(createDto: CreateRewardDto): Promise<RewardResponseDto> {
+    try {
+      // Verify user exists
+      const user = await this.userRepository.findOne({
+        where: { id: createDto.userId },
+      });
+
+      if (!user) {
+        throw new NotFoundException("User not found");
+      }
+
+      const reward = this.rewardRepository.create({
+        ...createDto,
+        milesDriven: createDto.milesDriven || 0,
+        carbonSaved: createDto.carbonSaved || 0,
+        cycleId: createDto.cycleId || null,
+        submissionId: null,
+      });
+
+      const savedReward = await this.rewardRepository.save(reward);
+
+      this.logger.log(
+        `Reward created: ${savedReward.id} for user: ${createDto.userId}`
+      );
+      return this.transformRewardToResponse(savedReward);
+    } catch (error) {
+      this.logger.error(`Failed to create reward: ${error.message}`);
+      throw new BadRequestException("Failed to create reward");
+    }
+  }
+
+  /**
+   * Get rewards with filtering
+   */
+  async getRewards(
+    query: RewardQueryDto,
+    userId?: string
+  ): Promise<{
+    rewards: RewardResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        type,
+        status,
+        blockchainStatus,
+        search,
+        startDate,
+        endDate,
+        sortBy = "createdAt",
+        sortOrder = "DESC",
+      } = query;
+      const offset = (page - 1) * limit;
+
+      const queryBuilder = this.rewardRepository.createQueryBuilder("reward");
+
+      if (userId) {
+        queryBuilder.andWhere("reward.userId = :userId", { userId });
+      }
+
+      if (type) {
+        queryBuilder.andWhere("reward.type = :type", { type });
+      }
+
+      if (status) {
+        queryBuilder.andWhere("reward.status = :status", { status });
+      }
+
+      if (blockchainStatus) {
+        queryBuilder.andWhere("reward.blockchainStatus = :blockchainStatus", {
+          blockchainStatus,
+        });
+      }
+
+      if (search) {
+        queryBuilder.andWhere(
+          "reward.description ILIKE :search OR reward.type ILIKE :search",
+          { search: `%${search}%` }
+        );
+      }
+
+      if (startDate) {
+        queryBuilder.andWhere("reward.createdAt >= :startDate", {
+          startDate: new Date(startDate),
+        });
+      }
+
+      if (endDate) {
+        queryBuilder.andWhere("reward.createdAt <= :endDate", {
+          endDate: new Date(endDate),
+        });
+      }
+
+      const total = await queryBuilder.getCount();
+      const rewards = await queryBuilder
+        .skip(offset)
+        .take(limit)
+        .orderBy(`reward.${sortBy}`, sortOrder as "ASC" | "DESC")
+        .getMany();
+
+      return {
+        rewards: rewards.map((reward) =>
+          this.transformRewardToResponse(reward)
+        ),
+        total,
+        page,
+        limit,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get rewards: ${error.message}`);
+      throw new BadRequestException("Failed to get rewards");
+    }
+  }
+
+  /**
+   * Get reward by ID
+   */
+  async getRewardById(
+    rewardId: string,
+    userId?: string
+  ): Promise<RewardResponseDto> {
+    const queryBuilder = this.rewardRepository
+      .createQueryBuilder("reward")
+      .where("reward.id = :rewardId", { rewardId });
+
+    if (userId) {
+      queryBuilder.andWhere("reward.userId = :userId", { userId });
+    }
+
+    const reward = await queryBuilder.getOne();
+
+    if (!reward) {
+      throw new NotFoundException("Reward not found");
+    }
+
+    return this.transformRewardToResponse(reward);
+  }
+
+  /**
+   * Update reward
+   */
+  async updateReward(
+    rewardId: string,
+    updateDto: UpdateRewardDto,
+    userId?: string
+  ): Promise<RewardResponseDto> {
+    try {
+      const queryBuilder = this.rewardRepository
+        .createQueryBuilder("reward")
+        .where("reward.id = :rewardId", { rewardId });
+
+      if (userId) {
+        queryBuilder.andWhere("reward.userId = :userId", { userId });
+      }
+
+      const reward = await queryBuilder.getOne();
+
+      if (!reward) {
+        throw new NotFoundException("Reward not found");
+      }
+
+      Object.assign(reward, updateDto);
+      const updatedReward = await this.rewardRepository.save(reward);
+
+      this.logger.log(`Reward updated: ${rewardId}`);
+      return this.transformRewardToResponse(updatedReward);
+    } catch (error) {
+      this.logger.error(`Failed to update reward: ${error.message}`);
+      throw new BadRequestException("Failed to update reward");
+    }
+  }
+
+  /**
+   * Cancel reward
+   */
+  async cancelReward(rewardId: string, userId?: string): Promise<void> {
+    try {
+      const queryBuilder = this.rewardRepository
+        .createQueryBuilder("reward")
+        .where("reward.id = :rewardId", { rewardId });
+
+      if (userId) {
+        queryBuilder.andWhere("reward.userId = :userId", { userId });
+      }
+
+      const reward = await queryBuilder.getOne();
+
+      if (!reward) {
+        throw new NotFoundException("Reward not found");
+      }
+
+      if (!reward.canBeCancelled) {
+        throw new BadRequestException("Reward cannot be cancelled");
+      }
+
+      reward.status = RewardStatus.CANCELLED;
+      await this.rewardRepository.save(reward);
+
+      this.logger.log(`Reward cancelled: ${rewardId}`);
+    } catch (error) {
+      this.logger.error(`Failed to cancel reward: ${error.message}`);
+      throw new BadRequestException("Failed to cancel reward");
+    }
+  }
+
+  // User Reward Management
+
+  /**
+   * Get user rewards
+   */
+  async getUserRewards(
+    userId: string,
+    query: RewardQueryDto
+  ): Promise<{
+    rewards: RewardResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    return this.getRewards(query, userId);
+  }
+
+  /**
+   * Get user reward statistics
+   */
+  async getUserRewardStats(userId: string): Promise<RewardStatsDto> {
+    return this.getRewardStats(userId);
+  }
+
+  /**
+   * Get reward statistics
+   */
+  async getRewardStats(userId?: string): Promise<RewardStatsDto> {
+    try {
+      const queryBuilder = this.rewardRepository.createQueryBuilder("reward");
+
+      if (userId) {
+        queryBuilder.andWhere("reward.userId = :userId", { userId });
+      }
+
+      const total = await queryBuilder.getCount();
+
+      // Get total amounts
+      const totalStats = await queryBuilder
+        .select([
+          "SUM(reward.amount) as totalAmount",
+          "SUM(reward.milesDriven) as totalMiles",
+          "SUM(reward.carbonSaved) as totalCarbonSaved",
+        ])
+        .getRawOne();
+
+      const totalAmount = parseFloat(totalStats?.totalAmount || "0");
+      const totalMiles = parseFloat(totalStats?.totalMiles || "0");
+      const totalCarbonSaved = parseFloat(totalStats?.totalCarbonSaved || "0");
+
+      // Get rewards by type
+      const byTypeQuery = await queryBuilder
+        .select(["reward.type", "COUNT(*) as count"])
+        .groupBy("reward.type")
+        .getRawMany();
+
+      const byType: Record<string, number> = {};
+      byTypeQuery.forEach((item) => {
+        byType[item.reward_type] = parseInt(item.count);
+      });
+
+      // Get rewards by status
+      const byStatusQuery = await queryBuilder
+        .select(["reward.status", "COUNT(*) as count"])
+        .groupBy("reward.status")
+        .getRawMany();
+
+      const byStatus: Record<string, number> = {};
+      byStatusQuery.forEach((item) => {
+        byStatus[item.reward_status] = parseInt(item.count);
+      });
+
+      // Get rewards by blockchain status
+      const byBlockchainStatusQuery = await queryBuilder
+        .select(["reward.blockchainStatus", "COUNT(*) as count"])
+        .groupBy("reward.blockchainStatus")
+        .getRawMany();
+
+      const byBlockchainStatus: Record<string, number> = {};
+      byBlockchainStatusQuery.forEach((item) => {
+        byBlockchainStatus[item.reward_blockchainStatus] = parseInt(item.count);
+      });
+
+      // Calculate averages
+      const averageAmount = total > 0 ? totalAmount / total : 0;
+      const averageMiles = total > 0 ? totalMiles / total : 0;
+      const averageCarbonSaved = total > 0 ? totalCarbonSaved / total : 0;
+
+      // Get most active day
+      const mostActiveDayQuery = await queryBuilder
+        .select(["DATE(reward.createdAt) as date", "COUNT(*) as count"])
+        .groupBy("DATE(reward.createdAt)")
+        .orderBy("count", "DESC")
+        .limit(1)
+        .getRawOne();
+
+      const mostActiveDay = mostActiveDayQuery?.date || null;
+      const mostActiveDayCount = parseInt(mostActiveDayQuery?.count || "0");
+
+      return {
+        total,
+        totalAmount,
+        totalMiles,
+        totalCarbonSaved: totalCarbonSaved / 1000, // Convert to kg
+        byType,
+        byStatus,
+        byBlockchainStatus,
+        averageAmount,
+        averageMiles,
+        averageCarbonSaved: averageCarbonSaved / 1000, // Convert to kg
+        mostActiveDay,
+        mostActiveDayCount,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get reward stats: ${error.message}`);
+      throw new BadRequestException("Failed to get reward stats");
+    }
+  }
+
+  // Blockchain Integration
+
+  /**
+   * Process pending rewards and send to blockchain
+   */
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async processPendingRewards(): Promise<void> {
+    try {
+      this.logger.log("Processing pending rewards...");
+
+      // Get pending rewards
+      const pendingRewards = await this.rewardRepository.find({
+        where: {
+          status: RewardStatus.PENDING,
+          blockchainStatus: BlockchainStatus.NOT_SENT,
+        },
+        order: { createdAt: "ASC" },
+        take: 100, // Process in batches
+      });
+
+      if (pendingRewards.length === 0) {
+        this.logger.log("No pending rewards to process");
+        return;
+      }
+
+      this.logger.log(`Processing ${pendingRewards.length} pending rewards`);
+
+      // Group rewards by user for batch processing
+      const userRewards = new Map<string, Reward[]>();
+      pendingRewards.forEach((reward) => {
+        if (!userRewards.has(reward.userId)) {
+          userRewards.set(reward.userId, []);
+        }
+        userRewards.get(reward.userId)!.push(reward);
+      });
+
+      // Process each user's rewards
+      for (const [userId, rewards] of userRewards) {
+        await this.processUserRewards(userId, rewards);
+      }
+    } catch (error) {
+      this.logger.error("Failed to process pending rewards:", error);
+    }
+  }
+
+  /**
+   * Process rewards for a specific user
+   */
+  private async processUserRewards(
+    userId: string,
+    rewards: Reward[]
+  ): Promise<void> {
+    try {
+      // Get user wallet address
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+      });
+
+      if (!user || !user.walletAddress) {
+        this.logger.warn(`User ${userId} has no wallet address`);
+        return;
+      }
+
+      // Prepare batch data for blockchain
+      const batchData: BatchRewardDto[] = rewards.map((reward) => ({
+        user: user.walletAddress!,
+        miles: reward.milesDriven,
+        amount: reward.amount,
+        proofTypes: reward.proofData?.proofTypes || ["image"],
+        proofValues: reward.proofData?.proofValues || [
+          reward.proofData?.imageHash || "",
+        ],
+        impactCodes: reward.proofData?.impactCodes || ["carbon"],
+        impactValues: reward.proofData?.impactValues || [reward.carbonSaved],
+        description: reward.description || `Reward for ${reward.type}`,
+      }));
+
+      // Update rewards to processing status
+      for (const reward of rewards) {
+        reward.status = RewardStatus.PROCESSING;
+        reward.blockchainStatus = BlockchainStatus.SENT;
+        reward.processedAt = new Date();
+        await this.rewardRepository.save(reward);
+      }
+
+      // Send to blockchain
+      const txHash = await this.vechainService.distributeRewards(batchData);
+
+      // Update rewards with transaction hash
+      for (const reward of rewards) {
+        reward.blockchainData = {
+          ...reward.blockchainData,
+          txHash,
+          sentAt: new Date(),
+        };
+        await this.rewardRepository.save(reward);
+      }
+
+      this.logger.log(
+        `Processed ${rewards.length} rewards for user ${userId}: ${txHash}`
+      );
+    } catch (error) {
+      this.logger.error(`Failed to process rewards for user ${userId}:`, error);
+
+      // Mark rewards as failed
+      for (const reward of rewards) {
+        reward.status = RewardStatus.FAILED;
+        reward.blockchainStatus = BlockchainStatus.FAILED;
+        reward.failedAt = new Date();
+        reward.failureReason = error.message;
+        reward.blockchainData = {
+          ...reward.blockchainData,
+          error: error.message,
+          retryCount: (reward.blockchainData?.retryCount || 0) + 1,
+          lastRetryAt: new Date(),
+        };
+        await this.rewardRepository.save(reward);
+      }
+    }
+  }
+
+  /**
+   * Check blockchain transaction status
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async checkBlockchainTransactions(): Promise<void> {
+    try {
+      this.logger.log("Checking blockchain transactions...");
+
+      // Get sent transactions
+      const sentRewards = await this.rewardRepository.find({
+        where: {
+          blockchainStatus: BlockchainStatus.SENT,
+        },
+        take: 50,
+      });
+
+      for (const reward of sentRewards) {
+        if (reward.blockchainData?.txHash) {
+          const isConfirmed = await this.vechainService.isTransactionConfirmed(
+            reward.blockchainData.txHash
+          );
+
+          if (isConfirmed) {
+            reward.status = RewardStatus.COMPLETED;
+            reward.blockchainStatus = BlockchainStatus.CONFIRMED;
+            reward.confirmedAt = new Date();
+            await this.rewardRepository.save(reward);
+
+            this.logger.log(`Reward ${reward.id} confirmed on blockchain`);
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error("Failed to check blockchain transactions:", error);
+    }
+  }
+
+  /**
+   * Retry failed rewards
+   */
+  async retryFailedReward(rewardId: string): Promise<void> {
+    try {
+      const reward = await this.rewardRepository.findOne({
+        where: { id: rewardId },
+      });
+
+      if (!reward) {
+        throw new NotFoundException("Reward not found");
+      }
+
+      if (!reward.canRetry) {
+        throw new BadRequestException("Reward cannot be retried");
+      }
+
+      // Reset reward status
+      reward.status = RewardStatus.PENDING;
+      reward.blockchainStatus = BlockchainStatus.NOT_SENT;
+      reward.failedAt = null;
+      reward.failureReason = null;
+      await this.rewardRepository.save(reward);
+
+      this.logger.log(`Reward ${rewardId} queued for retry`);
+    } catch (error) {
+      this.logger.error(`Failed to retry reward ${rewardId}:`, error);
+      throw new BadRequestException("Failed to retry reward");
+    }
+  }
+
+  // Helper methods
+
+  /**
+   * Transform reward to response DTO
+   */
+  private transformRewardToResponse(reward: Reward): RewardResponseDto {
+    return {
+      id: reward.id,
+      userId: reward.userId,
+      type: reward.type,
+      status: reward.status,
+      blockchainStatus: reward.blockchainStatus,
+      amount: reward.amount,
+      milesDriven: reward.milesDriven,
+      carbonSaved: reward.carbonSaved,
+      cycleId: reward.cycleId,
+      submissionId: reward.submissionId,
+      description: reward.description,
+      proofData: reward.proofData,
+      blockchainData: reward.blockchainData,
+      metadata: reward.metadata,
+      processedAt: reward.processedAt,
+      confirmedAt: reward.confirmedAt,
+      failedAt: reward.failedAt,
+      failureReason: reward.failureReason,
+      createdAt: reward.createdAt,
+      updatedAt: reward.updatedAt,
+      // Virtual properties
+      isPending: reward.isPending,
+      isProcessing: reward.isProcessing,
+      isCompleted: reward.isCompleted,
+      isFailed: reward.isFailed,
+      isCancelled: reward.isCancelled,
+      isBlockchainPending: reward.isBlockchainPending,
+      isBlockchainSent: reward.isBlockchainSent,
+      isBlockchainConfirmed: reward.isBlockchainConfirmed,
+      isBlockchainFailed: reward.isBlockchainFailed,
+      canRetry: reward.canRetry,
+      formattedAmount: reward.formattedAmount,
+      formattedMiles: reward.formattedMiles,
+      formattedCarbonSaved: reward.formattedCarbonSaved,
+      carbonSavedKg: reward.carbonSavedKg,
+      formattedCarbonSavedKg: reward.formattedCarbonSavedKg,
+      rewardPerMile: reward.rewardPerMile,
+      formattedRewardPerMile: reward.formattedRewardPerMile,
+      carbonEfficiency: reward.carbonEfficiency,
+      formattedCarbonEfficiency: reward.formattedCarbonEfficiency,
+      processingTime: reward.processingTime,
+      confirmationTime: reward.confirmationTime,
+      totalProcessingTime: reward.totalProcessingTime,
+      formattedProcessingTime: reward.formattedProcessingTime,
+      formattedConfirmationTime: reward.formattedConfirmationTime,
+      formattedTotalProcessingTime: reward.formattedTotalProcessingTime,
+      typeIcon: reward.typeIcon,
+      statusColor: reward.statusColor,
+      blockchainStatusColor: reward.blockchainStatusColor,
+      canBeCancelled: reward.canBeCancelled,
+      canBeRetried: reward.canBeRetried,
+    };
+  }
+
+  // Auto-reward methods for system events
+
+  /**
+   * Create upload reward
+   */
+  async createUploadReward(
+    userId: string,
+    uploadId: string,
+    milesDriven: number,
+    carbonSaved: number,
+    imageHash: string
+  ): Promise<RewardResponseDto> {
+    const rewardAmount = this.calculateUploadReward(milesDriven, carbonSaved);
+
+    return this.createReward({
+      userId,
+      type: RewardType.UPLOAD,
+      amount: rewardAmount,
+      milesDriven,
+      carbonSaved,
+      description: `Reward for uploading ${milesDriven.toFixed(1)} miles`,
+      proofData: {
+        proofTypes: ["image"],
+        proofValues: [imageHash],
+        impactCodes: ["carbon"],
+        impactValues: [carbonSaved],
+        imageHash,
+        uploadId,
+      },
+      metadata: {
+        source: "upload",
+        trigger: "automatic",
+      },
+    });
+  }
+
+  /**
+   * Create badge reward
+   */
+  async createBadgeReward(
+    userId: string,
+    badgeId: string,
+    badgeName: string,
+    rewardAmount: number
+  ): Promise<RewardResponseDto> {
+    return this.createReward({
+      userId,
+      type: RewardType.BADGE,
+      amount: rewardAmount,
+      description: `Reward for earning "${badgeName}" badge`,
+      proofData: {
+        proofTypes: ["badge"],
+        proofValues: [badgeId],
+        impactCodes: ["achievement"],
+        impactValues: [1],
+        badgeId,
+      },
+      metadata: {
+        source: "badge",
+        trigger: "automatic",
+      },
+    });
+  }
+
+  /**
+   * Create challenge reward
+   */
+  async createChallengeReward(
+    userId: string,
+    challengeId: string,
+    challengeName: string,
+    rewardAmount: number
+  ): Promise<RewardResponseDto> {
+    return this.createReward({
+      userId,
+      type: RewardType.CHALLENGE,
+      amount: rewardAmount,
+      description: `Reward for completing "${challengeName}" challenge`,
+      proofData: {
+        proofTypes: ["challenge"],
+        proofValues: [challengeId],
+        impactCodes: ["achievement"],
+        impactValues: [1],
+        challengeId,
+      },
+      metadata: {
+        source: "challenge",
+        trigger: "automatic",
+      },
+    });
+  }
+
+  /**
+   * Calculate upload reward based on miles and carbon saved
+   */
+  private calculateUploadReward(
+    milesDriven: number,
+    carbonSaved: number
+  ): number {
+    // Base reward: 0.1 B3TR per mile
+    const baseReward = milesDriven * 0.1;
+
+    // Carbon bonus: 0.01 B3TR per kg CO2 saved
+    const carbonBonus = (carbonSaved / 1000) * 0.01;
+
+    // Total reward
+    const totalReward = baseReward + carbonBonus;
+
+    // Round to 8 decimal places (B3TR precision)
+    return Math.round(totalReward * 100000000) / 100000000;
+  }
+}
