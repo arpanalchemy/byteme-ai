@@ -7,6 +7,7 @@ services:
     envs:
       - key: NODE_ENV
         value: production
+        scope: RUN_AND_BUILD_TIME
       - key: PORT
         value: "3000"
     dockerfile_path: Dockerfile
@@ -15,8 +16,8 @@ services:
     instance_size_slug: basic-xxs
     health_check:
       http_path: /healthcheck
-      initial_delay_seconds: 30
-      period_seconds: 10
+      initial_delay_seconds: 60
+      period_seconds: 15
       timeout_seconds: 5
       success_threshold: 1
       failure_threshold: 3
