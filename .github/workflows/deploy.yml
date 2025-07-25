@@ -26,7 +26,12 @@ jobs:
       - name: Install zip and AWS CLI
         run: |
           sudo apt-get update
-          sudo apt-get install -y zip awscli
+          sudo apt-get install -y zip
+          # Install AWS CLI version 2 (the latest version)
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+          aws --version  # Verify installation
 
       - name: Create deployment archive
         run: zip -r dist.zip . -x "src/*" -x "*.git*"
