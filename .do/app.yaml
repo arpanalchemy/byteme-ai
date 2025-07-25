@@ -16,8 +16,19 @@ ingress:
 name: byteme-ai
 region: blr
 services:
-- dockerfile_path: /Dockerfile
+- name: api
+  dockerfile_path: Dockerfile
+  git:
+    branch: main
+    deploy_on_push: true
+    repo: arpanalchemy/byteme-ai
   envs:
+  - key: NODE_ENV
+    scope: RUN_AND_BUILD_TIME
+    value: development
+  - key: PORT
+    scope: RUN_AND_BUILD_TIME
+    value: "3000"
   - key: DB_HOST
     scope: RUN_AND_BUILD_TIME
     value: byte-me-instance-1.c1yc40cskc5f.ca-central-1.rds.amazonaws.com
@@ -51,12 +62,6 @@ services:
   - key: ADMIN_PRIVATE_KEY
     scope: RUN_AND_BUILD_TIME
     value: your-admin-private-key
-  - key: NODE_ENV
-    scope: RUN_AND_BUILD_TIME
-    value: development
-  - key: PORT
-    scope: RUN_AND_BUILD_TIME
-    value: "3000"
   - key: ALLOWED_ORIGINS
     scope: RUN_AND_BUILD_TIME
     value: http://localhost:3000,http://localhost:3001
@@ -90,19 +95,13 @@ services:
   - key: EMAIL_PASS
     scope: RUN_AND_BUILD_TIME
     value: gort axak ndzx peej
-  github:
-    branch: main
-    deploy_on_push: true
-    repo: arpanalchemy/byteme-ai
+  http_port: 3000
+  instance_count: 2
+  instance_size_slug: apps-s-1vcpu-1gb
   health_check:
     http_path: /healthcheck
-    initial_delay_seconds: 120
+    initial_delay_seconds: 180
     period_seconds: 30
     timeout_seconds: 10
     success_threshold: 1
     failure_threshold: 5
-  http_port: 3000
-  instance_count: 2
-  instance_size_slug: apps-s-1vcpu-1gb
-  name: byteme-ai
-  run_command: npm run start:dev
