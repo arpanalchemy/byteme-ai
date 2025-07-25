@@ -11,6 +11,7 @@ import { getDatabaseConfig } from "./config/database.config";
 import { JwtAuthGuard } from "./modules/auth/guards/jwt-auth.guard";
 import { OdometerModule } from "./modules/odometer/odometer.module";
 import { VehiclesModule } from "./modules/vehicles/vehicles.module";
+import { HealthcheckModule } from "./modules/healthcheck/healthcheck.module";
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { VehiclesModule } from "./modules/vehicles/vehicles.module";
     UsersModule,
     OdometerModule,
     VehiclesModule,
+    HealthcheckModule,
   ],
   controllers: [AppController],
   providers: [
