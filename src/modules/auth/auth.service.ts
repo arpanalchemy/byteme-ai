@@ -123,7 +123,7 @@ export class AuthService {
       accessToken,
       user: {
         id: user.id,
-        walletAddress: user.walletAddress,
+        walletAddress: user.walletAddress || '',
         username: user.username,
         email: user.email,
         isActive: user.isActive,
