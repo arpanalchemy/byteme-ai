@@ -10,6 +10,7 @@ services:
         scope: RUN_AND_BUILD_TIME
       - key: PORT
         value: "3000"
+    run_command: node dist/main
     dockerfile_path: Dockerfile
     http_port: 3000
     instance_count: 1
