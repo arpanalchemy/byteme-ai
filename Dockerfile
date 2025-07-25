@@ -9,7 +9,7 @@ RUN npm run build
 # Production stage
 FROM node:20-alpine
 WORKDIR /app
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 ENV PORT=3000
 COPY package*.json ./
 RUN npm ci --only=production --no-optional
