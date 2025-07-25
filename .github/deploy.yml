@@ -1,0 +1,88 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Install zip and AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip awscli
+
+      - name: Create deployment archive
+        run: zip -r dist.zip . -x "src/*" -x "*.git*"
+
+      - name: Configure AWS CLI
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+          aws configure set region $AWS_REGION
+
+      - name: Set S3 Bucket and Elastic Beanstalk Environment Based on Branch
+        id: env_setup
+        run: |
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            echo "S3_BUCKET=byteme-code" >> $GITHUB_ENV
+            echo "EB_APPLICATION_NAME=byteme-ai" >> $GITHUB_ENV
+            echo "EB_ENVIRONMENT_NAME=Byteme-ai-prod" >> $GITHUB_ENV
+          else
+            echo "No matching branch for deployment. Exiting."
+            exit 1
+          fi
+
+      - name: Upload to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: aws s3 cp dist.zip s3://${{ env.S3_BUCKET }}
+
+      - name: Create Elastic Beanstalk application version
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          CI_COMMIT_SHORT_SHA: ${{ github.sha }}
+          EB_APPLICATION_NAME: ${{ env.EB_APPLICATION_NAME }}
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name $EB_APPLICATION_NAME \
+            --version-label $CI_COMMIT_SHORT_SHA \
+            --source-bundle S3Bucket=${{ env.S3_BUCKET }},S3Key=dist.zip
+
+      - name: Update Elastic Beanstalk environment
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          CI_COMMIT_SHORT_SHA: ${{ github.sha }}
+          EB_APPLICATION_NAME: ${{ env.EB_APPLICATION_NAME }}
+          EB_ENVIRONMENT_NAME: ${{ env.EB_ENVIRONMENT_NAME }}
+        run: |
+          aws elasticbeanstalk update-environment \
+            --application-name $EB_APPLICATION_NAME \
+            --environment-name $EB_ENVIRONMENT_NAME \
+            --version-label $CI_COMMIT_SHORT_SHA
