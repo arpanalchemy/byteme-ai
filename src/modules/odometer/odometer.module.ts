@@ -8,8 +8,8 @@ import { User } from '../users/entity/user.entity';
 import { S3Service } from '../../common/upload/s3.service';
 import { OpenAIService } from '../../common/ai/openai.service';
 import { RedisService } from '../../common/cache/redis.service';
-import { TensorFlowOcrService } from '../../common/ocr/tensorflow.service';
-import { VehicleService } from '../vehicles/services/vehicle.service';
+
+import { VehicleService } from "../vehicles/services/vehicle.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([OdometerUpload, Vehicle, User])],
@@ -20,7 +20,6 @@ import { VehicleService } from '../vehicles/services/vehicle.service';
     S3Service,
     OpenAIService,
     RedisService,
-    TensorFlowOcrService,
   ],
   exports: [OdometerService],
 })

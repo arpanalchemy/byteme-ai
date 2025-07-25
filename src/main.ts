@@ -49,6 +49,7 @@ async function bootstrap() {
 
   console.log(`🚗 Drive & Earn API is running on: http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api`);
+  console.log(`🏥 Health Check: http://localhost:${port}/healthcheck`);
 }
 
 bootstrap();

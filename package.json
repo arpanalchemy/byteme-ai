@@ -34,7 +34,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/typeorm": "^11.0.0",
-    "@tensorflow/tfjs-node": "^4.22.0",
+
     "@types/multer": "^2.0.0",
     "@vechain/connex": "^2.2.1",
     "@vechain/connex-types": "^2.2.1",

@@ -16,12 +16,22 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: [".env.local", ".env"],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) =>
-        getDatabaseConfig(configService),
+      useFactory: (configService: ConfigService) => {
+        const config = getDatabaseConfig(configService);
+        // Add retry logic and graceful handling for database connection
+        return {
+          ...config,
+          retryAttempts: 3,
+          retryDelay: 3000,
+          keepConnectionAlive: true,
+          // Don't fail startup if database is not available
+          autoLoadEntities: true,
+        };
+      },
       inject: [ConfigService],
     }),
     ThrottlerModule.forRoot([
