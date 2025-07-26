@@ -7,6 +7,8 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
+  NotFoundException,
+  UnprocessableEntityException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -32,6 +34,7 @@ import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { User } from "../users/entity/user.entity";
+import { UnprocessableEntityError } from "openai";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -399,11 +402,11 @@ export class AuthController {
       });
 
       if (!user) {
-        throw new UnauthorizedException("User not found");
+        throw new NotFoundException("User not found");
       }
 
       if (!user.isActive) {
-        throw new UnauthorizedException("User account is inactive");
+        throw new UnprocessableEntityException("User account is inactive");
       }
 
       // Generate new token

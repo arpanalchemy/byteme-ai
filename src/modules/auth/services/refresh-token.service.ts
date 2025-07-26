@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
+import { Injectable, Logger, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { RedisService } from "../../../common/cache/redis.service";
@@ -150,7 +150,7 @@ export class RefreshTokenService {
       });
 
       if (!user || !user.isActive) {
-        throw new UnauthorizedException("User not found or inactive");
+        throw new UnprocessableEntityException("User not found or inactive");
       }
 
       // Revoke the old refresh token

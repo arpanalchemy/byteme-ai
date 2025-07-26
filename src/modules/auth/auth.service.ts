@@ -3,6 +3,8 @@ import {
   UnauthorizedException,
   ConflictException,
   Logger,
+  UnprocessableEntityException,
+  NotFoundException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -16,6 +18,7 @@ import {
 import { VeChainSignatureHelper } from "./helpers/vechain-signature.helper";
 import { RefreshTokenService } from "./services/refresh-token.service";
 import * as crypto from "crypto";
+import { UnprocessableEntityError } from "openai";
 
 @Injectable()
 export class AuthService {
@@ -39,12 +42,12 @@ export class AuthService {
 
     // Validate inputs
     if (!this.vechainSignatureHelper.isValidAddress(walletAddress)) {
-      throw new UnauthorizedException("Invalid wallet address format");
+      throw new UnprocessableEntityException("Invalid wallet address format");
     }
 
     // Validate certificate format
     if (!this.vechainSignatureHelper.isValidCertificate(certificate)) {
-      throw new UnauthorizedException("Invalid certificate format");
+      throw new UnprocessableEntityException("Invalid certificate format");
     }
 
     // Verify the certificate
@@ -53,7 +56,7 @@ export class AuthService {
 
     if (!isValidSignature) {
       this.logger.warn(`Invalid signature for wallet: ${walletAddress}`);
-      throw new UnauthorizedException("Invalid signature");
+      throw new UnprocessableEntityException("Invalid signature");
     }
 
     // Additional check: verify the certificate signer matches the wallet address
@@ -61,7 +64,7 @@ export class AuthService {
       this.logger.warn(
         `Certificate signer mismatch: expected ${walletAddress}, got ${certificate.signer}`
       );
-      throw new UnauthorizedException(
+      throw new UnprocessableEntityException(
         "Certificate signer does not match wallet address"
       );
     }
@@ -139,7 +142,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException("User not found");
+      throw new NotFoundException("User not found");
     }
 
     // Update last login
@@ -155,7 +158,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException("User not found or inactive");
+      throw new UnprocessableEntityException("User not found or inactive");
     }
 
     return user;
