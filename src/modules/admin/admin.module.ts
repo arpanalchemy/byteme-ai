@@ -7,6 +7,8 @@ import { AdminService } from "./services/admin.service";
 import { User } from "../users/entity/user.entity";
 import { Vehicle } from "../vehicles/entity/vehicle.entity";
 import { OdometerUpload } from "../odometer/entity/odometer-upload.entity";
+import { RefreshTokenService } from "../auth/services/refresh-token.service";
+import { RedisService } from "../../common/cache/redis.service";
 
 @Module({
   imports: [
@@ -27,7 +29,7 @@ import { OdometerUpload } from "../odometer/entity/odometer-upload.entity";
     }),
   ],
   controllers: [AdminController],
-  providers: [AdminService],
+  providers: [AdminService, RefreshTokenService, RedisService],
   exports: [AdminService],
 })
 export class AdminModule {}
