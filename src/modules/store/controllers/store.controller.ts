@@ -24,6 +24,7 @@ import { Order } from "../entity/order.entity";
 import { User } from "../../users/entity/user.entity";
 import { ProductCategory } from "../entity/product.entity";
 import { OrderStatus } from "../entity/order.entity";
+import { Public } from "src/common/decorators/public.decorator";
 
 @ApiTags("Store")
 @Controller("store")
@@ -150,6 +151,7 @@ export class StoreController {
 }
 
 @ApiTags("Admin Store")
+@Public()
 @Controller("admin/store")
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
