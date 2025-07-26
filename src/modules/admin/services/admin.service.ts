@@ -43,7 +43,7 @@ export class AdminService {
     private readonly odometerUploadRepository: Repository<OdometerUpload>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly refreshTokenService: RefreshTokenService
+    private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
   /**
@@ -113,7 +113,7 @@ export class AdminService {
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponseDto> {
     try {
       // Create a virtual admin user for token generation
-      const adminUser = {
+      const _adminUser = {
         id: "admin",
         username: "admin",
         email: "admin@system.com",
@@ -151,7 +151,7 @@ export class AdminService {
   async logout(refreshToken: string): Promise<{ message: string }> {
     try {
       // Verify the refresh token to get the token ID
-      const payload = this.jwtService.verify(refreshToken) as any;
+      const payload = this.jwtService.verify(refreshToken);
 
       if (payload.jti) {
         // Revoke the refresh token
@@ -217,7 +217,7 @@ export class AdminService {
         totalEvMiles: parseFloat(userStats?.totalEvMiles || "0"),
         totalCarbonSaved: parseFloat(userStats?.totalCarbonSaved || "0"),
         totalTokensDistributed: parseFloat(
-          userStats?.totalTokensDistributed || "0"
+          userStats?.totalTokensDistributed || "0",
         ),
         weeklyRewardsDistributed,
         totalUploads,
@@ -237,7 +237,7 @@ export class AdminService {
   async getAllUsers(
     page: number = 1,
     limit: number = 20,
-    search?: string
+    search?: string,
   ): Promise<{
     users: AdminUserStatsDto[];
     total: number;
@@ -252,7 +252,7 @@ export class AdminService {
       if (search) {
         query.where(
           "user.walletAddress ILIKE :search OR user.email ILIKE :search OR user.username ILIKE :search",
-          { search: `%${search}%` }
+          { search: `%${search}%` },
         );
       }
 
@@ -323,7 +323,7 @@ export class AdminService {
    * Block/Unblock user
    */
   async toggleUserStatus(
-    userId: string
+    userId: string,
   ): Promise<{ message: string; isActive: boolean }> {
     try {
       const user = await this.userRepository.findOne({
@@ -403,7 +403,7 @@ export class AdminService {
     } catch (error) {
       this.logger.error(
         `Failed to get upload history for user ${userId}`,
-        error
+        error,
       );
       throw new BadRequestException("Failed to get user upload history");
     }

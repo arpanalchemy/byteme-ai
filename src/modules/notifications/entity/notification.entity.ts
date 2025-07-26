@@ -282,7 +282,7 @@ export class Notification {
 
     const channels = Object.keys(this.deliveryStatus);
     const successful = channels.filter(
-      (channel) => this.deliveryStatus[channel]?.sent
+      (channel) => this.deliveryStatus[channel]?.sent,
     ).length;
 
     return channels.length > 0 ? (successful / channels.length) * 100 : 0;

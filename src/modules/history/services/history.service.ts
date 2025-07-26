@@ -28,7 +28,7 @@ export class HistoryService {
     @InjectRepository(History)
     private readonly historyRepository: Repository<History>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
   ) {}
 
   // History Management (Admin)
@@ -37,7 +37,7 @@ export class HistoryService {
    * Create a history entry
    */
   async createHistory(
-    createDto: CreateHistoryDto
+    createDto: CreateHistoryDto,
   ): Promise<HistoryResponseDto> {
     try {
       // Verify user exists
@@ -72,7 +72,7 @@ export class HistoryService {
    */
   async getHistory(
     query: HistoryQueryDto,
-    userId?: string
+    userId?: string,
   ): Promise<{
     history: HistoryResponseDto[];
     total: number;
@@ -110,7 +110,7 @@ export class HistoryService {
       if (search) {
         queryBuilder.andWhere(
           "history.title ILIKE :search OR history.description ILIKE :search",
-          { search: `%${search}%` }
+          { search: `%${search}%` },
         );
       }
 
@@ -142,12 +142,12 @@ export class HistoryService {
       const historyEntries = await queryBuilder
         .skip(offset)
         .take(limit)
-        .orderBy(`history.${sortBy}`, sortOrder as "ASC" | "DESC")
+        .orderBy(`history.${sortBy}`, sortOrder)
         .getMany();
 
       return {
         history: historyEntries.map((entry) =>
-          this.transformHistoryToResponse(entry)
+          this.transformHistoryToResponse(entry),
         ),
         total,
         page,
@@ -164,7 +164,7 @@ export class HistoryService {
    */
   async getHistoryById(
     historyId: string,
-    userId?: string
+    userId?: string,
   ): Promise<HistoryResponseDto> {
     const queryBuilder = this.historyRepository
       .createQueryBuilder("history")
@@ -193,7 +193,7 @@ export class HistoryService {
   async updateHistory(
     historyId: string,
     updateDto: UpdateHistoryDto,
-    userId?: string
+    userId?: string,
   ): Promise<HistoryResponseDto> {
     try {
       const queryBuilder = this.historyRepository
@@ -260,7 +260,7 @@ export class HistoryService {
    */
   async getUserHistory(
     userId: string,
-    query: HistoryQueryDto
+    query: HistoryQueryDto,
   ): Promise<{
     history: HistoryResponseDto[];
     total: number;
@@ -342,7 +342,7 @@ export class HistoryService {
           monthStart: new Date(
             new Date().getFullYear(),
             new Date().getMonth(),
-            1
+            1,
           ),
         })
         .getCount();
@@ -439,7 +439,7 @@ export class HistoryService {
     uploadId: string,
     mileage: number,
     carbonSaved: number,
-    previousMileage?: number
+    previousMileage?: number,
   ): Promise<void> {
     const mileageDifference = previousMileage
       ? mileage - previousMileage
@@ -475,7 +475,7 @@ export class HistoryService {
     rewardType: string,
     previousBalance: number,
     newBalance: number,
-    source?: string
+    source?: string,
   ): Promise<void> {
     await this.createHistory({
       userId,
@@ -506,7 +506,7 @@ export class HistoryService {
     previousBalance: number,
     newBalance: number,
     purpose?: string,
-    orderId?: string
+    orderId?: string,
   ): Promise<void> {
     await this.createHistory({
       userId,
@@ -537,7 +537,7 @@ export class HistoryService {
     badgeName: string,
     badgeType: string,
     badgeRarity: string,
-    rewards?: any
+    rewards?: any,
   ): Promise<void> {
     await this.createHistory({
       userId,
@@ -567,7 +567,7 @@ export class HistoryService {
     challengeId: string,
     challengeName: string,
     challengeType: string,
-    challengeDifficulty: string
+    challengeDifficulty: string,
   ): Promise<void> {
     await this.createHistory({
       userId,
@@ -596,7 +596,7 @@ export class HistoryService {
     challengeName: string,
     challengeType: string,
     challengeDifficulty: string,
-    rewards?: any
+    rewards?: any,
   ): Promise<void> {
     await this.createHistory({
       userId,
@@ -627,7 +627,7 @@ export class HistoryService {
     orderNumber: string,
     productName: string,
     quantity: number,
-    totalAmount: number
+    totalAmount: number,
   ): Promise<void> {
     await this.createHistory({
       userId,
@@ -656,7 +656,7 @@ export class HistoryService {
     userId: string,
     vehicleId: string,
     vehicleName: string,
-    vehicleType: string
+    vehicleType: string,
   ): Promise<void> {
     await this.createHistory({
       userId,
@@ -683,7 +683,7 @@ export class HistoryService {
     previousRank: number,
     period: string,
     score: number,
-    previousScore: number
+    previousScore: number,
   ): Promise<void> {
     await this.createHistory({
       userId,
@@ -712,7 +712,7 @@ export class HistoryService {
     milestone: string,
     milestoneType: string,
     milestoneValue: number,
-    rewards?: any
+    rewards?: any,
   ): Promise<void> {
     await this.createHistory({
       userId,

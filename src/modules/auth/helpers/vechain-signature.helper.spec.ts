@@ -1,7 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { VeChainSignatureHelper } from './vechain-signature.helper';
+import { Test, TestingModule } from "@nestjs/testing";
+import { VeChainSignatureHelper } from "./vechain-signature.helper";
 
-describe('VeChainSignatureHelper', () => {
+describe("VeChainSignatureHelper", () => {
   let service: VeChainSignatureHelper;
 
   beforeEach(async () => {
@@ -12,13 +12,13 @@ describe('VeChainSignatureHelper', () => {
     service = module.get<VeChainSignatureHelper>(VeChainSignatureHelper);
   });
 
-  describe('isValidAddress', () => {
-    it('should validate correct VeChain addresses', () => {
+  describe("isValidAddress", () => {
+    it("should validate correct VeChain addresses", () => {
       const validAddresses = [
-        '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-        '0x0000000000000000000000000000000000000000',
-        '0x1234567890123456789012345678901234567890',
-        '742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6', // without 0x prefix
+        "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+        "0x0000000000000000000000000000000000000000",
+        "0x1234567890123456789012345678901234567890",
+        "742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6", // without 0x prefix
       ];
 
       validAddresses.forEach((address) => {
@@ -26,13 +26,13 @@ describe('VeChainSignatureHelper', () => {
       });
     });
 
-    it('should reject invalid addresses', () => {
+    it("should reject invalid addresses", () => {
       const invalidAddresses = [
-        '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b', // too short
-        '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b67', // too long
-        '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6g', // invalid character
-        'invalid-address',
-        '',
+        "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b", // too short
+        "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b67", // too long
+        "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6g", // invalid character
+        "invalid-address",
+        "",
         null,
         undefined,
       ];
@@ -43,11 +43,11 @@ describe('VeChainSignatureHelper', () => {
     });
   });
 
-  describe('isValidSignature', () => {
-    it('should validate correct signature formats', () => {
+  describe("isValidSignature", () => {
+    it("should validate correct signature formats", () => {
       const validSignatures = [
-        '0x' + '1'.repeat(130), // 130 hex characters with 0x prefix
-        '1'.repeat(130), // 130 hex characters without 0x prefix
+        "0x" + "1".repeat(130), // 130 hex characters with 0x prefix
+        "1".repeat(130), // 130 hex characters without 0x prefix
       ];
 
       validSignatures.forEach((signature) => {
@@ -55,13 +55,13 @@ describe('VeChainSignatureHelper', () => {
       });
     });
 
-    it('should reject invalid signatures', () => {
+    it("should reject invalid signatures", () => {
       const invalidSignatures = [
-        '0x' + '1'.repeat(129), // too short
-        '0x' + '1'.repeat(131), // too long
-        '0x' + '1'.repeat(129) + 'g', // invalid character
-        'invalid-signature',
-        '',
+        "0x" + "1".repeat(129), // too short
+        "0x" + "1".repeat(131), // too long
+        "0x" + "1".repeat(129) + "g", // invalid character
+        "invalid-signature",
+        "",
         null,
         undefined,
       ];
@@ -72,28 +72,28 @@ describe('VeChainSignatureHelper', () => {
     });
   });
 
-  describe('generateMessageHash', () => {
-    it('should generate valid message hash', () => {
-      const message = 'Test message';
+  describe("generateMessageHash", () => {
+    it("should generate valid message hash", () => {
+      const message = "Test message";
       const hash = service.generateMessageHash(message);
 
       expect(hash).toMatch(/^0x[a-fA-F0-9]{64}$/);
       expect(hash.length).toBe(66); // 0x + 64 hex characters
     });
 
-    it('should generate different hashes for different messages', () => {
-      const hash1 = service.generateMessageHash('Message 1');
-      const hash2 = service.generateMessageHash('Message 2');
+    it("should generate different hashes for different messages", () => {
+      const hash1 = service.generateMessageHash("Message 1");
+      const hash2 = service.generateMessageHash("Message 2");
 
       expect(hash1).not.toBe(hash2);
     });
   });
 
-  describe('verifySignature', () => {
-    it('should handle invalid signature gracefully', async () => {
-      const message = 'Test message';
-      const invalidSignature = '0x' + '1'.repeat(130);
-      const walletAddress = '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6';
+  describe("verifySignature", () => {
+    it("should handle invalid signature gracefully", async () => {
+      const message = "Test message";
+      const invalidSignature = "0x" + "1".repeat(130);
+      const walletAddress = "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6";
 
       const result = await service.verifySignature(
         message,
@@ -103,10 +103,10 @@ describe('VeChainSignatureHelper', () => {
       expect(result).toBe(false);
     });
 
-    it('should handle invalid address gracefully', async () => {
-      const message = 'Test message';
-      const signature = '0x' + '1'.repeat(130);
-      const invalidAddress = 'invalid-address';
+    it("should handle invalid address gracefully", async () => {
+      const message = "Test message";
+      const signature = "0x" + "1".repeat(130);
+      const invalidAddress = "invalid-address";
 
       const result = await service.verifySignature(
         message,
@@ -117,11 +117,11 @@ describe('VeChainSignatureHelper', () => {
     });
   });
 
-  describe('verifyPersonalSignature', () => {
-    it('should handle invalid signature gracefully', async () => {
-      const message = 'Test message';
-      const invalidSignature = '0x' + '1'.repeat(130);
-      const walletAddress = '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6';
+  describe("verifyPersonalSignature", () => {
+    it("should handle invalid signature gracefully", async () => {
+      const message = "Test message";
+      const invalidSignature = "0x" + "1".repeat(130);
+      const walletAddress = "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6";
 
       const result = await service.verifyPersonalSignature(
         message,

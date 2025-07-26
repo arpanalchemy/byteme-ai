@@ -30,7 +30,7 @@ export class StoreService {
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
   ) {}
 
   // Product Management
@@ -61,7 +61,7 @@ export class StoreService {
     search?: string,
     minPrice?: number,
     maxPrice?: number,
-    ecoFriendly?: boolean
+    ecoFriendly?: boolean,
   ): Promise<{
     products: Product[];
     total: number;
@@ -82,7 +82,7 @@ export class StoreService {
       if (search) {
         query.andWhere(
           "(product.name ILIKE :search OR product.description ILIKE :search OR product.tags::text ILIKE :search)",
-          { search: `%${search}%` }
+          { search: `%${search}%` },
         );
       }
 
@@ -141,7 +141,7 @@ export class StoreService {
    */
   async updateProduct(
     productId: string,
-    updateDto: UpdateProductDto
+    updateDto: UpdateProductDto,
   ): Promise<Product> {
     try {
       const product = await this.productRepository.findOne({
@@ -268,7 +268,7 @@ export class StoreService {
   async getUserOrders(
     userId: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
   ): Promise<{
     orders: Order[];
     total: number;
@@ -331,7 +331,7 @@ export class StoreService {
   async updateOrderStatus(
     orderId: string,
     status: OrderStatus,
-    notes?: string
+    notes?: string,
   ): Promise<Order> {
     try {
       const order = await this.orderRepository.findOne({
@@ -368,7 +368,7 @@ export class StoreService {
   async cancelOrder(
     orderId: string,
     userId: string,
-    reason?: string
+    reason?: string,
   ): Promise<Order> {
     try {
       const order = await this.orderRepository.findOne({
@@ -425,7 +425,7 @@ export class StoreService {
   async getAllOrders(
     page: number = 1,
     limit: number = 20,
-    status?: OrderStatus
+    status?: OrderStatus,
   ): Promise<{
     orders: Order[];
     total: number;

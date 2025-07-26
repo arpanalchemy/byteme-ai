@@ -37,7 +37,7 @@ export class EncryptionService {
       salt,
       iterations,
       this.keyLength,
-      "sha512"
+      "sha512",
     );
   }
 
@@ -46,7 +46,7 @@ export class EncryptionService {
    */
   encrypt(
     data: string,
-    masterKey?: string
+    masterKey?: string,
   ): {
     encryptedData: string;
     iv: string;
@@ -70,7 +70,7 @@ export class EncryptionService {
       const cipher = crypto.createCipheriv(
         this.algorithm,
         derivedKey,
-        Buffer.from(iv, "hex")
+        Buffer.from(iv, "hex"),
       );
       cipher.setAAD(Buffer.from("user-wallet-data", "utf8")); // Additional authenticated data
 
@@ -104,7 +104,7 @@ export class EncryptionService {
     encryptedData: string,
     iv: string,
     salt: string,
-    masterKey?: string
+    masterKey?: string,
   ): string {
     try {
       // Use environment variable or generate a temporary key
@@ -124,7 +124,7 @@ export class EncryptionService {
       const decipher = crypto.createDecipheriv(
         this.algorithm,
         derivedKey,
-        Buffer.from(iv, "hex")
+        Buffer.from(iv, "hex"),
       );
       decipher.setAAD(Buffer.from("user-wallet-data", "utf8")); // Additional authenticated data
       decipher.setAuthTag(tag);
@@ -206,17 +206,17 @@ export class EncryptionService {
         mnemonic: this.decrypt(
           encryptedData.encryptedMnemonic,
           encryptedData.mnemonicIv,
-          encryptedData.mnemonicSalt
+          encryptedData.mnemonicSalt,
         ),
         privateKey: this.decrypt(
           encryptedData.encryptedPrivateKey,
           encryptedData.privateKeyIv,
-          encryptedData.privateKeySalt
+          encryptedData.privateKeySalt,
         ),
         publicKey: this.decrypt(
           encryptedData.encryptedPublicKey,
           encryptedData.publicKeyIv,
-          encryptedData.publicKeySalt
+          encryptedData.publicKeySalt,
         ),
       };
     } catch (error) {

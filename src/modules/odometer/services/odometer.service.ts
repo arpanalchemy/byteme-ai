@@ -3,12 +3,12 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { S3Service } from '../../../common/upload/s3.service';
-import { OpenAIService } from '../../../common/ai/openai.service';
-import { RedisService } from '../../../common/cache/redis.service';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { S3Service } from "../../../common/upload/s3.service";
+import { OpenAIService } from "../../../common/ai/openai.service";
+import { RedisService } from "../../../common/cache/redis.service";
 import { AwsTextractService } from "../../../common/ocr/aws-textract.service";
 
 import {
@@ -39,7 +39,7 @@ export class OdometerService {
     private readonly s3Service: S3Service,
     private readonly openaiService: OpenAIService,
     private readonly redisService: RedisService,
-    private readonly awsTextractService: AwsTextractService
+    private readonly awsTextractService: AwsTextractService,
   ) {}
 
   /**
@@ -48,7 +48,7 @@ export class OdometerService {
   async uploadOdometer(
     file: Express.Multer.File,
     userId: string,
-    uploadDto: UploadOdometerDto
+    uploadDto: UploadOdometerDto,
   ): Promise<ProcessingResultDto> {
     const startTime = Date.now();
 
@@ -62,7 +62,7 @@ export class OdometerService {
       const uploadResult = await this.s3Service.uploadImage(
         file,
         userId,
-        uploadDto.vehicleId
+        uploadDto.vehicleId,
       );
 
       // Create upload record
@@ -124,7 +124,7 @@ export class OdometerService {
       // Step 3: Vehicle Matching
       const vehicleMatch = await this.matchVehicle(
         upload,
-        aiResults.vehicleDetection
+        aiResults.vehicleDetection,
       );
 
       // Step 4: Mileage Validation
@@ -133,7 +133,7 @@ export class OdometerService {
       // Step 5: Calculate carbon savings
       const carbonSaved = await this.calculateCarbonSaved(
         upload,
-        validationResult.finalMileage
+        validationResult.finalMileage,
       );
 
       // Update upload with results
@@ -151,7 +151,7 @@ export class OdometerService {
       this.logger.log(`Upload ${uploadId} processed successfully`);
     } catch (error) {
       this.logger.error(
-        `Failed to process upload ${uploadId}: ${error.message}`
+        `Failed to process upload ${uploadId}: ${error.message}`,
       );
       await this.markUploadAsFailed(uploadId, error.message);
     }
@@ -177,7 +177,7 @@ export class OdometerService {
         await this.awsTextractService.extractOdometerReading(imageBuffer);
 
       this.logger.log(
-        `OCR completed: ${ocrResult.mileage} miles (confidence: ${ocrResult.confidence}%)`
+        `OCR completed: ${ocrResult.mileage} miles (confidence: ${ocrResult.confidence}%)`,
       );
 
       return {
@@ -209,18 +209,18 @@ export class OdometerService {
 
       if (!analysis) {
         analysis = await this.openaiService.analyzeOdometerImage(
-          upload.s3ImageUrl
+          upload.s3ImageUrl,
         );
         await this.redisService.setAnalysisCache(imageHash, analysis);
       }
 
       if (!vehicleDetection) {
         vehicleDetection = await this.openaiService.detectVehicle(
-          upload.s3ImageUrl
+          upload.s3ImageUrl,
         );
         await this.redisService.setVehicleDetectionCache(
           imageHash,
-          vehicleDetection
+          vehicleDetection,
         );
       }
 
@@ -236,7 +236,7 @@ export class OdometerService {
    */
   private async matchVehicle(
     upload: OdometerUpload,
-    vehicleDetection: any
+    vehicleDetection: any,
   ): Promise<VehicleMatchResultDto> {
     try {
       // If user already specified a vehicle, use it
@@ -268,7 +268,7 @@ export class OdometerService {
       for (const vehicle of userVehicles) {
         const confidence = this.calculateVehicleMatchConfidence(
           vehicle,
-          vehicleDetection
+          vehicleDetection,
         );
         if (confidence > bestConfidence && confidence > 0.7) {
           bestMatch = vehicle;
@@ -309,7 +309,7 @@ export class OdometerService {
    */
   private calculateVehicleMatchConfidence(
     vehicle: Vehicle,
-    detection: any
+    detection: any,
   ): number {
     let confidence = 0;
 
@@ -344,12 +344,12 @@ export class OdometerService {
    */
   private async validateMileage(
     upload: OdometerUpload,
-    ocrResult: any
+    ocrResult: any,
   ): Promise<any> {
     try {
       const previousMileage = await this.getPreviousMileage(
         upload.userId,
-        upload.vehicleId
+        upload.vehicleId,
       );
 
       // Placeholder validation - will be replaced with actual validation later
@@ -364,7 +364,7 @@ export class OdometerService {
         try {
           aiValidation = await this.openaiService.validateOcrResult(
             upload.s3ImageUrl,
-            ocrResult.extractedMileage.toString()
+            ocrResult.extractedMileage.toString(),
           );
         } catch (error) {
           this.logger.warn(`AI validation failed: ${error.message}`);
@@ -399,7 +399,7 @@ export class OdometerService {
    */
   private async getPreviousMileage(
     userId: string,
-    vehicleId?: string
+    vehicleId?: string,
   ): Promise<number | undefined> {
     try {
       const query = this.odometerUploadRepository
@@ -426,7 +426,7 @@ export class OdometerService {
    */
   private async calculateCarbonSaved(
     upload: OdometerUpload,
-    mileage: number
+    mileage: number,
   ): Promise<number> {
     try {
       if (!mileage || !upload.vehicleId) {
@@ -443,7 +443,7 @@ export class OdometerService {
 
       const previousMileage = await this.getPreviousMileage(
         upload.userId,
-        upload.vehicleId
+        upload.vehicleId,
       );
       if (!previousMileage) {
         return 0;
@@ -462,7 +462,7 @@ export class OdometerService {
    */
   private async updateUploadWithResults(
     upload: OdometerUpload,
-    results: any
+    results: any,
   ): Promise<void> {
     try {
       upload.status = UploadStatus.COMPLETED;
@@ -502,7 +502,7 @@ export class OdometerService {
    */
   private async markUploadAsFailed(
     uploadId: string,
-    errorMessage: string
+    errorMessage: string,
   ): Promise<void> {
     try {
       await this.odometerUploadRepository.update(uploadId, {
@@ -521,7 +521,7 @@ export class OdometerService {
   private validateUploadFile(file: Express.Multer.File): void {
     if (!this.s3Service.validateFileType(file.mimetype)) {
       throw new BadRequestException(
-        "Invalid file type. Only JPEG, PNG, and WebP are allowed."
+        "Invalid file type. Only JPEG, PNG, and WebP are allowed.",
       );
     }
 
@@ -544,9 +544,9 @@ export class OdometerService {
    */
   async getUploadById(
     uploadId: string,
-    userId?: string
+    userId?: string,
   ): Promise<OdometerUpload> {
-    let whereClause: any = { id: uploadId };
+    const whereClause: any = { id: uploadId };
     if (userId) {
       whereClause.userId = userId;
     }
@@ -567,7 +567,7 @@ export class OdometerService {
   async getUserUploads(
     userId: string,
     limit = 20,
-    offset = 0
+    offset = 0,
   ): Promise<OdometerUpload[]> {
     return this.odometerUploadRepository.find({
       where: { userId },
@@ -657,7 +657,7 @@ export class OdometerService {
       };
     } catch (error) {
       this.logger.error(
-        `Failed to get user stats for ${userId}: ${error.message}`
+        `Failed to get user stats for ${userId}: ${error.message}`,
       );
       throw new BadRequestException("Failed to retrieve user statistics");
     }

@@ -1,4 +1,4 @@
-import { ConfigService } from '@nestjs/config';
+import { ConfigService } from "@nestjs/config";
 
 interface EmailTemplateProps {
   configService: ConfigService;
@@ -218,7 +218,10 @@ export class EmailTemplates {
     `;
   }
 
-  public static getOTPEmailTemplate(otp: string, { configService }: EmailTemplateProps) {
+  public static getOTPEmailTemplate(
+    otp: string,
+    { configService }: EmailTemplateProps,
+  ) {
     const content = `
       <div class="header">
         <h1 class="header-title">Secure Login</h1>
@@ -253,6 +256,6 @@ export class EmailTemplates {
       </div>
     `;
 
-    return EmailTemplates.getBaseTemplate().replace('{{content}}', content);
+    return EmailTemplates.getBaseTemplate().replace("{{content}}", content);
   }
-} 
+}

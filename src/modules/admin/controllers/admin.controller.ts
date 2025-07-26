@@ -6,10 +6,9 @@ import {
   Param,
   Body,
   Query,
-  UseGuards,
   ParseIntPipe,
 } from "@nestjs/common";
-import { ApiTags, ApiResponse, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
+import { ApiTags, ApiResponse, ApiQuery } from "@nestjs/swagger";
 import { AdminService } from "../services/admin.service";
 import { AdminLoginDto } from "../dto/admin-login.dto";
 import {
@@ -148,7 +147,7 @@ export class AdminController {
   async getAllUsers(
     @Query("page", new ParseIntPipe({ optional: true })) page: number = 1,
     @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20,
-    @Query("search") search?: string
+    @Query("search") search?: string,
   ) {
     return this.adminService.getAllUsers(page, limit, search);
   }
@@ -161,7 +160,7 @@ export class AdminController {
   })
   @ApiResponse({ status: 404, description: "User not found" })
   async getUserDetails(
-    @Param("id") userId: string
+    @Param("id") userId: string,
   ): Promise<AdminUserStatsDto> {
     return this.adminService.getUserDetails(userId);
   }

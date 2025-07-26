@@ -31,7 +31,7 @@ export class NotificationService {
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
   ) {}
 
   // Notification Management (Admin)
@@ -40,7 +40,7 @@ export class NotificationService {
    * Create a single notification
    */
   async createNotification(
-    createDto: CreateNotificationDto
+    createDto: CreateNotificationDto,
   ): Promise<NotificationResponseDto> {
     try {
       // Verify user exists
@@ -81,7 +81,7 @@ export class NotificationService {
    * Create bulk notifications
    */
   async createBulkNotifications(
-    createDto: CreateBulkNotificationDto
+    createDto: CreateBulkNotificationDto,
   ): Promise<NotificationResponseDto[]> {
     try {
       const notifications: Notification[] = [];
@@ -119,21 +119,21 @@ export class NotificationService {
 
       // Send notifications if not scheduled
       const immediateNotifications = savedNotifications.filter(
-        (n) => !n.scheduledAt
+        (n) => !n.scheduledAt,
       );
       for (const notification of immediateNotifications) {
         await this.sendNotification(notification);
       }
 
       this.logger.log(
-        `Bulk notifications created: ${savedNotifications.length}`
+        `Bulk notifications created: ${savedNotifications.length}`,
       );
       return savedNotifications.map((notification) =>
-        this.transformNotificationToResponse(notification)
+        this.transformNotificationToResponse(notification),
       );
     } catch (error) {
       this.logger.error(
-        `Failed to create bulk notifications: ${error.message}`
+        `Failed to create bulk notifications: ${error.message}`,
       );
       throw new BadRequestException("Failed to create bulk notifications");
     }
@@ -144,7 +144,7 @@ export class NotificationService {
    */
   async getNotifications(
     query: NotificationQueryDto,
-    userId?: string
+    userId?: string,
   ): Promise<{
     notifications: NotificationResponseDto[];
     total: number;
@@ -188,7 +188,7 @@ export class NotificationService {
       if (search) {
         queryBuilder.andWhere(
           "notification.title ILIKE :search OR notification.message ILIKE :search",
-          { search: `%${search}%` }
+          { search: `%${search}%` },
         );
       }
 
@@ -218,7 +218,7 @@ export class NotificationService {
 
       return {
         notifications: notifications.map((notification) =>
-          this.transformNotificationToResponse(notification)
+          this.transformNotificationToResponse(notification),
         ),
         total,
         page,
@@ -235,7 +235,7 @@ export class NotificationService {
    */
   async getNotificationById(
     notificationId: string,
-    userId?: string
+    userId?: string,
   ): Promise<NotificationResponseDto> {
     const queryBuilder = this.notificationRepository
       .createQueryBuilder("notification")
@@ -261,7 +261,7 @@ export class NotificationService {
   async updateNotification(
     notificationId: string,
     updateDto: UpdateNotificationDto,
-    userId?: string
+    userId?: string,
   ): Promise<NotificationResponseDto> {
     try {
       const queryBuilder = this.notificationRepository
@@ -321,7 +321,7 @@ export class NotificationService {
    */
   async deleteNotification(
     notificationId: string,
-    userId?: string
+    userId?: string,
   ): Promise<void> {
     try {
       const queryBuilder = this.notificationRepository
@@ -357,7 +357,7 @@ export class NotificationService {
    */
   async getUserNotifications(
     userId: string,
-    query: NotificationQueryDto
+    query: NotificationQueryDto,
   ): Promise<{
     notifications: NotificationResponseDto[];
     total: number;
@@ -372,7 +372,7 @@ export class NotificationService {
    */
   async markAsRead(
     notificationId: string,
-    userId: string
+    userId: string,
   ): Promise<NotificationResponseDto> {
     return this.updateNotification(notificationId, { isRead: true }, userId);
   }
@@ -382,7 +382,7 @@ export class NotificationService {
    */
   async markAsUnread(
     notificationId: string,
-    userId: string
+    userId: string,
   ): Promise<NotificationResponseDto> {
     return this.updateNotification(notificationId, { isRead: false }, userId);
   }
@@ -392,12 +392,12 @@ export class NotificationService {
    */
   async archiveNotification(
     notificationId: string,
-    userId: string
+    userId: string,
   ): Promise<NotificationResponseDto> {
     return this.updateNotification(
       notificationId,
       { isArchived: true },
-      userId
+      userId,
     );
   }
 
@@ -406,12 +406,12 @@ export class NotificationService {
    */
   async unarchiveNotification(
     notificationId: string,
-    userId: string
+    userId: string,
   ): Promise<NotificationResponseDto> {
     return this.updateNotification(
       notificationId,
       { isArchived: false },
-      userId
+      userId,
     );
   }
 
@@ -436,7 +436,7 @@ export class NotificationService {
       this.logger.log(`All notifications marked as read for user: ${userId}`);
     } catch (error) {
       this.logger.error(
-        `Failed to mark all notifications as read: ${error.message}`
+        `Failed to mark all notifications as read: ${error.message}`,
       );
       throw new BadRequestException("Failed to mark all notifications as read");
     }
@@ -575,7 +575,7 @@ export class NotificationService {
         } catch (error) {
           deliveryStatus[channel] = { sent: false, error: error.message };
           this.logger.error(
-            `Failed to send notification via ${channel}: ${error.message}`
+            `Failed to send notification via ${channel}: ${error.message}`,
           );
         }
       }
@@ -594,7 +594,7 @@ export class NotificationService {
    * Transform notification to response DTO
    */
   private transformNotificationToResponse(
-    notification: Notification
+    notification: Notification,
   ): NotificationResponseDto {
     return {
       id: notification.id,
@@ -643,7 +643,7 @@ export class NotificationService {
     userId: string,
     uploadId: string,
     mileage: number,
-    carbonSaved: number
+    carbonSaved: number,
   ): Promise<void> {
     await this.createNotification({
       userId,
@@ -667,7 +667,7 @@ export class NotificationService {
     userId: string,
     badgeId: string,
     badgeName: string,
-    rewards?: any
+    rewards?: any,
   ): Promise<void> {
     await this.createNotification({
       userId,
@@ -691,7 +691,7 @@ export class NotificationService {
     userId: string,
     challengeId: string,
     challengeName: string,
-    rewards?: any
+    rewards?: any,
   ): Promise<void> {
     await this.createNotification({
       userId,

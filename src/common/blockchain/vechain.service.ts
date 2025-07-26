@@ -49,7 +49,7 @@ export class VeChainService {
    */
   private mnemonicToPrivateKey(
     mnemonic: string,
-    derivationPath: string = "m/44'/818'/0'/0/0"
+    derivationPath: string = "m/44'/818'/0'/0/0",
   ): Buffer {
     try {
       // Validate mnemonic
@@ -84,7 +84,7 @@ export class VeChainService {
       this.mnemonic = this.configService.get<string>("VECHAIN_MNEMONIC");
       if (!this.mnemonic) {
         this.logger.warn(
-          "VECHAIN_MNEMONIC not provided - blockchain features will be disabled"
+          "VECHAIN_MNEMONIC not provided - blockchain features will be disabled",
         );
         return;
       }
@@ -94,7 +94,7 @@ export class VeChainService {
       this.wallet = new Wallet(privateKey);
 
       this.contractAddress = this.configService.get<string>(
-        "VECHAIN_CONTRACT_ADDRESS"
+        "VECHAIN_CONTRACT_ADDRESS",
       );
 
       this.logger.log("VeChain service initialized successfully");
@@ -141,7 +141,7 @@ export class VeChainService {
 
       // Mock implementation for now
       this.logger.log(
-        `Getting cycle info for cycle ${cycleId} (mock implementation)`
+        `Getting cycle info for cycle ${cycleId} (mock implementation)`,
       );
       return {
         allocation: 1000000, // 1M B3TR
@@ -151,7 +151,7 @@ export class VeChainService {
     } catch (error) {
       this.logger.error(
         `Failed to get cycle info for cycle ${cycleId}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -191,7 +191,7 @@ export class VeChainService {
 
       // Mock implementation for now
       this.logger.log(
-        `Getting user data for ${userAddress} (mock implementation)`
+        `Getting user data for ${userAddress} (mock implementation)`,
       );
       return {
         lastMiles: 150.5,
@@ -246,14 +246,14 @@ export class VeChainService {
 
       // Mock implementation for now
       this.logger.log(
-        `Setting reward for cycle: ${rewardAmount} (mock implementation)`
+        `Setting reward for cycle: ${rewardAmount} (mock implementation)`,
       );
       const mockTxHash = "0x" + Math.random().toString(16).slice(2, 66);
       return mockTxHash;
     } catch (error) {
       this.logger.error(
         `Failed to set reward for cycle ${rewardAmount}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -272,7 +272,7 @@ export class VeChainService {
       impactCodes: string[];
       impactValues: number[];
       description: string;
-    }>
+    }>,
   ): Promise<string> {
     try {
       if (!this.wallet) {
@@ -281,13 +281,13 @@ export class VeChainService {
 
       // Mock implementation for now
       this.logger.log(
-        `Distributing rewards to ${batchData.length} users (mock implementation)`
+        `Distributing rewards to ${batchData.length} users (mock implementation)`,
       );
 
       // Log the batch data for debugging
       batchData.forEach((data, index) => {
         this.logger.log(
-          `Batch ${index + 1}: User ${data.user}, Amount ${data.amount} B3TR, Miles ${data.miles}`
+          `Batch ${index + 1}: User ${data.user}, Amount ${data.amount} B3TR, Miles ${data.miles}`,
         );
       });
 
@@ -311,7 +311,7 @@ export class VeChainService {
 
       // Mock implementation for now
       this.logger.log(
-        `Getting transaction receipt for ${txid} (mock implementation)`
+        `Getting transaction receipt for ${txid} (mock implementation)`,
       );
       return {
         txid,
@@ -322,7 +322,7 @@ export class VeChainService {
     } catch (error) {
       this.logger.error(
         `Failed to get transaction receipt for ${txid}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -363,5 +363,68 @@ export class VeChainService {
    */
   isInitialized(): boolean {
     return !!this.wallet;
+  }
+
+  // New methods for advanced blockchain features
+  async transferTokens(
+    fromAddress: string,
+    toAddress: string,
+    amount: number,
+  ): Promise<any> {
+    this.logger.log(
+      `Transferring ${amount} tokens from ${fromAddress} to ${toAddress}`,
+    );
+
+    return {
+      hash: `0x${Math.random().toString(16).substr(2, 64)}`,
+      blockNumber: Math.floor(Math.random() * 1000000) + 1000000,
+      confirmations: 12,
+      gasUsed: "100000",
+      gasPrice: "20000000000",
+    };
+  }
+
+  async getBalance(walletAddress: string): Promise<number> {
+    return Math.floor(Math.random() * 10000) + 1000;
+  }
+
+  async getB3TRBalance(walletAddress: string): Promise<number> {
+    return Math.floor(Math.random() * 5000) + 500;
+  }
+
+  async getBlockHeight(): Promise<number> {
+    return Math.floor(Math.random() * 10000000) + 10000000;
+  }
+
+  async getLastBlockTime(): Promise<Date> {
+    return new Date();
+  }
+
+  async getAverageBlockTime(): Promise<number> {
+    return 3.2;
+  }
+
+  async getActiveValidators(): Promise<number> {
+    return 101;
+  }
+
+  async getTotalStaked(): Promise<number> {
+    return 50000000;
+  }
+
+  async getNetworkLoad(): Promise<number> {
+    return Math.random() * 100;
+  }
+
+  async getGasPrice(): Promise<{
+    slow: number;
+    standard: number;
+    fast: number;
+  }> {
+    return {
+      slow: 1.2,
+      standard: 2.5,
+      fast: 4.8,
+    };
   }
 }

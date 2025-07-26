@@ -44,7 +44,7 @@ export class ChallengeService {
     @InjectRepository(Vehicle)
     private readonly vehicleRepository: Repository<Vehicle>,
     @InjectRepository(OdometerUpload)
-    private readonly odometerUploadRepository: Repository<OdometerUpload>
+    private readonly odometerUploadRepository: Repository<OdometerUpload>,
   ) {}
 
   /**
@@ -52,7 +52,7 @@ export class ChallengeService {
    */
   async createChallenge(
     createDto: CreateChallengeDto,
-    adminId: string
+    adminId: string,
   ): Promise<ChallengeResponseDto> {
     try {
       const challenge = this.challengeRepository.create({
@@ -77,7 +77,7 @@ export class ChallengeService {
     type?: ChallengeType,
     status?: ChallengeStatus,
     visibility?: ChallengeVisibility,
-    search?: string
+    search?: string,
   ): Promise<{
     challenges: ChallengeResponseDto[];
     total: number;
@@ -104,7 +104,7 @@ export class ChallengeService {
       if (search) {
         query.andWhere(
           "challenge.name ILIKE :search OR challenge.description ILIKE :search",
-          { search: `%${search}%` }
+          { search: `%${search}%` },
         );
       }
 
@@ -117,7 +117,7 @@ export class ChallengeService {
 
       return {
         challenges: challenges.map((challenge) =>
-          this.transformChallengeToResponse(challenge)
+          this.transformChallengeToResponse(challenge),
         ),
         total,
         page,
@@ -145,7 +145,7 @@ export class ChallengeService {
       return this.transformChallengeToResponse(challenge);
     } catch (error) {
       this.logger.error(
-        `Failed to get challenge ${challengeId}: ${error.message}`
+        `Failed to get challenge ${challengeId}: ${error.message}`,
       );
       throw error;
     }
@@ -156,7 +156,7 @@ export class ChallengeService {
    */
   async updateChallenge(
     challengeId: string,
-    updateDto: UpdateChallengeDto
+    updateDto: UpdateChallengeDto,
   ): Promise<ChallengeResponseDto> {
     try {
       const challenge = await this.challengeRepository.findOne({
@@ -173,7 +173,7 @@ export class ChallengeService {
       return this.transformChallengeToResponse(updatedChallenge);
     } catch (error) {
       this.logger.error(
-        `Failed to update challenge ${challengeId}: ${error.message}`
+        `Failed to update challenge ${challengeId}: ${error.message}`,
       );
       throw new BadRequestException("Failed to update challenge");
     }
@@ -198,7 +198,7 @@ export class ChallengeService {
       return this.transformChallengeToResponse(publishedChallenge);
     } catch (error) {
       this.logger.error(
-        `Failed to publish challenge ${challengeId}: ${error.message}`
+        `Failed to publish challenge ${challengeId}: ${error.message}`,
       );
       throw new BadRequestException("Failed to publish challenge");
     }
@@ -220,7 +220,7 @@ export class ChallengeService {
       await this.challengeRepository.remove(challenge);
     } catch (error) {
       this.logger.error(
-        `Failed to delete challenge ${challengeId}: ${error.message}`
+        `Failed to delete challenge ${challengeId}: ${error.message}`,
       );
       throw new BadRequestException("Failed to delete challenge");
     }
@@ -230,7 +230,7 @@ export class ChallengeService {
    * Get available challenges for user
    */
   async getAvailableChallenges(
-    userId: string
+    userId: string,
   ): Promise<ChallengeResponseDto[]> {
     try {
       const challenges = await this.challengeRepository.find({
@@ -244,11 +244,11 @@ export class ChallengeService {
 
       const joinedChallengeIds = userChallenges.map((uc) => uc.challengeId);
       const availableChallenges = challenges.filter(
-        (challenge) => !joinedChallengeIds.includes(challenge.id)
+        (challenge) => !joinedChallengeIds.includes(challenge.id),
       );
 
       return availableChallenges.map((challenge) =>
-        this.transformChallengeToResponse(challenge)
+        this.transformChallengeToResponse(challenge),
       );
     } catch (error) {
       this.logger.error(`Failed to get available challenges: ${error.message}`);
@@ -261,7 +261,7 @@ export class ChallengeService {
    */
   async joinChallenge(
     userId: string,
-    challengeId: string
+    challengeId: string,
   ): Promise<UserChallengeResponseDto> {
     try {
       const challenge = await this.challengeRepository.findOne({
@@ -315,7 +315,7 @@ export class ChallengeService {
   async getUserChallenges(
     userId: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
   ): Promise<{
     userChallenges: UserChallengeResponseDto[];
     total: number;
@@ -339,7 +339,7 @@ export class ChallengeService {
 
       return {
         userChallenges: userChallenges.map((userChallenge) =>
-          this.transformUserChallengeToResponse(userChallenge)
+          this.transformUserChallengeToResponse(userChallenge),
         ),
         total,
         page,
@@ -356,7 +356,7 @@ export class ChallengeService {
    */
   async updateChallengeProgress(
     userId: string,
-    challengeId: string
+    challengeId: string,
   ): Promise<UserChallengeResponseDto> {
     try {
       const userChallenge = await this.userChallengeRepository.findOne({
@@ -371,7 +371,7 @@ export class ChallengeService {
       // Get user stats for the challenge period
       const userStats = await this.getUserStatsForChallenge(
         userId,
-        userChallenge.challenge
+        userChallenge.challenge,
       );
 
       // Update progress
@@ -399,7 +399,7 @@ export class ChallengeService {
       return this.transformUserChallengeToResponse(updatedUserChallenge);
     } catch (error) {
       this.logger.error(
-        `Failed to update challenge progress: ${error.message}`
+        `Failed to update challenge progress: ${error.message}`,
       );
       throw new BadRequestException("Failed to update challenge progress");
     }
@@ -410,7 +410,7 @@ export class ChallengeService {
    */
   async claimChallengeRewards(
     userId: string,
-    userChallengeId: string
+    userChallengeId: string,
   ): Promise<UserChallengeResponseDto> {
     try {
       const userChallenge = await this.userChallengeRepository.findOne({
@@ -449,7 +449,7 @@ export class ChallengeService {
    */
   private async getUserStatsForChallenge(
     userId: string,
-    challenge: Challenge
+    challenge: Challenge,
   ): Promise<any> {
     const { startDate, endDate } = challenge;
 
@@ -490,7 +490,7 @@ export class ChallengeService {
    * Check if challenge is completed
    */
   private async checkChallengeCompletion(
-    userChallenge: UserChallenge
+    userChallenge: UserChallenge,
   ): Promise<boolean> {
     const { challenge, progress } = userChallenge;
     const { objectives } = challenge;
@@ -537,7 +537,7 @@ export class ChallengeService {
    * Calculate challenge rewards
    */
   private async calculateChallengeRewards(
-    userChallenge: UserChallenge
+    userChallenge: UserChallenge,
   ): Promise<any> {
     const { challenge } = userChallenge;
     const rewards = { ...challenge.rewards };
@@ -555,7 +555,7 @@ export class ChallengeService {
    * Transform challenge to response DTO
    */
   private transformChallengeToResponse(
-    challenge: Challenge
+    challenge: Challenge,
   ): ChallengeResponseDto {
     return {
       id: challenge.id,
@@ -597,7 +597,7 @@ export class ChallengeService {
    * Transform user challenge to response DTO
    */
   private transformUserChallengeToResponse(
-    userChallenge: UserChallenge
+    userChallenge: UserChallenge,
   ): UserChallengeResponseDto {
     return {
       id: userChallenge.id,

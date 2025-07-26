@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import * as sharp from 'sharp';
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import * as sharp from "sharp";
 
 export interface UploadResult {
   key: string;
@@ -25,17 +25,17 @@ export class S3Service {
   private readonly region: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.region = this.configService.get('AWS_REGION', 'ca-central-1');
+    this.region = this.configService.get("AWS_REGION", "ca-central-1");
     this.bucketName = this.configService.get(
-      'S3_BUCKET_NAME',
-      'drive-earn-uploads',
+      "S3_BUCKET_NAME",
+      "drive-earn-uploads",
     );
 
-    const accessKeyId = this.configService.get('AWS_ACCESS_KEY_ID');
-    const secretAccessKey = this.configService.get('AWS_SECRET_ACCESS_KEY');
+    const accessKeyId = this.configService.get("AWS_ACCESS_KEY_ID");
+    const secretAccessKey = this.configService.get("AWS_SECRET_ACCESS_KEY");
 
     if (!accessKeyId || !secretAccessKey) {
-      this.logger.warn('AWS credentials not found, S3 operations will fail');
+      this.logger.warn("AWS credentials not found, S3 operations will fail");
     }
 
     this.s3Client = new S3Client({
@@ -90,7 +90,7 @@ export class S3Service {
       return result;
     } catch (error) {
       this.logger.error(`Failed to upload image: ${error.message}`);
-      throw new Error('Failed to upload image');
+      throw new Error("Failed to upload image");
     }
   }
 
@@ -119,7 +119,7 @@ export class S3Service {
       return { uploadUrl, key };
     } catch (error) {
       this.logger.error(`Failed to generate presigned URL: ${error.message}`);
-      throw new Error('Failed to generate upload URL');
+      throw new Error("Failed to generate upload URL");
     }
   }
 
@@ -137,7 +137,7 @@ export class S3Service {
       this.logger.log(`Image deleted successfully: ${key}`);
     } catch (error) {
       this.logger.error(`Failed to delete image: ${error.message}`);
-      throw new Error('Failed to delete image');
+      throw new Error("Failed to delete image");
     }
   }
 
@@ -161,7 +161,7 @@ export class S3Service {
       const response = await this.s3Client.send(command);
 
       if (!response.Body) {
-        throw new Error('No image data received from S3');
+        throw new Error("No image data received from S3");
       }
 
       // Convert stream to buffer
@@ -172,13 +172,13 @@ export class S3Service {
       const buffer = Buffer.concat(chunks);
 
       // Convert to base64
-      const base64 = buffer.toString('base64');
-      const mimeType = response.ContentType || 'image/jpeg';
+      const base64 = buffer.toString("base64");
+      const mimeType = response.ContentType || "image/jpeg";
 
       return `data:${mimeType};base64,${base64}`;
     } catch (error) {
       this.logger.error(`Failed to download image from S3: ${error.message}`);
-      throw new Error('Failed to download image from S3');
+      throw new Error("Failed to download image from S3");
     }
   }
 
@@ -187,7 +187,7 @@ export class S3Service {
    */
   extractKeyFromUrl(url: string): string | null {
     try {
-      const urlParts = url.split('.com/');
+      const urlParts = url.split(".com/");
       if (urlParts.length < 2) {
         return null;
       }
@@ -204,7 +204,7 @@ export class S3Service {
   private async optimizeImage(buffer: Buffer): Promise<Buffer> {
     try {
       return await sharp(buffer)
-        .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
+        .resize(1920, 1080, { fit: "inside", withoutEnlargement: true })
         .jpeg({ quality: 85, progressive: true })
         .toBuffer();
     } catch (error) {
@@ -221,7 +221,7 @@ export class S3Service {
   private async createThumbnail(buffer: Buffer): Promise<Buffer> {
     try {
       return await sharp(buffer)
-        .resize(300, 300, { fit: 'cover' })
+        .resize(300, 300, { fit: "cover" })
         .jpeg({ quality: 70 })
         .toBuffer();
     } catch (error) {
@@ -243,7 +243,7 @@ export class S3Service {
       Key: key,
       Body: buffer,
       ContentType: contentType,
-      ACL: 'private',
+      ACL: "private",
       Metadata: {
         uploadedAt: new Date().toISOString(),
       },
@@ -256,7 +256,7 @@ export class S3Service {
    * Validate file type
    */
   validateFileType(mimeType: string): boolean {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     return allowedTypes.includes(mimeType);
   }
 

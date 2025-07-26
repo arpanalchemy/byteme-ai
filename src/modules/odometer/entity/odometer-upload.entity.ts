@@ -6,23 +6,23 @@ import {
   UpdateDateColumn,
   ManyToOne,
   Index,
-} from 'typeorm';
-import { User } from '../../users/entity/user.entity';
-import { Vehicle } from '../../vehicles/entity/vehicle.entity';
+} from "typeorm";
+import { User } from "../../users/entity/user.entity";
+import { Vehicle } from "../../vehicles/entity/vehicle.entity";
 
 export enum UploadStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  REJECTED = 'rejected',
+  PENDING = "pending",
+  PROCESSING = "processing",
+  COMPLETED = "completed",
+  FAILED = "failed",
+  REJECTED = "rejected",
 }
 
 export enum ValidationStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  FLAGGED = 'flagged',
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  FLAGGED = "flagged",
 }
 
 @Entity("odometer_uploads")

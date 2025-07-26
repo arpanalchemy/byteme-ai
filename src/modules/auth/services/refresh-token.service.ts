@@ -1,4 +1,9 @@
-import { Injectable, Logger, UnauthorizedException, UnprocessableEntityException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { RedisService } from "../../../common/cache/redis.service";
@@ -35,16 +40,16 @@ export class RefreshTokenService {
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
   ) {
     // Get token expiry times from config
     this.accessTokenExpiry = this.parseExpiryTime(
       this.configService.get("JWT_EXPIRES_IN") ||
-        this.configService.get("app.jwt.expiresIn", "3m")
+        this.configService.get("app.jwt.expiresIn", "3m"),
     );
     this.refreshTokenExpiry = this.parseExpiryTime(
       this.configService.get("JWT_REFRESH_EXPIRES_IN") ||
-        this.configService.get("app.jwt.refreshExpiresIn", "7d")
+        this.configService.get("app.jwt.refreshExpiresIn", "7d"),
     );
   }
 
@@ -100,7 +105,7 @@ export class RefreshTokenService {
     await this.redisService.set(
       `refresh_token:${tokenId}`,
       refreshTokenData,
-      this.refreshTokenExpiry
+      this.refreshTokenExpiry,
     );
 
     // Store user's active refresh tokens
@@ -127,9 +132,7 @@ export class RefreshTokenService {
   }> {
     try {
       // Verify refresh token
-      const payload = this.jwtService.verify(refreshToken) as TokenPayload & {
-        jti: string;
-      };
+      const payload = this.jwtService.verify(refreshToken);
 
       if (payload.type !== "refresh") {
         throw new UnauthorizedException("Invalid token type");
@@ -137,7 +140,7 @@ export class RefreshTokenService {
 
       // Check if refresh token is revoked
       const refreshTokenData = await this.redisService.get<RefreshTokenData>(
-        `refresh_token:${payload.jti}`
+        `refresh_token:${payload.jti}`,
       );
 
       if (!refreshTokenData || refreshTokenData.isRevoked) {
@@ -169,7 +172,7 @@ export class RefreshTokenService {
    */
   async revokeRefreshToken(tokenId: string): Promise<void> {
     const refreshTokenData = await this.redisService.get<RefreshTokenData>(
-      `refresh_token:${tokenId}`
+      `refresh_token:${tokenId}`,
     );
 
     if (refreshTokenData) {
@@ -177,7 +180,7 @@ export class RefreshTokenService {
       await this.redisService.set(
         `refresh_token:${tokenId}`,
         refreshTokenData,
-        3600 // Keep revoked token for 1 hour for audit purposes
+        3600, // Keep revoked token for 1 hour for audit purposes
       );
 
       // Remove from user's active tokens
@@ -192,7 +195,7 @@ export class RefreshTokenService {
    */
   async revokeAllUserTokens(userId: string): Promise<void> {
     const userTokens = await this.redisService.get<string[]>(
-      `user_refresh_tokens:${userId}`
+      `user_refresh_tokens:${userId}`,
     );
 
     if (userTokens) {
@@ -213,7 +216,7 @@ export class RefreshTokenService {
    */
   async validateAccessToken(token: string): Promise<TokenPayload> {
     try {
-      const payload = this.jwtService.verify(token) as TokenPayload;
+      const payload = this.jwtService.verify(token);
 
       if (payload.type !== "access") {
         throw new UnauthorizedException("Invalid token type");
@@ -230,11 +233,11 @@ export class RefreshTokenService {
    */
   private async addUserRefreshToken(
     userId: string,
-    tokenId: string
+    tokenId: string,
   ): Promise<void> {
     const userTokens =
       (await this.redisService.get<string[]>(
-        `user_refresh_tokens:${userId}`
+        `user_refresh_tokens:${userId}`,
       )) || [];
 
     userTokens.push(tokenId);
@@ -242,7 +245,7 @@ export class RefreshTokenService {
     await this.redisService.set(
       `user_refresh_tokens:${userId}`,
       userTokens,
-      this.refreshTokenExpiry
+      this.refreshTokenExpiry,
     );
   }
 
@@ -251,11 +254,11 @@ export class RefreshTokenService {
    */
   private async removeUserRefreshToken(
     userId: string,
-    tokenId: string
+    tokenId: string,
   ): Promise<void> {
     const userTokens =
       (await this.redisService.get<string[]>(
-        `user_refresh_tokens:${userId}`
+        `user_refresh_tokens:${userId}`,
       )) || [];
 
     const filteredTokens = userTokens.filter((id) => id !== tokenId);
@@ -264,7 +267,7 @@ export class RefreshTokenService {
       await this.redisService.set(
         `user_refresh_tokens:${userId}`,
         filteredTokens,
-        this.refreshTokenExpiry
+        this.refreshTokenExpiry,
       );
     } else {
       await this.redisService.delete(`user_refresh_tokens:${userId}`);

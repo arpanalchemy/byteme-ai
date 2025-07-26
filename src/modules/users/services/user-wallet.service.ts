@@ -16,7 +16,7 @@ export class UserWalletService {
     @InjectRepository(UserWallet)
     private readonly userWalletRepository: Repository<UserWallet>,
     private readonly vechainWalletService: VeChainWalletService,
-    private readonly encryptionService: EncryptionService
+    private readonly encryptionService: EncryptionService,
   ) {}
 
   /**
@@ -70,7 +70,7 @@ export class UserWalletService {
       await this.userWalletRepository.save(userWallet);
 
       this.logger.log(
-        `Created encrypted wallet for user ${userId}: ${wallet.address}`
+        `Created encrypted wallet for user ${userId}: ${wallet.address}`,
       );
 
       return {
@@ -106,7 +106,7 @@ export class UserWalletService {
    */
   async getDecryptedWallet(
     userId: string,
-    masterKey?: string
+    masterKey?: string,
   ): Promise<{
     mnemonic: string;
     privateKey: string;
@@ -152,14 +152,14 @@ export class UserWalletService {
         {
           isBackedUp: true,
           backedUpAt: new Date(),
-        }
+        },
       );
 
       this.logger.log(`Marked wallet as backed up for user ${userId}`);
     } catch (error) {
       this.logger.error(
         `Failed to mark wallet as backed up for user ${userId}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -170,7 +170,7 @@ export class UserWalletService {
    */
   async updateWalletBackupStatus(
     userId: string,
-    isBackedUp: boolean
+    isBackedUp: boolean,
   ): Promise<void> {
     try {
       const updateData: any = { isBackedUp };
@@ -184,12 +184,12 @@ export class UserWalletService {
       await this.userWalletRepository.update({ userId }, updateData);
 
       this.logger.log(
-        `Updated wallet backup status for user ${userId}: ${isBackedUp}`
+        `Updated wallet backup status for user ${userId}: ${isBackedUp}`,
       );
     } catch (error) {
       this.logger.error(
         `Failed to update wallet backup status for user ${userId}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -245,7 +245,7 @@ export class UserWalletService {
    */
   async signMessage(
     userId: string,
-    message: string
+    message: string,
   ): Promise<{
     signature: string;
     address: string;
@@ -259,7 +259,7 @@ export class UserWalletService {
 
       const signature = this.vechainWalletService.signMessage(
         message,
-        decryptedWallet.privateKey
+        decryptedWallet.privateKey,
       );
 
       return {
@@ -278,12 +278,12 @@ export class UserWalletService {
   verifySignature(
     message: string,
     signature: string,
-    address: string
+    address: string,
   ): boolean {
     return this.vechainWalletService.verifySignature(
       message,
       signature,
-      address
+      address,
     );
   }
 }

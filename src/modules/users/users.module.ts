@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './entity/user.entity';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { User } from "./entity/user.entity";
 import { Vehicle } from "../vehicles/entity/vehicle.entity";
 import { OdometerUpload } from "../odometer/entity/odometer-upload.entity";
 import { UserController } from "./controllers/user.controller";

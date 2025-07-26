@@ -43,7 +43,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly jwtService: JwtService,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
   ) {}
 
   @Post("verify-signature")
@@ -106,7 +106,7 @@ export class AuthController {
     },
   })
   async verifySignature(
-    @Body() verifySignatureDto: VerifySignatureDto
+    @Body() verifySignatureDto: VerifySignatureDto,
   ): Promise<AuthResponseDto> {
     return this.authService.verifySignature(verifySignatureDto);
   }
@@ -194,7 +194,7 @@ export class AuthController {
     },
   })
   async refreshToken(
-    @Body() refreshTokenDto: RefreshTokenDto
+    @Body() refreshTokenDto: RefreshTokenDto,
   ): Promise<RefreshTokenResponseDto> {
     return this.authService.refreshToken(refreshTokenDto.refreshToken);
   }
@@ -274,7 +274,7 @@ export class AuthController {
   })
   async logoutFromDevice(
     @CurrentUser() user: any,
-    @Body() body: LogoutDeviceDto
+    @Body() body: LogoutDeviceDto,
   ): Promise<LogoutResponseDto> {
     return this.authService.logoutFromDevice(user.id, body.tokenId);
   }

@@ -44,12 +44,12 @@ export class UserService {
     private readonly vechainSignatureHelper: VeChainSignatureHelper,
     private readonly vechainWalletService: VeChainWalletService,
     private readonly userWalletService: UserWalletService,
-    private readonly refreshTokenService: RefreshTokenService
+    private readonly refreshTokenService: RefreshTokenService,
   ) {
     // Initialize email transporter
     const emailUser = this.configService.get(
       "EMAIL_USER",
-      "jaimin.tank@alchemytech.ca"
+      "jaimin.tank@alchemytech.ca",
     );
     const emailPass = this.configService.get("EMAIL_PASS");
 
@@ -80,7 +80,7 @@ export class UserService {
   async sendEmail(
     to: string,
     subject: string,
-    htmlContent: string
+    htmlContent: string,
   ): Promise<void> {
     // if (!this.emailTransporter) {
     //   throw new BadRequestException('Email service not configured');
@@ -88,7 +88,7 @@ export class UserService {
 
     const fromEmail = this.configService.get(
       "EMAIL_USER",
-      "jaimin.tank@alchemytech.ca"
+      "jaimin.tank@alchemytech.ca",
     );
 
     try {
@@ -110,7 +110,7 @@ export class UserService {
       console.error("Failed to send email:", error);
       if (error.code === "EAUTH") {
         throw new BadRequestException(
-          "Email authentication failed. Please check SMTP credentials."
+          "Email authentication failed. Please check SMTP credentials.",
         );
       }
       throw new BadRequestException(`Failed to send email: ${error.message}`);
@@ -152,7 +152,7 @@ export class UserService {
         "Your B3TR EV Rewards Login Code",
         EmailTemplates.getOTPEmailTemplate(otp, {
           configService: this.configService,
-        })
+        }),
       );
 
       return { message: "OTP sent to your email" };
@@ -167,7 +167,7 @@ export class UserService {
    */
   async validateOtp(
     email: string,
-    otp: string
+    otp: string,
   ): Promise<{
     message: string;
     token: string;
@@ -219,7 +219,7 @@ export class UserService {
       if (!userWallet || !user.walletAddress) {
         // Create wallet for user
         const walletResult = await this.userWalletService.createUserWallet(
-          user.id
+          user.id,
         );
         walletCreated = true;
         wallet = walletResult.encryptedWallet;
@@ -322,7 +322,7 @@ export class UserService {
         weeklyStats: {
           milesThisWeek: parseFloat(weeklyUploads?.milesThisWeek || "0"),
           carbonSavedThisWeek: parseFloat(
-            weeklyUploads?.carbonSavedThisWeek || "0"
+            weeklyUploads?.carbonSavedThisWeek || "0",
           ),
           rewardsEarnedThisWeek: 0, // Placeholder - would need reward tracking
           uploadsThisWeek: recentUploads.filter((u) => u.createdAt >= weekAgo)
@@ -331,7 +331,7 @@ export class UserService {
         monthlyStats: {
           milesThisMonth: parseFloat(monthlyUploads?.milesThisMonth || "0"),
           carbonSavedThisMonth: parseFloat(
-            monthlyUploads?.carbonSavedThisMonth || "0"
+            monthlyUploads?.carbonSavedThisMonth || "0",
           ),
           rewardsEarnedThisMonth: 0, // Placeholder - would need reward tracking
           uploadsThisMonth: recentUploads.filter((u) => u.createdAt >= monthAgo)
@@ -341,7 +341,7 @@ export class UserService {
       };
     } catch (error) {
       this.logger.error(
-        `Failed to get user dashboard for ${userId}: ${error.message}`
+        `Failed to get user dashboard for ${userId}: ${error.message}`,
       );
       throw new BadRequestException("Failed to get user dashboard");
     }
@@ -376,7 +376,7 @@ export class UserService {
       };
     } catch (error) {
       this.logger.error(
-        `Failed to get user profile for ${userId}: ${error.message}`
+        `Failed to get user profile for ${userId}: ${error.message}`,
       );
       throw new BadRequestException("Failed to get user profile");
     }
@@ -387,7 +387,7 @@ export class UserService {
    */
   async updateUserProfile(
     userId: string,
-    updateDto: UpdateUserProfileDto
+    updateDto: UpdateUserProfileDto,
   ): Promise<UserProfileDto> {
     try {
       const user = await this.userRepository.findOne({
@@ -414,7 +414,7 @@ export class UserService {
       return this.getUserProfile(userId);
     } catch (error) {
       this.logger.error(
-        `Failed to update user profile for ${userId}: ${error.message}`
+        `Failed to update user profile for ${userId}: ${error.message}`,
       );
       throw new BadRequestException("Failed to update user profile");
     }
