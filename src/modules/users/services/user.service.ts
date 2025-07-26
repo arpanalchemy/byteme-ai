@@ -1,18 +1,21 @@
 import {
   Injectable,
   Logger,
-  NotFoundException,
-  UnauthorizedException,
   BadRequestException,
+  NotFoundException,
+  ConflictException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { ConfigService } from "@nestjs/config";
+import { JwtService } from "@nestjs/jwt";
+import * as nodemailer from "nodemailer";
 import { User } from "../entity/user.entity";
 import { Vehicle } from "../../vehicles/entity/vehicle.entity";
-import { OdometerUpload } from "../../odometer/entity/odometer-upload.entity";
-import { ConfigService } from "@nestjs/config";
-import { EmailTemplates } from "../helpers/email-templates.helper";
-import { JwtService } from "@nestjs/jwt";
+import {
+  OdometerUpload,
+  UploadStatus,
+} from "../../odometer/entity/odometer-upload.entity";
 import { VeChainSignatureHelper } from "../../auth/helpers/vechain-signature.helper";
 import { VeChainWalletService } from "../../../common/blockchain/vechain-wallet.service";
 import { UserWalletService } from "./user-wallet.service";
@@ -22,8 +25,7 @@ import {
   UserProfileDto,
   UpdateUserProfileDto,
 } from "../dto/user-dashboard.dto";
-import * as crypto from "crypto";
-import * as nodemailer from "nodemailer";
+import { EmailTemplates } from "../helpers/email-templates.helper";
 
 @Injectable()
 export class UserService {
@@ -44,108 +46,78 @@ export class UserService {
     private readonly userWalletService: UserWalletService,
     private readonly refreshTokenService: RefreshTokenService
   ) {
-    const emailUser = this.configService.get(
-      "EMAIL_USER",
-      "jaimin.tank@alchemytech.ca"
-    );
-    const emailPass = this.configService.get("EMAIL_PASS");
-
-    if (!emailUser || !emailPass) {
-      console.error("Email credentials not properly configured");
-      return;
-    }
-
-    // Create Gmail SMTP transporter
+    // Initialize email transporter
     this.emailTransporter = nodemailer.createTransport({
-      service: "gmail",
+      host: this.configService.get("SMTP_HOST"),
+      port: this.configService.get("SMTP_PORT"),
+      secure: true,
       auth: {
-        user: emailUser,
-        pass: emailPass,
+        user: this.configService.get("SMTP_USER"),
+        pass: this.configService.get("SMTP_PASS"),
       },
-    });
-
-    // Verify the connection
-    this.emailTransporter.verify((error) => {
-      if (error) {
-        console.error("SMTP Connection Error:", error);
-      } else {
-        console.log("SMTP Server is ready to send emails");
-      }
     });
   }
 
+  /**
+   * Send email using nodemailer
+   */
   async sendEmail(
     to: string,
     subject: string,
     htmlContent: string
   ): Promise<void> {
-    // if (!this.emailTransporter) {
-    //   throw new BadRequestException('Email service not configured');
-    // }
-
-    const fromEmail = this.configService.get(
-      "EMAIL_USER",
-      "jaimin.tank@alchemytech.ca"
-    );
-
     try {
       await this.emailTransporter.sendMail({
-        from: {
-          name: "B3TR EV Rewards",
-          address: fromEmail,
-        },
+        from: this.configService.get("SMTP_FROM"),
         to,
         subject,
         html: htmlContent,
-        headers: {
-          "X-Priority": "1",
-          "X-MSMail-Priority": "High",
-          Importance: "high",
-        },
       });
+
+      this.logger.log(`Email sent to ${to}`);
     } catch (error) {
-      console.error("Failed to send email:", error);
-      if (error.code === "EAUTH") {
-        throw new BadRequestException(
-          "Email authentication failed. Please check SMTP credentials."
-        );
-      }
-      throw new BadRequestException(`Failed to send email: ${error.message}`);
+      this.logger.error(`Failed to send email to ${to}: ${error.message}`);
+      throw new BadRequestException("Failed to send email");
     }
   }
 
+  /**
+   * Login with email (send OTP)
+   */
   async loginWithEmail(email: string): Promise<{ message: string }> {
-    let user = await this.userRepository.findOne({ where: { email } });
-
-    if (!user) {
-      // Create new user if not found
-      user = this.userRepository.create({
-        email,
-        isActive: true,
-        isVerified: false,
-        totalMileage: 0,
-        totalCarbonSaved: 0,
-        totalPoints: 0,
-        currentTier: "bronze",
-        b3trBalance: 0,
+    try {
+      // Check if user exists
+      const user = await this.userRepository.findOne({
+        where: { email },
       });
-    }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.emailOtp = otp;
-    await this.userRepository.save(user);
+      if (!user) {
+        throw new NotFoundException("User not found");
+      }
 
-    await this.sendEmail(
-      email,
-      "Your B3TR EV Rewards Login Code",
-      EmailTemplates.getOTPEmailTemplate(otp, {
+      // Generate OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Store OTP in user record (in production, use Redis with expiration)
+      user.nonce = otp;
+      await this.userRepository.save(user);
+
+      // Send OTP email
+      const emailContent = EmailTemplates.getOTPEmailTemplate(otp, {
         configService: this.configService,
-      })
-    );
+      });
+      await this.sendEmail(email, "Your Login OTP", emailContent);
 
-    return { message: "Login code sent to your email address" };
+      return { message: "OTP sent to your email" };
+    } catch (error) {
+      this.logger.error(`Failed to send login OTP: ${error.message}`);
+      throw error;
+    }
   }
 
+  /**
+   * Validate OTP and login
+   */
   async validateOtp(
     email: string,
     otp: string
@@ -158,81 +130,71 @@ export class UserService {
     walletCreated?: boolean;
     wallet?: any;
   }> {
-    const user = await this.userRepository.findOne({ where: { email } });
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
+    try {
+      const user = await this.userRepository.findOne({
+        where: { email },
+      });
 
-    if (!user.emailOtp || user.emailOtp !== otp) {
-      throw new UnauthorizedException("Invalid OTP");
-    }
+      if (!user) {
+        throw new NotFoundException("User not found");
+      }
 
-    // Clear the OTP after successful validation
-    user.emailOtp = undefined;
+      if (user.nonce !== otp) {
+        throw new BadRequestException("Invalid OTP");
+      }
 
-    // Generate a proper VeChain wallet if not exists
-    let walletCreated = false;
-    let encryptedWallet = null;
+      // Clear OTP
+      user.nonce = undefined;
+      await this.userRepository.save(user);
 
-    if (!user.walletAddress) {
-      try {
-        // Create encrypted wallet using the wallet service
+      // Generate tokens
+      const payload = {
+        sub: user.id,
+        walletAddress: user.walletAddress,
+        isActive: user.isActive,
+        isVerified: user.isVerified,
+        type: "access" as const,
+      };
+
+      const token = this.jwtService.sign(payload, {
+        secret: this.configService.get("JWT_SECRET"),
+        expiresIn: "7d",
+      });
+
+      const refreshToken = await this.refreshTokenService.generateTokens(user);
+
+      // Check if user has wallet
+      const userWallet = await this.userWalletService.getUserWallet(user.id);
+
+      let walletCreated = false;
+      let wallet = null;
+
+      if (!userWallet) {
+        // Create wallet for user
         const walletResult = await this.userWalletService.createUserWallet(
           user.id
         );
-
-        // Update user with wallet address
-        user.walletAddress = walletResult.walletAddress;
-        user.walletType = "sync2";
-        user.isVerified = true;
-
         walletCreated = true;
-        encryptedWallet = walletResult.encryptedWallet;
-
-        this.logger.log(
-          `Generated encrypted VeChain wallet for user ${user.email}: ${walletResult.walletAddress}`
-        );
-      } catch (error) {
-        this.logger.error("Failed to generate VeChain wallet:", error);
-        throw new Error("Failed to generate wallet for user");
+        wallet = walletResult.encryptedWallet;
       }
-    }
 
-    user.lastLogin = new Date();
-    await this.userRepository.save(user);
-
-    // Generate tokens using RefreshTokenService
-    const tokens = await this.refreshTokenService.generateTokens(user);
-
-    const response: any = {
-      message: "OTP validated successfully",
-      token: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresIn: tokens.expiresIn,
-      refreshExpiresIn: tokens.refreshExpiresIn,
-    };
-
-    // Include encrypted wallet information if a new wallet was created
-    if (walletCreated && encryptedWallet) {
-      response.walletCreated = true;
-      response.wallet = {
-        address: user.walletAddress,
-        mnemonic: encryptedWallet.mnemonic,
-        privateKey: encryptedWallet.privateKey,
-        publicKey: encryptedWallet.publicKey,
-        backupRequired: true,
-        backupInstructions:
-          "Please securely backup your mnemonic phrase. Store it in a safe place and never share it with anyone.",
+      return {
+        message: "Login successful",
+        token,
+        refreshToken: refreshToken.refreshToken,
+        expiresIn: 7 * 24 * 60 * 60, // 7 days
+        refreshExpiresIn: 30 * 24 * 60 * 60, // 30 days
+        walletCreated,
+        wallet,
       };
-    } else {
-      response.walletCreated = false;
+    } catch (error) {
+      this.logger.error(`Failed to validate OTP: ${error.message}`);
+      throw error;
     }
-
-    return response;
   }
 
   /**
-   * Get user dashboard data
+   * Get user dashboard
    */
   async getUserDashboard(userId: string): Promise<UserDashboardDto> {
     try {
@@ -251,7 +213,7 @@ export class UserService {
 
       // Get upload count
       const uploadCount = await this.odometerUploadRepository.count({
-        where: { userId, status: "completed" as any },
+        where: { userId, status: UploadStatus.COMPLETED },
       });
 
       // Calculate weekly stats
@@ -265,7 +227,7 @@ export class UserService {
         ])
         .where("upload.userId = :userId", { userId })
         .andWhere("upload.createdAt >= :weekAgo", { weekAgo })
-        .andWhere("upload.status = :status", { status: "completed" as any })
+        .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
         .getRawOne();
 
       // Calculate monthly stats
@@ -279,7 +241,7 @@ export class UserService {
         ])
         .where("upload.userId = :userId", { userId })
         .andWhere("upload.createdAt >= :monthAgo", { monthAgo })
-        .andWhere("upload.status = :status", { status: "completed" as any })
+        .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
         .getRawOne();
 
       // Get recent activity (last 10 uploads)

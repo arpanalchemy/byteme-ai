@@ -11,7 +11,10 @@ import { Badge, BadgeType, BadgeStatus } from "../entity/badge.entity";
 import { UserBadge } from "../entity/user-badge.entity";
 import { User } from "../../users/entity/user.entity";
 import { Vehicle } from "../../vehicles/entity/vehicle.entity";
-import { OdometerUpload } from "../../odometer/entity/odometer-upload.entity";
+import {
+  OdometerUpload,
+  UploadStatus,
+} from "../../odometer/entity/odometer-upload.entity";
 import {
   CreateBadgeDto,
   UpdateBadgeDto,
@@ -36,8 +39,6 @@ export class BadgeService {
     private readonly odometerUploadRepository: Repository<OdometerUpload>
   ) {}
 
-  // Badge Management (Admin)
-
   /**
    * Create a new badge
    */
@@ -49,12 +50,9 @@ export class BadgeService {
       const badge = this.badgeRepository.create({
         ...createDto,
         createdBy: adminId,
-        status: BadgeStatus.DRAFT,
       });
 
       const savedBadge = await this.badgeRepository.save(badge);
-
-      this.logger.log(`Badge created: ${savedBadge.id}`);
       return this.transformBadgeToResponse(savedBadge);
     } catch (error) {
       this.logger.error(`Failed to create badge: ${error.message}`);
@@ -63,7 +61,7 @@ export class BadgeService {
   }
 
   /**
-   * Get all badges with filtering
+   * Get all badges with pagination and filters
    */
   async getBadges(
     page: number = 1,
@@ -120,15 +118,20 @@ export class BadgeService {
    * Get badge by ID
    */
   async getBadgeById(badgeId: string): Promise<BadgeResponseDto> {
-    const badge = await this.badgeRepository.findOne({
-      where: { id: badgeId },
-    });
+    try {
+      const badge = await this.badgeRepository.findOne({
+        where: { id: badgeId },
+      });
 
-    if (!badge) {
-      throw new NotFoundException("Badge not found");
+      if (!badge) {
+        throw new NotFoundException("Badge not found");
+      }
+
+      return this.transformBadgeToResponse(badge);
+    } catch (error) {
+      this.logger.error(`Failed to get badge ${badgeId}: ${error.message}`);
+      throw error;
     }
-
-    return this.transformBadgeToResponse(badge);
   }
 
   /**
@@ -147,19 +150,12 @@ export class BadgeService {
         throw new NotFoundException("Badge not found");
       }
 
-      if (!badge.canBeEdited) {
-        throw new BadRequestException(
-          "Cannot edit badge that has been earned by users"
-        );
-      }
-
       Object.assign(badge, updateDto);
       const updatedBadge = await this.badgeRepository.save(badge);
 
-      this.logger.log(`Badge updated: ${badgeId}`);
       return this.transformBadgeToResponse(updatedBadge);
     } catch (error) {
-      this.logger.error(`Failed to update badge: ${error.message}`);
+      this.logger.error(`Failed to update badge ${badgeId}: ${error.message}`);
       throw new BadRequestException("Failed to update badge");
     }
   }
@@ -178,19 +174,17 @@ export class BadgeService {
       }
 
       badge.status = BadgeStatus.ACTIVE;
-      badge.publishedAt = new Date();
-      const updatedBadge = await this.badgeRepository.save(badge);
+      const publishedBadge = await this.badgeRepository.save(badge);
 
-      this.logger.log(`Badge published: ${badgeId}`);
-      return this.transformBadgeToResponse(updatedBadge);
+      return this.transformBadgeToResponse(publishedBadge);
     } catch (error) {
-      this.logger.error(`Failed to publish badge: ${error.message}`);
+      this.logger.error(`Failed to publish badge ${badgeId}: ${error.message}`);
       throw new BadRequestException("Failed to publish badge");
     }
   }
 
   /**
-   * Delete badge (soft delete)
+   * Delete badge
    */
   async deleteBadge(badgeId: string): Promise<void> {
     try {
@@ -202,23 +196,12 @@ export class BadgeService {
         throw new NotFoundException("Badge not found");
       }
 
-      if (!badge.canBeEdited) {
-        throw new BadRequestException(
-          "Cannot delete badge that has been earned by users"
-        );
-      }
-
-      badge.status = BadgeStatus.INACTIVE;
-      await this.badgeRepository.save(badge);
-
-      this.logger.log(`Badge deleted: ${badgeId}`);
+      await this.badgeRepository.remove(badge);
     } catch (error) {
-      this.logger.error(`Failed to delete badge: ${error.message}`);
+      this.logger.error(`Failed to delete badge ${badgeId}: ${error.message}`);
       throw new BadRequestException("Failed to delete badge");
     }
   }
-
-  // User Badge Management
 
   /**
    * Get user badges
@@ -239,8 +222,7 @@ export class BadgeService {
       const query = this.userBadgeRepository
         .createQueryBuilder("userBadge")
         .leftJoinAndSelect("userBadge.badge", "badge")
-        .where("userBadge.userId = :userId", { userId })
-        .andWhere("userBadge.isVisible = :isVisible", { isVisible: true });
+        .where("userBadge.userId = :userId", { userId });
 
       const total = await query.getCount();
       const userBadges = await query
@@ -268,23 +250,18 @@ export class BadgeService {
    */
   async getAvailableBadges(userId: string): Promise<BadgeResponseDto[]> {
     try {
-      // Get all active badges
-      const activeBadges = await this.badgeRepository.find({
+      const badges = await this.badgeRepository.find({
         where: { status: BadgeStatus.ACTIVE },
       });
 
-      // Get user's earned badges
-      const earnedBadgeIds = await this.userBadgeRepository
-        .createQueryBuilder("userBadge")
-        .select("userBadge.badgeId")
-        .where("userBadge.userId = :userId", { userId })
-        .getMany();
+      const userBadges = await this.userBadgeRepository.find({
+        where: { userId },
+        select: ["badgeId"],
+      });
 
-      const earnedBadgeIdSet = new Set(earnedBadgeIds.map((ub) => ub.badgeId));
-
-      // Filter out already earned badges
-      const availableBadges = activeBadges.filter(
-        (badge) => !earnedBadgeIdSet.has(badge.id)
+      const earnedBadgeIds = userBadges.map((ub) => ub.badgeId);
+      const availableBadges = badges.filter(
+        (badge) => !earnedBadgeIds.includes(badge.id)
       );
 
       return availableBadges.map((badge) =>
@@ -297,43 +274,36 @@ export class BadgeService {
   }
 
   /**
-   * Check and award badges for user
+   * Check and award badges to user
    */
   async checkAndAwardBadges(userId: string): Promise<UserBadgeResponseDto[]> {
     try {
-      const user = await this.userRepository.findOne({
-        where: { id: userId },
-      });
-
-      if (!user) {
-        throw new NotFoundException("User not found");
-      }
-
-      // Get user statistics
-      const userStats = await this.getUserStats(userId);
-
-      // Get available badges
       const availableBadges = await this.getAvailableBadges(userId);
-
-      const newlyAwardedBadges: UserBadgeResponseDto[] = [];
+      const userStats = await this.getUserStats(userId);
+      const awardedBadges: UserBadgeResponseDto[] = [];
 
       for (const badgeResponse of availableBadges) {
         const badge = await this.badgeRepository.findOne({
           where: { id: badgeResponse.id },
         });
-        if (badge && (await this.checkBadgeConditions(badge, userStats))) {
-          const userBadge = await this.awardBadge(userId, badge.id, userStats);
-          newlyAwardedBadges.push(userBadge);
+
+        if (badge) {
+          const meetsConditions = await this.checkBadgeConditions(
+            badge,
+            userStats
+          );
+          if (meetsConditions) {
+            const awardedBadge = await this.awardBadge(
+              userId,
+              badge.id,
+              userStats
+            );
+            awardedBadges.push(awardedBadge);
+          }
         }
       }
 
-      if (newlyAwardedBadges.length > 0) {
-        this.logger.log(
-          `Awarded ${newlyAwardedBadges.length} badges to user ${userId}`
-        );
-      }
-
-      return newlyAwardedBadges;
+      return awardedBadges;
     } catch (error) {
       this.logger.error(`Failed to check and award badges: ${error.message}`);
       throw new BadRequestException("Failed to check and award badges");
@@ -358,45 +328,24 @@ export class BadgeService {
       }
 
       if (userBadge.rewardsClaimed) {
-        throw new ConflictException("Rewards already claimed");
+        throw new BadRequestException("Rewards already claimed");
       }
-
-      if (!userBadge.hasRewards) {
-        throw new BadRequestException("No rewards to claim");
-      }
-
-      // Update user with rewards
-      const user = await this.userRepository.findOne({
-        where: { id: userId },
-      });
-
-      if (userBadge.rewards.b3trTokens) {
-        user.b3trBalance += userBadge.rewards.b3trTokens;
-      }
-
-      if (userBadge.rewards.points) {
-        user.totalPoints += userBadge.rewards.points;
-      }
-
-      await this.userRepository.save(user);
 
       // Mark rewards as claimed
       userBadge.rewardsClaimed = true;
       userBadge.claimedAt = new Date();
-      await this.userBadgeRepository.save(userBadge);
 
-      this.logger.log(`Badge rewards claimed: ${userBadgeId}`);
-      return this.transformUserBadgeToResponse(userBadge);
+      const updatedUserBadge = await this.userBadgeRepository.save(userBadge);
+
+      return this.transformUserBadgeToResponse(updatedUserBadge);
     } catch (error) {
       this.logger.error(`Failed to claim badge rewards: ${error.message}`);
       throw new BadRequestException("Failed to claim badge rewards");
     }
   }
 
-  // Helper methods
-
   /**
-   * Get user statistics for badge checking
+   * Get user statistics for badge conditions
    */
   private async getUserStats(userId: string): Promise<any> {
     // Get total mileage
@@ -404,7 +353,7 @@ export class BadgeService {
       .createQueryBuilder("upload")
       .select("SUM(upload.finalMileage)", "totalMileage")
       .where("upload.userId = :userId", { userId })
-      .andWhere("upload.status = :status", { status: "completed" as any })
+      .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
       .getRawOne();
 
     // Get total carbon saved
@@ -412,7 +361,7 @@ export class BadgeService {
       .createQueryBuilder("upload")
       .select("SUM(upload.carbonSaved)", "totalCarbonSaved")
       .where("upload.userId = :userId", { userId })
-      .andWhere("upload.status = :status", { status: "completed" as any })
+      .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
       .getRawOne();
 
     // Get vehicle count
