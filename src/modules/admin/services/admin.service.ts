@@ -68,6 +68,7 @@ export class AdminService {
         secret: this.configService.get("JWT_SECRET"),
         expiresIn: "24h",
       });
+      console.log("🚀 ~ AdminService ~ adminLogin ~ token:", token)
 
       return {
         token,
