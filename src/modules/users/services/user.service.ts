@@ -47,37 +47,73 @@ export class UserService {
     private readonly refreshTokenService: RefreshTokenService
   ) {
     // Initialize email transporter
+    const emailUser = this.configService.get(
+      "EMAIL_USER",
+      "jaimin.tank@alchemytech.ca"
+    );
+    const emailPass = this.configService.get("EMAIL_PASS");
+
+    if (!emailUser || !emailPass) {
+      console.error("Email credentials not properly configured");
+      return;
+    }
+
+    // Create Gmail SMTP transporter
     this.emailTransporter = nodemailer.createTransport({
-      host: this.configService.get("SMTP_HOST"),
-      port: this.configService.get("SMTP_PORT"),
-      secure: true,
+      service: "gmail",
       auth: {
-        user: this.configService.get("SMTP_USER"),
-        pass: this.configService.get("SMTP_PASS"),
+        user: emailUser,
+        pass: emailPass,
       },
+    });
+
+    // Verify the connection
+    this.emailTransporter.verify((error) => {
+      if (error) {
+        console.error("SMTP Connection Error:", error);
+      } else {
+        console.log("SMTP Server is ready to send emails");
+      }
     });
   }
 
-  /**
-   * Send email using nodemailer
-   */
   async sendEmail(
     to: string,
     subject: string,
     htmlContent: string
   ): Promise<void> {
+    // if (!this.emailTransporter) {
+    //   throw new BadRequestException('Email service not configured');
+    // }
+
+    const fromEmail = this.configService.get(
+      "EMAIL_USER",
+      "jaimin.tank@alchemytech.ca"
+    );
+
     try {
       await this.emailTransporter.sendMail({
-        from: this.configService.get("SMTP_FROM"),
+        from: {
+          name: "B3TR EV Rewards",
+          address: fromEmail,
+        },
         to,
         subject,
         html: htmlContent,
+        headers: {
+          "X-Priority": "1",
+          "X-MSMail-Priority": "High",
+          Importance: "high",
+        },
       });
-
-      this.logger.log(`Email sent to ${to}`);
     } catch (error) {
-      this.logger.error(`Failed to send email to ${to}: ${error.message}`);
-      throw new BadRequestException("Failed to send email");
+      console.error("Failed to send email:", error);
+      if (error.code === "EAUTH") {
+        throw new BadRequestException(
+          "Email authentication failed. Please check SMTP credentials."
+        );
+      }
+      throw new BadRequestException(`Failed to send email: ${error.message}`);
     }
   }
 
@@ -99,6 +135,7 @@ export class UserService {
         user = this.userRepository.create({
           email,
           emailOtp: otp,
+          walletAddress: null,
           isActive: true,
           isVerified: false,
         });
@@ -110,10 +147,13 @@ export class UserService {
       await this.userRepository.save(user);
 
       // Send OTP email
-      const emailContent = EmailTemplates.getOTPEmailTemplate(otp, {
-        configService: this.configService,
-      });
-      await this.sendEmail(email, "Your Login OTP", emailContent);
+      await this.sendEmail(
+        email,
+        "Your B3TR EV Rewards Login Code",
+        EmailTemplates.getOTPEmailTemplate(otp, {
+          configService: this.configService,
+        })
+      );
 
       return { message: "OTP sent to your email" };
     } catch (error) {
@@ -176,7 +216,7 @@ export class UserService {
       let walletCreated = false;
       let wallet = null;
 
-      if (!userWallet) {
+      if (!userWallet || !user.walletAddress) {
         // Create wallet for user
         const walletResult = await this.userWalletService.createUserWallet(
           user.id
