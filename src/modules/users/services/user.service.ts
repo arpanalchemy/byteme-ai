@@ -87,19 +87,26 @@ export class UserService {
   async loginWithEmail(email: string): Promise<{ message: string }> {
     try {
       // Check if user exists
-      const user = await this.userRepository.findOne({
+      let user = await this.userRepository.findOne({
         where: { email },
       });
-
-      if (!user) {
-        throw new NotFoundException("User not found");
-      }
 
       // Generate OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-      // Store OTP in user record (in production, use Redis with expiration)
-      user.nonce = otp;
+      if (!user) {
+        // Create new user if doesn't exist
+        user = this.userRepository.create({
+          email,
+          emailOtp: otp,
+          isActive: true,
+          isVerified: false,
+        });
+      } else {
+        // Update existing user's OTP
+        user.emailOtp = otp;
+      }
+
       await this.userRepository.save(user);
 
       // Send OTP email
@@ -139,12 +146,12 @@ export class UserService {
         throw new NotFoundException("User not found");
       }
 
-      if (user.nonce !== otp) {
+      if (user.emailOtp !== otp) {
         throw new BadRequestException("Invalid OTP");
       }
 
       // Clear OTP
-      user.nonce = undefined;
+      user.emailOtp = undefined;
       await this.userRepository.save(user);
 
       // Generate tokens
