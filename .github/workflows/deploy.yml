@@ -102,7 +102,6 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           echo "Waiting for the environment to finish updating..."
-          # Set a retry count and a higher timeout for a more resilient check
           retries=10
           timeout=900  # 15 minutes timeout
           interval=30  # Check every 30 seconds
@@ -114,6 +113,10 @@ jobs:
               exit 0
             elif [ "$health_status" == "Red" ]; then
               echo "Environment health is Red, deployment failed!"
+              # Fetch detailed logs before exiting to aid debugging
+              aws elasticbeanstalk request-environment-info --environment-name $EB_ENVIRONMENT_NAME --info-type tail
+              sleep 60  # Wait a minute before fetching logs
+              aws elasticbeanstalk retrieve-environment-info --environment-name $EB_ENVIRONMENT_NAME --info-type tail
               exit 1
             fi
             echo "Waiting for environment to be healthy. Current status: $health_status"
