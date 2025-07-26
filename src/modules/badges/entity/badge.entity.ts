@@ -63,13 +63,13 @@ export class Badge {
   })
   status: BadgeStatus;
 
-  @Column({ nullable: true })
+  @Column({ name: "image_url", nullable: true })
   imageUrl: string;
 
-  @Column({ nullable: true })
+  @Column({ name: "icon_url", nullable: true })
   iconUrl: string;
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "conditions", type: "json", nullable: true })
   conditions: {
     mileage?: number;
     carbonSaved?: number;
@@ -81,20 +81,20 @@ export class Badge {
     timeFrame?: "daily" | "weekly" | "monthly" | "all_time";
   };
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "rewards", type: "json", nullable: true })
   rewards?: {
     b3trTokens?: number;
     points?: number;
     experience?: number;
   };
 
-  @Column({ default: 0 })
+  @Column({ name: "points_value", default: 0 })
   pointsValue: number; // Points awarded when badge is earned
 
-  @Column({ default: 0 })
+  @Column({ name: "earned_count", default: 0 })
   earnedCount: number; // Number of users who have earned this badge
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "metadata", type: "json", nullable: true })
   metadata?: {
     category?: string;
     tags?: string[];
@@ -102,10 +102,10 @@ export class Badge {
     estimatedTime?: string; // e.g., "2 weeks", "1 month"
   };
 
-  @Column({ nullable: true })
+  @Column({ name: "created_by", nullable: true })
   createdBy: string; // Admin who created the badge
 
-  @Column({ nullable: true })
+  @Column({ name: "published_at", nullable: true })
   publishedAt: Date;
 
   @Column({ type: "text", nullable: true })

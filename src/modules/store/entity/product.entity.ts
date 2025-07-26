@@ -50,6 +50,7 @@ export class Product {
   price: number; // Price in B3TR tokens
 
   @Column({
+    name: "original_price",
     type: "decimal",
     precision: 10,
     scale: 2,
@@ -57,7 +58,7 @@ export class Product {
   })
   originalPrice?: number; // Original price in USD
 
-  @Column({ default: 0 })
+  @Column({ name: "stock_quantity", default: 0 })
   stockQuantity: number;
 
   @Column({
@@ -67,44 +68,50 @@ export class Product {
   })
   status: ProductStatus;
 
-  @Column({ nullable: true })
+  @Column({ name: "image_url", nullable: true })
   imageUrl?: string;
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "images", type: "json", nullable: true })
   images?: string[]; // Multiple product images
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "specifications", type: "json", nullable: true })
   specifications?: Record<string, any>; // Product specifications
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "tags", type: "json", nullable: true })
   tags?: string[]; // Product tags for search
 
-  @Column({ default: 0 })
+  @Column({ name: "sold_count", default: 0 })
   soldCount: number; // Number of units sold
 
-  @Column({ default: 0 })
+  @Column({ name: "view_count", default: 0 })
   viewCount: number; // Number of views
 
-  @Column({ type: "decimal", precision: 3, scale: 2, default: 0 })
+  @Column({
+    name: "rating",
+    type: "decimal",
+    precision: 3,
+    scale: 2,
+    default: 0,
+  })
   rating: number; // Average rating (0-5)
 
-  @Column({ default: 0 })
+  @Column({ name: "review_count", default: 0 })
   reviewCount: number; // Number of reviews
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "discount_info", type: "json", nullable: true })
   discountInfo?: {
     percentage?: number;
     validUntil?: Date;
     minimumPurchase?: number;
   };
 
-  @Column({ default: true })
+  @Column({ name: "is_eco_friendly", default: true })
   isEcoFriendly: boolean; // Whether the product is eco-friendly
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "eco_description", type: "text", nullable: true })
   ecoDescription?: string; // Description of eco-friendly features
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "shipping_info", type: "json", nullable: true })
   shippingInfo?: {
     weight?: number;
     dimensions?: {

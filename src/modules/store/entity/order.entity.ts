@@ -50,6 +50,7 @@ export class Order {
   quantity: number;
 
   @Column({
+    name: "unit_price",
     type: "decimal",
     precision: 10,
     scale: 2,
@@ -58,6 +59,7 @@ export class Order {
   unitPrice: number; // Price per unit in B3TR
 
   @Column({
+    name: "total_price",
     type: "decimal",
     precision: 10,
     scale: 2,
@@ -66,6 +68,7 @@ export class Order {
   totalPrice: number; // Total price in B3TR
 
   @Column({
+    name: "discount_amount",
     type: "decimal",
     precision: 10,
     scale: 2,
@@ -81,13 +84,14 @@ export class Order {
   status: OrderStatus;
 
   @Column({
+    name: "payment_status",
     type: "enum",
     enum: PaymentStatus,
     default: PaymentStatus.PENDING,
   })
   paymentStatus: PaymentStatus;
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "shipping_address", type: "json", nullable: true })
   shippingAddress?: {
     street: string;
     city: string;
@@ -96,7 +100,7 @@ export class Order {
     country: string;
   };
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "billing_address", type: "json", nullable: true })
   billingAddress?: {
     street: string;
     city: string;
@@ -105,10 +109,10 @@ export class Order {
     country: string;
   };
 
-  @Column({ nullable: true })
+  @Column({ name: "tracking_number", nullable: true })
   trackingNumber?: string;
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "tracking_info", type: "json", nullable: true })
   trackingInfo?: {
     carrier?: string;
     trackingUrl?: string;
@@ -116,31 +120,37 @@ export class Order {
     deliveredAt?: Date;
   };
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "notes", type: "text", nullable: true })
   notes?: string; // Admin notes
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "customer_notes", type: "text", nullable: true })
   customerNotes?: string; // Customer notes
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "metadata", type: "json", nullable: true })
   metadata?: Record<string, any>; // Additional order metadata
 
-  @Column({ nullable: true })
+  @Column({ name: "cancelled_at", nullable: true })
   cancelledAt?: Date;
 
-  @Column({ nullable: true })
+  @Column({ name: "cancelled_by", nullable: true })
   cancelledBy?: string; // User ID who cancelled
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "cancellation_reason", type: "text", nullable: true })
   cancellationReason?: string;
 
-  @Column({ nullable: true })
+  @Column({ name: "refunded_at", nullable: true })
   refundedAt?: Date;
 
-  @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
+  @Column({
+    name: "refund_amount",
+    type: "decimal",
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
   refundAmount?: number;
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "refund_reason", type: "text", nullable: true })
   refundReason?: string;
 
   @CreateDateColumn({ name: "created_at" })

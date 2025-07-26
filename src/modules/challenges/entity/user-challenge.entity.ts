@@ -48,7 +48,7 @@ export class UserChallenge {
   })
   status: UserChallengeStatus;
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "progress", type: "json", nullable: true })
   progress: {
     mileage?: number;
     carbonSaved?: number;
@@ -60,7 +60,7 @@ export class UserChallenge {
     weeklyUploads?: number;
   };
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "rewards", type: "json", nullable: true })
   rewards?: {
     b3trTokens?: number;
     points?: number;
@@ -75,13 +75,13 @@ export class UserChallenge {
     };
   };
 
-  @Column({ default: false })
+  @Column({ name: "rewards_claimed", default: false })
   rewardsClaimed: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: "claimed_at", nullable: true })
   claimedAt: Date;
 
-  @Column({ nullable: true })
+  @Column({ name: "completed_at", nullable: true })
   completedAt: Date;
 
   @Column({ nullable: true })
@@ -90,7 +90,7 @@ export class UserChallenge {
   @Column({ type: "text", nullable: true })
   notes: string; // User notes about the challenge
 
-  @Column({ default: true })
+  @Column({ name: "is_visible", default: true })
   isVisible: boolean; // Whether the challenge is visible in user's profile
 
   @CreateDateColumn({ name: "created_at" })

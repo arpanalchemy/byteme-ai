@@ -67,6 +67,7 @@ export class Reward {
   status: RewardStatus;
 
   @Column({
+    name: "blockchain_status",
     type: "enum",
     enum: BlockchainStatus,
     default: BlockchainStatus.NOT_SENT,
@@ -76,22 +77,34 @@ export class Reward {
   @Column({ type: "decimal", precision: 18, scale: 8, nullable: false })
   amount: number; // B3TR tokens amount
 
-  @Column({ type: "decimal", precision: 10, scale: 2, default: 0 })
+  @Column({
+    name: "miles_driven",
+    type: "decimal",
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
   milesDriven: number; // Miles driven for this reward
 
-  @Column({ type: "decimal", precision: 10, scale: 2, default: 0 })
+  @Column({
+    name: "carbon_saved",
+    type: "decimal",
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
   carbonSaved: number; // Carbon saved in grams
 
-  @Column({ nullable: true })
+  @Column({ name: "cycle_id", nullable: true })
   cycleId: number; // Blockchain cycle ID
 
-  @Column({ nullable: true })
+  @Column({ name: "submission_id", nullable: true })
   submissionId: number; // Blockchain submission ID
 
   @Column({ type: "text", nullable: true })
   description: string;
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "proof_data", type: "json", nullable: true })
   proofData: {
     // Proof types and values for blockchain
     proofTypes?: string[];
@@ -107,7 +120,7 @@ export class Reward {
     leaderboardRank?: number;
   };
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "blockchain_data", type: "json", nullable: true })
   blockchainData: {
     // Blockchain transaction data
     txHash?: string;
@@ -135,16 +148,16 @@ export class Reward {
     bonus?: number;
   };
 
-  @Column({ nullable: true })
+  @Column({ name: "processed_at", nullable: true })
   processedAt: Date;
 
-  @Column({ nullable: true })
+  @Column({ name: "confirmed_at", nullable: true })
   confirmedAt: Date;
 
-  @Column({ nullable: true })
+  @Column({ name: "failed_at", nullable: true })
   failedAt: Date;
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "failure_reason", type: "text", nullable: true })
   failureReason: string;
 
   @CreateDateColumn({ name: "created_at" })

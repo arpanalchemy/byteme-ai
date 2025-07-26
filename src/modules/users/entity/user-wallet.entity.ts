@@ -14,55 +14,55 @@ export class UserWallet {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: "uuid", unique: true })
+  @Column({ name: "user_id", type: "uuid", unique: true })
   userId: string;
 
   @OneToOne(() => User)
-  @JoinColumn({ name: "userId" })
+  @JoinColumn({ name: "user_id" })
   user: User;
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "encrypted_mnemonic", type: "text", nullable: true })
   encryptedMnemonic: string;
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "encrypted_private_key", type: "text", nullable: true })
   encryptedPrivateKey: string;
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "encrypted_public_key", type: "text", nullable: true })
   encryptedPublicKey: string;
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "wallet_address", type: "text", nullable: true })
   walletAddress: string;
 
-  @Column({ type: "varchar", length: 50, nullable: true })
+  @Column({ name: "wallet_type", type: "varchar", length: 50, nullable: true })
   walletType: string;
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "mnemonic_iv", type: "text", nullable: true })
   mnemonicIv: string; // IV for mnemonic encryption
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "mnemonic_salt", type: "text", nullable: true })
   mnemonicSalt: string; // Salt for mnemonic encryption
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "private_key_iv", type: "text", nullable: true })
   privateKeyIv: string; // IV for private key encryption
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "private_key_salt", type: "text", nullable: true })
   privateKeySalt: string; // Salt for private key encryption
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "public_key_iv", type: "text", nullable: true })
   publicKeyIv: string; // IV for public key encryption
 
-  @Column({ type: "text", nullable: true })
+  @Column({ name: "public_key_salt", type: "text", nullable: true })
   publicKeySalt: string; // Salt for public key encryption
 
-  @Column({ type: "boolean", default: false })
+  @Column({ name: "is_backed_up", type: "boolean", default: false })
   isBackedUp: boolean; // Whether user has backed up their wallet
 
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ name: "backed_up_at", type: "timestamp", nullable: true })
   backedUpAt: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 }

@@ -78,13 +78,13 @@ export class Challenge {
   })
   visibility: ChallengeVisibility;
 
-  @Column({ nullable: true })
+  @Column({ name: "image_url", nullable: true })
   imageUrl: string;
 
-  @Column({ nullable: true })
+  @Column({ name: "banner_url", nullable: true })
   bannerUrl: string;
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "objectives", type: "json", nullable: true })
   objectives: {
     mileage?: number;
     carbonSaved?: number;
@@ -96,7 +96,7 @@ export class Challenge {
     weeklyUploads?: number;
   };
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "rewards", type: "json", nullable: true })
   rewards: {
     b3trTokens?: number;
     points?: number;
@@ -105,7 +105,7 @@ export class Challenge {
     specialReward?: string;
   };
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "leaderboard_rewards", type: "json", nullable: true })
   leaderboardRewards?: {
     first?: { b3trTokens?: number; points?: number; experience?: number };
     second?: { b3trTokens?: number; points?: number; experience?: number };
@@ -114,22 +114,22 @@ export class Challenge {
     top50?: { b3trTokens?: number; points?: number; experience?: number };
   };
 
-  @Column({ type: "date" })
+  @Column({ name: "start_date", type: "date" })
   startDate: Date;
 
-  @Column({ type: "date" })
+  @Column({ name: "end_date", type: "date" })
   endDate: Date;
 
-  @Column({ default: 0 })
+  @Column({ name: "max_participants", default: 0 })
   maxParticipants: number; // 0 = unlimited
 
-  @Column({ default: 0 })
+  @Column({ name: "current_participants", default: 0 })
   currentParticipants: number;
 
-  @Column({ default: 0 })
+  @Column({ name: "completed_participants", default: 0 })
   completedParticipants: number;
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "requirements", type: "json", nullable: true })
   requirements?: {
     minLevel?: number;
     minMileage?: number;
@@ -138,7 +138,7 @@ export class Challenge {
     vehicleTypes?: string[];
   };
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "metadata", type: "json", nullable: true })
   metadata?: {
     category?: string;
     tags?: string[];
@@ -148,10 +148,10 @@ export class Challenge {
     eventType?: string;
   };
 
-  @Column({ nullable: true })
+  @Column({ name: "created_by", nullable: true })
   createdBy: string; // Admin who created the challenge
 
-  @Column({ nullable: true })
+  @Column({ name: "published_at", nullable: true })
   publishedAt: Date;
 
   @Column({ type: "text", nullable: true })

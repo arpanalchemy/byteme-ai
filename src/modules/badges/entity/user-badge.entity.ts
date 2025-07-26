@@ -33,7 +33,7 @@ export class UserBadge {
   @Column({ name: "badge_id" })
   badgeId: string;
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "earned_data", type: "json", nullable: true })
   earnedData?: {
     mileage?: number;
     carbonSaved?: number;
@@ -44,23 +44,23 @@ export class UserBadge {
     specialEvent?: string;
   };
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "rewards", type: "json", nullable: true })
   rewards?: {
     b3trTokens?: number;
     points?: number;
     experience?: number;
   };
 
-  @Column({ default: false })
+  @Column({ name: "rewards_claimed", default: false })
   rewardsClaimed: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: "claimed_at", nullable: true })
   claimedAt: Date;
 
   @Column({ type: "text", nullable: true })
   notes: string; // User notes about the badge
 
-  @Column({ default: true })
+  @Column({ name: "is_visible", default: true })
   isVisible: boolean; // Whether the badge is visible in user's profile
 
   @CreateDateColumn({ name: "created_at" })

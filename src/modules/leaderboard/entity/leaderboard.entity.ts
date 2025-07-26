@@ -38,6 +38,7 @@ export class Leaderboard {
   period: LeaderboardPeriod;
 
   @Column({
+    name: "total_mileage",
     type: "decimal",
     precision: 10,
     scale: 2,
@@ -46,6 +47,7 @@ export class Leaderboard {
   totalMileage: number;
 
   @Column({
+    name: "total_carbon_saved",
     type: "decimal",
     precision: 10,
     scale: 2,
@@ -54,6 +56,7 @@ export class Leaderboard {
   totalCarbonSaved: number;
 
   @Column({
+    name: "total_rewards",
     type: "decimal",
     precision: 18,
     scale: 6,
@@ -61,22 +64,22 @@ export class Leaderboard {
   })
   totalRewards: number;
 
-  @Column({ default: 0 })
+  @Column({ name: "total_points", default: 0 })
   totalPoints: number;
 
-  @Column({ default: 0 })
+  @Column({ name: "upload_count", default: 0 })
   uploadCount: number;
 
   @Column({ default: 0 })
   rank: number;
 
-  @Column({ type: "date" })
+  @Column({ name: "period_start", type: "date" })
   periodStart: Date;
 
-  @Column({ type: "date" })
+  @Column({ name: "period_end", type: "date" })
   periodEnd: Date;
 
-  @Column({ default: true })
+  @Column({ name: "is_active", default: true })
   isActive: boolean;
 
   @CreateDateColumn({ name: "created_at" })

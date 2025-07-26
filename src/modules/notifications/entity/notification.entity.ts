@@ -121,31 +121,31 @@ export class Notification {
   })
   channels: NotificationChannel[];
 
-  @Column({ default: false })
+  @Column({ name: "is_read", default: false })
   isRead: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: "read_at", nullable: true })
   readAt: Date;
 
-  @Column({ default: false })
+  @Column({ name: "is_archived", default: false })
   isArchived: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: "archived_at", nullable: true })
   archivedAt: Date;
 
-  @Column({ default: false })
+  @Column({ name: "is_deleted", default: false })
   isDeleted: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: "deleted_at", nullable: true })
   deletedAt: Date;
 
-  @Column({ nullable: true })
+  @Column({ name: "scheduled_at", nullable: true })
   scheduledAt: Date; // For scheduled notifications
 
-  @Column({ nullable: true })
+  @Column({ name: "sent_at", nullable: true })
   sentAt: Date; // When notification was actually sent
 
-  @Column({ type: "json", nullable: true })
+  @Column({ name: "delivery_status", type: "json", nullable: true })
   deliveryStatus?: {
     inApp?: { sent: boolean; deliveredAt?: Date };
     email?: { sent: boolean; deliveredAt?: Date; error?: string };
