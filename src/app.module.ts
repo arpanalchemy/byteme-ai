@@ -11,6 +11,14 @@ import { getDatabaseConfig } from "./config/database.config";
 import { JwtAuthGuard } from "./modules/auth/guards/jwt-auth.guard";
 import { OdometerModule } from "./modules/odometer/odometer.module";
 import { VehiclesModule } from "./modules/vehicles/vehicles.module";
+import { AdminModule } from "./modules/admin/admin.module";
+import { StoreModule } from "./modules/store/store.module";
+import { LeaderboardModule } from "./modules/leaderboard/leaderboard.module";
+import { BadgesModule } from "./modules/badges/badges.module";
+import { ChallengesModule } from "./modules/challenges/challenges.module";
+import { NotificationsModule } from "./modules/notifications/notifications.module";
+import { HistoryModule } from "./modules/history/history.module";
+import { RewardsModule } from "./modules/rewards/rewards.module";
 import { HealthcheckModule } from "./modules/healthcheck/healthcheck.module";
 
 @Module({
@@ -45,6 +53,14 @@ import { HealthcheckModule } from "./modules/healthcheck/healthcheck.module";
     UsersModule,
     OdometerModule,
     VehiclesModule,
+    AdminModule,
+    StoreModule,
+    LeaderboardModule,
+    BadgesModule,
+    ChallengesModule,
+    NotificationsModule,
+    HistoryModule,
+    RewardsModule,
     HealthcheckModule,
   ],
   controllers: [AppController],
