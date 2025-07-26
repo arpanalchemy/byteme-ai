@@ -30,7 +30,8 @@ export default registerAs("app", () => ({
     secret:
       process.env.JWT_SECRET ||
       "your-super-secret-jwt-key-change-in-production",
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    expiresIn: process.env.JWT_EXPIRES_IN || "3m",
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
   },
 
   // VeChain configuration
@@ -38,7 +39,7 @@ export default registerAs("app", () => ({
     network: process.env.VECHAIN_NETWORK || "testnet",
     nodeUrl: process.env.VECHAIN_NODE_URL || "https://testnet.vechain.org",
     contractAddress: process.env.B3TR_CONTRACT_ADDRESS || "",
-    adminPrivateKey: process.env.ADMIN_PRIVATE_KEY || "",
+    mnemonic: process.env.VECHAIN_MNEMONIC || "",
   },
 
   // AWS S3 configuration

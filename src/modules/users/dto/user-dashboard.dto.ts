@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString, IsEmail, IsUrl } from "class-validator";
 
 export class UserDashboardDto {
   @ApiProperty({
@@ -163,23 +164,29 @@ export class UserProfileDto {
 
 export class UpdateUserProfileDto {
   @ApiProperty({
-    description: 'Username',
-    example: 'EcoDriver123',
+    description: "Username",
+    example: "EcoDriver123",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   username?: string;
 
   @ApiProperty({
-    description: 'Email address',
-    example: 'user@example.com',
+    description: "Email address",
+    example: "user@example.com",
     required: false,
   })
+  @IsOptional()
+  @IsEmail()
   email?: string;
 
   @ApiProperty({
-    description: 'Profile image URL',
-    example: 'https://example.com/profile.jpg',
+    description: "Profile image URL",
+    example: "https://example.com/profile.jpg",
     required: false,
   })
+  @IsOptional()
+  @IsUrl()
   profileImageUrl?: string;
 } 

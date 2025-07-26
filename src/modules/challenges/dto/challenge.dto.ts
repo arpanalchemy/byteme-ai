@@ -1,5 +1,17 @@
 import { ApiProperty } from "@nestjs/swagger";
 import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsEnum,
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  Min,
+  Max,
+  IsDateString,
+} from "class-validator";
+import {
   ChallengeType,
   ChallengeStatus,
   ChallengeDifficulty,
@@ -12,12 +24,16 @@ export class CreateChallengeDto {
     description: "Challenge name",
     example: "Weekend Warrior",
   })
+  @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiProperty({
     description: "Challenge description",
     example: "Drive 500 km over the weekend and earn bonus rewards!",
   })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @ApiProperty({
@@ -25,6 +41,8 @@ export class CreateChallengeDto {
     enum: ChallengeType,
     example: ChallengeType.MILEAGE,
   })
+  @IsEnum(ChallengeType)
+  @IsNotEmpty()
   type: ChallengeType;
 
   @ApiProperty({
@@ -32,6 +50,8 @@ export class CreateChallengeDto {
     enum: ChallengeDifficulty,
     example: ChallengeDifficulty.MEDIUM,
   })
+  @IsEnum(ChallengeDifficulty)
+  @IsNotEmpty()
   difficulty: ChallengeDifficulty;
 
   @ApiProperty({
@@ -39,6 +59,8 @@ export class CreateChallengeDto {
     enum: ChallengeVisibility,
     example: ChallengeVisibility.PUBLIC,
   })
+  @IsEnum(ChallengeVisibility)
+  @IsNotEmpty()
   visibility: ChallengeVisibility;
 
   @ApiProperty({
@@ -46,6 +68,8 @@ export class CreateChallengeDto {
     example: "https://example.com/challenge-image.png",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   imageUrl?: string;
 
   @ApiProperty({
@@ -53,6 +77,8 @@ export class CreateChallengeDto {
     example: "https://example.com/challenge-banner.png",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   bannerUrl?: string;
 
   @ApiProperty({
@@ -63,6 +89,7 @@ export class CreateChallengeDto {
     },
     required: false,
   })
+  @IsOptional()
   objectives?: {
     mileage?: number;
     carbonSaved?: number;
@@ -83,6 +110,7 @@ export class CreateChallengeDto {
     },
     required: false,
   })
+  @IsOptional()
   rewards?: {
     b3trTokens?: number;
     points?: number;
@@ -100,6 +128,7 @@ export class CreateChallengeDto {
     },
     required: false,
   })
+  @IsOptional()
   leaderboardRewards?: {
     first?: { b3trTokens?: number; points?: number; experience?: number };
     second?: { b3trTokens?: number; points?: number; experience?: number };
@@ -112,12 +141,16 @@ export class CreateChallengeDto {
     description: "Challenge start date",
     example: "2024-01-15",
   })
+  @IsDateString()
+  @IsNotEmpty()
   startDate: string;
 
   @ApiProperty({
     description: "Challenge end date",
     example: "2024-01-22",
   })
+  @IsDateString()
+  @IsNotEmpty()
   endDate: string;
 
   @ApiProperty({
@@ -125,6 +158,9 @@ export class CreateChallengeDto {
     example: 100,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   maxParticipants?: number;
 
   @ApiProperty({
@@ -135,6 +171,7 @@ export class CreateChallengeDto {
     },
     required: false,
   })
+  @IsOptional()
   requirements?: {
     minLevel?: number;
     minMileage?: number;
@@ -153,6 +190,7 @@ export class CreateChallengeDto {
     },
     required: false,
   })
+  @IsOptional()
   metadata?: {
     category?: string;
     tags?: string[];
@@ -167,6 +205,8 @@ export class CreateChallengeDto {
     example: "Created for weekend engagement",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 
@@ -175,12 +215,16 @@ export class UpdateChallengeDto {
     description: "Challenge name",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @ApiProperty({
     description: "Challenge description",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @ApiProperty({
@@ -188,6 +232,8 @@ export class UpdateChallengeDto {
     enum: ChallengeType,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(ChallengeType)
   type?: ChallengeType;
 
   @ApiProperty({
@@ -195,6 +241,8 @@ export class UpdateChallengeDto {
     enum: ChallengeStatus,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(ChallengeStatus)
   status?: ChallengeStatus;
 
   @ApiProperty({
@@ -202,6 +250,8 @@ export class UpdateChallengeDto {
     enum: ChallengeDifficulty,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(ChallengeDifficulty)
   difficulty?: ChallengeDifficulty;
 
   @ApiProperty({
@@ -209,24 +259,31 @@ export class UpdateChallengeDto {
     enum: ChallengeVisibility,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(ChallengeVisibility)
   visibility?: ChallengeVisibility;
 
   @ApiProperty({
     description: "Challenge image URL",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   imageUrl?: string;
 
   @ApiProperty({
     description: "Challenge banner URL",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   bannerUrl?: string;
 
   @ApiProperty({
     description: "Challenge objectives",
     required: false,
   })
+  @IsOptional()
   objectives?: {
     mileage?: number;
     carbonSaved?: number;
@@ -242,6 +299,7 @@ export class UpdateChallengeDto {
     description: "Challenge rewards",
     required: false,
   })
+  @IsOptional()
   rewards?: {
     b3trTokens?: number;
     points?: number;
@@ -254,6 +312,7 @@ export class UpdateChallengeDto {
     description: "Leaderboard rewards",
     required: false,
   })
+  @IsOptional()
   leaderboardRewards?: {
     first?: { b3trTokens?: number; points?: number; experience?: number };
     second?: { b3trTokens?: number; points?: number; experience?: number };
@@ -266,24 +325,32 @@ export class UpdateChallengeDto {
     description: "Challenge start date",
     required: false,
   })
+  @IsOptional()
+  @IsDateString()
   startDate?: string;
 
   @ApiProperty({
     description: "Challenge end date",
     required: false,
   })
+  @IsOptional()
+  @IsDateString()
   endDate?: string;
 
   @ApiProperty({
     description: "Maximum participants",
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   maxParticipants?: number;
 
   @ApiProperty({
     description: "Challenge requirements",
     required: false,
   })
+  @IsOptional()
   requirements?: {
     minLevel?: number;
     minMileage?: number;
@@ -296,6 +363,7 @@ export class UpdateChallengeDto {
     description: "Challenge metadata",
     required: false,
   })
+  @IsOptional()
   metadata?: {
     category?: string;
     tags?: string[];
@@ -309,6 +377,8 @@ export class UpdateChallengeDto {
     description: "Admin notes",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 

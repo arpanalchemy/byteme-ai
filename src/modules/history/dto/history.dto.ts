@@ -1,4 +1,16 @@
 import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsEnum,
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  Min,
+  Max,
+  IsUUID,
+} from "class-validator";
 import { HistoryType, HistoryCategory } from "../entity/history.entity";
 
 export class CreateHistoryDto {
@@ -6,6 +18,8 @@ export class CreateHistoryDto {
     description: "User ID",
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
+  @IsUUID()
+  @IsNotEmpty()
   userId: string;
 
   @ApiProperty({
@@ -13,6 +27,8 @@ export class CreateHistoryDto {
     enum: HistoryType,
     example: HistoryType.VEHICLE_UPLOAD,
   })
+  @IsEnum(HistoryType)
+  @IsNotEmpty()
   type: HistoryType;
 
   @ApiProperty({
@@ -20,18 +36,24 @@ export class CreateHistoryDto {
     enum: HistoryCategory,
     example: HistoryCategory.UPLOAD,
   })
+  @IsEnum(HistoryCategory)
+  @IsNotEmpty()
   category: HistoryCategory;
 
   @ApiProperty({
     description: "History title",
     example: "Odometer Upload Successful",
   })
+  @IsString()
+  @IsNotEmpty()
   title: string;
 
   @ApiProperty({
     description: "History description",
     example: "Uploaded 150 km for Tesla Model 3",
   })
+  @IsString()
+  @IsNotEmpty()
   description: string;
 
   @ApiProperty({
@@ -45,6 +67,7 @@ export class CreateHistoryDto {
     },
     required: false,
   })
+  @IsOptional()
   data?: {
     vehicleId?: string;
     vehicleName?: string;
@@ -100,6 +123,8 @@ export class CreateHistoryDto {
     example: 150.5,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
   value?: number;
 
   @ApiProperty({
@@ -107,6 +132,8 @@ export class CreateHistoryDto {
     example: 100.0,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
   previousValue?: number;
 
   @ApiProperty({
@@ -114,6 +141,8 @@ export class CreateHistoryDto {
     example: true,
     required: false,
   })
+  @IsOptional()
+  @IsBoolean()
   isVisible?: boolean;
 
   @ApiProperty({
@@ -121,6 +150,8 @@ export class CreateHistoryDto {
     example: "Automatic history entry",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 
@@ -129,18 +160,23 @@ export class UpdateHistoryDto {
     description: "History title",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   title?: string;
 
   @ApiProperty({
     description: "History description",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @ApiProperty({
     description: "History data",
     required: false,
   })
+  @IsOptional()
   data?: {
     vehicleId?: string;
     vehicleName?: string;
@@ -195,24 +231,32 @@ export class UpdateHistoryDto {
     description: "Numeric value for sorting/filtering",
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
   value?: number;
 
   @ApiProperty({
     description: "Previous value for comparison",
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
   previousValue?: number;
 
   @ApiProperty({
     description: "Whether the history entry is visible to user",
     required: false,
   })
+  @IsOptional()
+  @IsBoolean()
   isVisible?: boolean;
 
   @ApiProperty({
     description: "Admin notes",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 
@@ -356,7 +400,6 @@ export class HistoryResponseDto {
   })
   updatedAt: Date;
 
-  // Virtual properties
   @ApiProperty({
     description: "Whether the history entry is recent (within 24 hours)",
     example: true,
@@ -442,6 +485,9 @@ export class HistoryQueryDto {
     example: 1,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   page?: number;
 
   @ApiProperty({
@@ -449,6 +495,10 @@ export class HistoryQueryDto {
     example: 20,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(100)
   limit?: number;
 
   @ApiProperty({
@@ -456,6 +506,8 @@ export class HistoryQueryDto {
     enum: HistoryType,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(HistoryType)
   type?: HistoryType;
 
   @ApiProperty({
@@ -463,6 +515,8 @@ export class HistoryQueryDto {
     enum: HistoryCategory,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(HistoryCategory)
   category?: HistoryCategory;
 
   @ApiProperty({
@@ -470,6 +524,8 @@ export class HistoryQueryDto {
     example: "Tesla",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   search?: string;
 
   @ApiProperty({
@@ -477,6 +533,8 @@ export class HistoryQueryDto {
     example: "2024-01-01",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   startDate?: string;
 
   @ApiProperty({
@@ -484,6 +542,8 @@ export class HistoryQueryDto {
     example: "2024-01-31",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   endDate?: string;
 
   @ApiProperty({
@@ -491,6 +551,8 @@ export class HistoryQueryDto {
     example: "createdAt",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   sortBy?: string;
 
   @ApiProperty({
@@ -498,6 +560,8 @@ export class HistoryQueryDto {
     example: "DESC",
     required: false,
   })
+  @IsOptional()
+  @IsEnum(["ASC", "DESC"])
   sortOrder?: "ASC" | "DESC";
 }
 

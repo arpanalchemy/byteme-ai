@@ -1,6 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { secp256k1 } from "thor-devkit";
+import * as bip39 from "bip39";
+import * as hdkey from "hdkey";
 
 // Simple wallet implementation using secp256k1
 class Wallet {
@@ -35,11 +37,40 @@ export class VeChainService {
   private readonly logger = new Logger(VeChainService.name);
   private wallet: Wallet;
   private contractAddress: string;
-  private adminPrivateKey: string;
+  private mnemonic: string;
   private nodeUrl: string;
 
   constructor(private configService: ConfigService) {
     this.initializeVeChain();
+  }
+
+  /**
+   * Convert mnemonic to private key using BIP39 and HD wallet derivation
+   */
+  private mnemonicToPrivateKey(
+    mnemonic: string,
+    derivationPath: string = "m/44'/818'/0'/0/0"
+  ): Buffer {
+    try {
+      // Validate mnemonic
+      if (!bip39.validateMnemonic(mnemonic)) {
+        throw new Error("Invalid mnemonic phrase");
+      }
+
+      // Generate seed from mnemonic
+      const seed = bip39.mnemonicToSeedSync(mnemonic);
+
+      // Create HD wallet
+      const hdWallet = hdkey.fromMasterSeed(seed);
+
+      // Derive private key from path
+      const childKey = hdWallet.derive(derivationPath);
+
+      return childKey.privateKey;
+    } catch (error) {
+      this.logger.error("Failed to convert mnemonic to private key:", error);
+      throw error;
+    }
   }
 
   private initializeVeChain() {
@@ -49,20 +80,19 @@ export class VeChainService {
         this.configService.get<string>("VECHAIN_NODE_URL") ||
         "https://testnet.veblocks.net";
 
-      // Initialize admin wallet
-      this.adminPrivateKey = this.configService.get<string>(
-        "VECHAIN_ADMIN_PRIVATE_KEY"
-      );
-      if (!this.adminPrivateKey) {
+      // Initialize admin wallet using mnemonic
+      this.mnemonic = this.configService.get<string>("VECHAIN_MNEMONIC");
+      if (!this.mnemonic) {
         this.logger.warn(
-          "VECHAIN_ADMIN_PRIVATE_KEY not provided - blockchain features will be disabled"
+          "VECHAIN_MNEMONIC not provided - blockchain features will be disabled"
         );
         return;
       }
 
-      this.wallet = new Wallet(
-        Buffer.from(this.adminPrivateKey.slice(2), "hex")
-      );
+      // Convert mnemonic to private key
+      const privateKey = this.mnemonicToPrivateKey(this.mnemonic);
+      this.wallet = new Wallet(privateKey);
+
       this.contractAddress = this.configService.get<string>(
         "VECHAIN_CONTRACT_ADDRESS"
       );

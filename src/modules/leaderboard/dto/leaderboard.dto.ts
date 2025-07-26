@@ -1,4 +1,15 @@
 import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsEnum,
+  IsArray,
+  IsNotEmpty,
+  Min,
+  Max,
+  IsUUID,
+} from "class-validator";
 import { LeaderboardPeriod } from "../entity/leaderboard.entity";
 
 export class LeaderboardEntryDto {
@@ -133,6 +144,8 @@ export class LeaderboardQueryDto {
     example: LeaderboardPeriod.WEEKLY,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(LeaderboardPeriod)
   period?: LeaderboardPeriod;
 
   @ApiProperty({
@@ -140,6 +153,9 @@ export class LeaderboardQueryDto {
     example: 1,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   page?: number;
 
   @ApiProperty({
@@ -147,5 +163,9 @@ export class LeaderboardQueryDto {
     example: 20,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(100)
   limit?: number;
 }

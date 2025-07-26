@@ -54,6 +54,7 @@ export class AdminService {
       sub: "admin",
       username: "admin",
       role: "admin",
+      type: "access" as const,
       iat: Date.now(),
     };
 

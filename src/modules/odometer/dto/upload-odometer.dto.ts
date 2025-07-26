@@ -4,8 +4,12 @@ import {
   IsNumber,
   IsEnum,
   IsBoolean,
-} from 'class-validator';
-import { VehicleType } from '../../vehicles/entity/vehicle.entity';
+  IsNotEmpty,
+  Min,
+  Max,
+  IsUUID,
+} from "class-validator";
+import { VehicleType } from "../../vehicles/entity/vehicle.entity";
 
 export class UploadOdometerDto {
   @IsOptional()
@@ -19,6 +23,7 @@ export class UploadOdometerDto {
 
 export class ProcessOdometerDto {
   @IsString()
+  @IsNotEmpty()
   imageUrl: string;
 
   @IsOptional()
@@ -32,6 +37,7 @@ export class ProcessOdometerDto {
 
 export class CreateVehicleFromUploadDto {
   @IsEnum(VehicleType)
+  @IsNotEmpty()
   vehicleType: VehicleType;
 
   @IsOptional()
@@ -44,6 +50,8 @@ export class CreateVehicleFromUploadDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(1900)
+  @Max(2030)
   year?: number;
 
   @IsOptional()
@@ -52,14 +60,21 @@ export class CreateVehicleFromUploadDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(0)
+  @Max(1)
   emissionFactor?: number;
 }
 
 export class ValidateMileageDto {
   @IsNumber()
+  @Min(0)
+  @IsNotEmpty()
   extractedMileage: number;
 
   @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsNotEmpty()
   confidence: number;
 
   @IsOptional()
@@ -68,6 +83,7 @@ export class ValidateMileageDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(0)
   previousMileage?: number;
 }
 

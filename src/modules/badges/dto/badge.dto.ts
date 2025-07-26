@@ -1,4 +1,15 @@
 import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsEnum,
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  Min,
+  Max,
+} from "class-validator";
 import { BadgeType, BadgeRarity, BadgeStatus } from "../entity/badge.entity";
 
 export class CreateBadgeDto {
@@ -6,12 +17,16 @@ export class CreateBadgeDto {
     description: "Badge name",
     example: "First 1000 km",
   })
+  @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiProperty({
     description: "Badge description",
     example: "Drive your first 1000 kilometers",
   })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @ApiProperty({
@@ -19,6 +34,8 @@ export class CreateBadgeDto {
     enum: BadgeType,
     example: BadgeType.MILEAGE,
   })
+  @IsEnum(BadgeType)
+  @IsNotEmpty()
   type: BadgeType;
 
   @ApiProperty({
@@ -26,6 +43,8 @@ export class CreateBadgeDto {
     enum: BadgeRarity,
     example: BadgeRarity.COMMON,
   })
+  @IsEnum(BadgeRarity)
+  @IsNotEmpty()
   rarity: BadgeRarity;
 
   @ApiProperty({
@@ -33,6 +52,8 @@ export class CreateBadgeDto {
     example: "https://example.com/badge-image.png",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   imageUrl?: string;
 
   @ApiProperty({
@@ -40,6 +61,8 @@ export class CreateBadgeDto {
     example: "https://example.com/badge-icon.png",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   iconUrl?: string;
 
   @ApiProperty({
@@ -50,6 +73,7 @@ export class CreateBadgeDto {
     },
     required: false,
   })
+  @IsOptional()
   conditions?: {
     mileage?: number;
     carbonSaved?: number;
@@ -70,6 +94,7 @@ export class CreateBadgeDto {
     },
     required: false,
   })
+  @IsOptional()
   rewards?: {
     b3trTokens?: number;
     points?: number;
@@ -81,6 +106,9 @@ export class CreateBadgeDto {
     example: 100,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   pointsValue?: number;
 
   @ApiProperty({
@@ -93,6 +121,7 @@ export class CreateBadgeDto {
     },
     required: false,
   })
+  @IsOptional()
   metadata?: {
     category?: string;
     tags?: string[];
@@ -105,6 +134,8 @@ export class CreateBadgeDto {
     example: "Created for new user onboarding",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 
@@ -114,6 +145,8 @@ export class UpdateBadgeDto {
     example: "First 1000 km",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @ApiProperty({
@@ -121,6 +154,8 @@ export class UpdateBadgeDto {
     example: "Drive your first 1000 kilometers",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @ApiProperty({
@@ -128,6 +163,8 @@ export class UpdateBadgeDto {
     enum: BadgeType,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(BadgeType)
   type?: BadgeType;
 
   @ApiProperty({
@@ -135,6 +172,8 @@ export class UpdateBadgeDto {
     enum: BadgeRarity,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(BadgeRarity)
   rarity?: BadgeRarity;
 
   @ApiProperty({
@@ -142,6 +181,8 @@ export class UpdateBadgeDto {
     enum: BadgeStatus,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(BadgeStatus)
   status?: BadgeStatus;
 
   @ApiProperty({
@@ -149,6 +190,8 @@ export class UpdateBadgeDto {
     example: "https://example.com/badge-image.png",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   imageUrl?: string;
 
   @ApiProperty({
@@ -156,12 +199,15 @@ export class UpdateBadgeDto {
     example: "https://example.com/badge-icon.png",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   iconUrl?: string;
 
   @ApiProperty({
     description: "Badge conditions",
     required: false,
   })
+  @IsOptional()
   conditions?: {
     mileage?: number;
     carbonSaved?: number;
@@ -177,6 +223,7 @@ export class UpdateBadgeDto {
     description: "Badge rewards",
     required: false,
   })
+  @IsOptional()
   rewards?: {
     b3trTokens?: number;
     points?: number;
@@ -187,12 +234,16 @@ export class UpdateBadgeDto {
     description: "Points value of the badge",
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   pointsValue?: number;
 
   @ApiProperty({
     description: "Badge metadata",
     required: false,
   })
+  @IsOptional()
   metadata?: {
     category?: string;
     tags?: string[];
@@ -204,6 +255,8 @@ export class UpdateBadgeDto {
     description: "Admin notes",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 

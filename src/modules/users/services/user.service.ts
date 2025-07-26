@@ -14,6 +14,9 @@ import { ConfigService } from "@nestjs/config";
 import { EmailTemplates } from "../helpers/email-templates.helper";
 import { JwtService } from "@nestjs/jwt";
 import { VeChainSignatureHelper } from "../../auth/helpers/vechain-signature.helper";
+import { VeChainWalletService } from "../../../common/blockchain/vechain-wallet.service";
+import { UserWalletService } from "./user-wallet.service";
+import { RefreshTokenService } from "../../auth/services/refresh-token.service";
 import {
   UserDashboardDto,
   UserProfileDto,
@@ -36,7 +39,10 @@ export class UserService {
     private readonly odometerUploadRepository: Repository<OdometerUpload>,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-    private readonly vechainSignatureHelper: VeChainSignatureHelper
+    private readonly vechainSignatureHelper: VeChainSignatureHelper,
+    private readonly vechainWalletService: VeChainWalletService,
+    private readonly userWalletService: UserWalletService,
+    private readonly refreshTokenService: RefreshTokenService
   ) {
     const emailUser = this.configService.get(
       "EMAIL_USER",
@@ -143,7 +149,15 @@ export class UserService {
   async validateOtp(
     email: string,
     otp: string
-  ): Promise<{ message: string; token: string }> {
+  ): Promise<{
+    message: string;
+    token: string;
+    refreshToken?: string;
+    expiresIn?: number;
+    refreshExpiresIn?: number;
+    walletCreated?: boolean;
+    wallet?: any;
+  }> {
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
       throw new NotFoundException("User not found");
@@ -156,33 +170,65 @@ export class UserService {
     // Clear the OTP after successful validation
     user.emailOtp = undefined;
 
-    // Generate a random wallet address if not exists
+    // Generate a proper VeChain wallet if not exists
+    let walletCreated = false;
+    let encryptedWallet = null;
+
     if (!user.walletAddress) {
-      const walletAddress = "0x" + crypto.randomBytes(20).toString("hex");
-      if (!this.vechainSignatureHelper.isValidAddress(walletAddress)) {
-        throw new Error("Generated invalid wallet address");
+      try {
+        // Create encrypted wallet using the wallet service
+        const walletResult = await this.userWalletService.createUserWallet(
+          user.id
+        );
+
+        // Update user with wallet address
+        user.walletAddress = walletResult.walletAddress;
+        user.walletType = "sync2";
+        user.isVerified = true;
+
+        walletCreated = true;
+        encryptedWallet = walletResult.encryptedWallet;
+
+        this.logger.log(
+          `Generated encrypted VeChain wallet for user ${user.email}: ${walletResult.walletAddress}`
+        );
+      } catch (error) {
+        this.logger.error("Failed to generate VeChain wallet:", error);
+        throw new Error("Failed to generate wallet for user");
       }
-      user.walletAddress = walletAddress;
-      user.walletType = "sync2";
-      user.isVerified = true;
     }
 
     user.lastLogin = new Date();
     await this.userRepository.save(user);
 
-    // Generate JWT token using the same payload structure as auth service
-    const payload = {
-      sub: user.id,
-      walletAddress: user.walletAddress,
-      email: user.email,
-    };
+    // Generate tokens using RefreshTokenService
+    const tokens = await this.refreshTokenService.generateTokens(user);
 
-    const token = this.jwtService.sign(payload);
-
-    return {
+    const response: any = {
       message: "OTP validated successfully",
-      token,
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
+      refreshExpiresIn: tokens.refreshExpiresIn,
     };
+
+    // Include encrypted wallet information if a new wallet was created
+    if (walletCreated && encryptedWallet) {
+      response.walletCreated = true;
+      response.wallet = {
+        address: user.walletAddress,
+        mnemonic: encryptedWallet.mnemonic,
+        privateKey: encryptedWallet.privateKey,
+        publicKey: encryptedWallet.publicKey,
+        backupRequired: true,
+        backupInstructions:
+          "Please securely backup your mnemonic phrase. Store it in a safe place and never share it with anyone.",
+      };
+    } else {
+      response.walletCreated = false;
+    }
+
+    return response;
   }
 
   /**
