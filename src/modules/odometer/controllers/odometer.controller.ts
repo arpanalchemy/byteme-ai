@@ -166,7 +166,6 @@ export class OdometerController {
     @Param('uploadId') uploadId: string,
     @CurrentUser() user?: User,
   ) {
-    console.log('uploadId', uploadId);
     return this.odometerService.getUploadById(uploadId, user?.id);
   }
 
