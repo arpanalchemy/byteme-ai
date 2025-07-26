@@ -95,16 +95,16 @@ jobs:
             --environment-name $EB_ENVIRONMENT_NAME \
             --version-label $CI_COMMIT_SHORT_SHA
 
-      - name: Wait for Elastic Beanstalk environment to update
+      - name: Wait for Elastic Beanstalk environment to finish updating
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           echo "Waiting for the environment to finish updating..."
-          retries=10
-          timeout=900  # 15 minutes timeout
-          interval=30  # Check every 30 seconds
+          retries=20
+          timeout=1800
+          interval=60
           end=$((SECONDS+timeout))
           while [ $SECONDS -lt $end ] && [ $retries -gt 0 ]; do
             health_status=$(aws elasticbeanstalk describe-environments --environment-names $EB_ENVIRONMENT_NAME --query 'Environments[0].Health' --output text)
@@ -113,13 +113,13 @@ jobs:
               exit 0
             elif [ "$health_status" == "Red" ]; then
               echo "Environment health is Red, deployment failed!"
-              # Fetch detailed logs before exiting to aid debugging
               aws elasticbeanstalk request-environment-info --environment-name $EB_ENVIRONMENT_NAME --info-type tail
-              sleep 60  # Wait a minute before fetching logs
+              sleep 60
               aws elasticbeanstalk retrieve-environment-info --environment-name $EB_ENVIRONMENT_NAME --info-type tail
               exit 1
+            elif [ "$health_status" == "Grey" ]; then
+              echo "Environment status is Grey, still updating..."
             fi
-            echo "Waiting for environment to be healthy. Current status: $health_status"
             retries=$((retries-1))
             sleep $interval
           done
