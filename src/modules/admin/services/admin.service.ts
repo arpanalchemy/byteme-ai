@@ -1,17 +1,20 @@
 import {
   Injectable,
   Logger,
+  BadRequestException,
   UnauthorizedException,
   NotFoundException,
-  BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, MoreThanOrEqual } from "typeorm";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { User } from "../../users/entity/user.entity";
 import { Vehicle } from "../../vehicles/entity/vehicle.entity";
-import { OdometerUpload } from "../../odometer/entity/odometer-upload.entity";
+import {
+  OdometerUpload,
+  UploadStatus,
+} from "../../odometer/entity/odometer-upload.entity";
 import { AdminLoginDto } from "../dto/admin-login.dto";
 import {
   AdminDashboardStatsDto,
@@ -22,7 +25,7 @@ import {
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  // Static admin credentials (should be moved to environment variables in production)
+  // Simple admin credentials (in production, use environment variables)
   private readonly ADMIN_USERNAME = "admin";
   private readonly ADMIN_PASSWORD = "admin123";
 
@@ -38,33 +41,42 @@ export class AdminService {
   ) {}
 
   /**
-   * Admin login with static credentials
+   * Admin login
    */
   async adminLogin(
     loginDto: AdminLoginDto
   ): Promise<{ token: string; message: string }> {
-    const { username, password } = loginDto;
+    try {
+      const { username, password } = loginDto;
 
-    if (username !== this.ADMIN_USERNAME || password !== this.ADMIN_PASSWORD) {
-      throw new UnauthorizedException("Invalid admin credentials");
+      // Check admin credentials
+      if (
+        username !== this.ADMIN_USERNAME ||
+        password !== this.ADMIN_PASSWORD
+      ) {
+        throw new UnauthorizedException("Invalid admin credentials");
+      }
+
+      // Generate JWT token
+      const payload = {
+        sub: "admin",
+        username: username,
+        role: "admin",
+      };
+
+      const token = this.jwtService.sign(payload, {
+        secret: this.configService.get("JWT_SECRET"),
+        expiresIn: "24h",
+      });
+
+      return {
+        token,
+        message: "Admin login successful",
+      };
+    } catch (error) {
+      this.logger.error("Admin login failed", error);
+      throw error;
     }
-
-    // Generate admin JWT token
-    const payload = {
-      sub: "admin",
-      username: "admin",
-      role: "admin",
-      type: "access" as const,
-      iat: Date.now(),
-    };
-
-    const token = this.jwtService.sign(payload);
-
-    this.logger.log("Admin login successful");
-    return {
-      token,
-      message: "Admin login successful",
-    };
   }
 
   /**
@@ -80,7 +92,7 @@ export class AdminService {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const activeUsers = await this.userRepository.count({
         where: {
-          lastLogin: { $gte: thirtyDaysAgo } as any,
+          lastLogin: MoreThanOrEqual(thirtyDaysAgo),
         },
       });
 
@@ -104,7 +116,7 @@ export class AdminService {
 
       // Get pending uploads
       const pendingUploads = await this.odometerUploadRepository.count({
-        where: { status: "pending" as any },
+        where: { status: UploadStatus.PENDING },
       });
 
       // Calculate weekly rewards (placeholder - would need actual reward tracking)

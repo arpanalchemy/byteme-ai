@@ -3,7 +3,10 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Leaderboard, LeaderboardPeriod } from "../entity/leaderboard.entity";
 import { User } from "../../users/entity/user.entity";
-import { OdometerUpload } from "../../odometer/entity/odometer-upload.entity";
+import {
+  OdometerUpload,
+  UploadStatus,
+} from "../../odometer/entity/odometer-upload.entity";
 import {
   LeaderboardResponseDto,
   LeaderboardEntryDto,
@@ -33,55 +36,67 @@ export class LeaderboardService {
     sortBy: "mileage" | "carbon" | "rewards" | "points" = "mileage"
   ): Promise<LeaderboardResponseDto> {
     try {
-      const offset = (page - 1) * limit;
       const { periodStart, periodEnd } = this.getPeriodDates(period);
+      const offset = (page - 1) * limit;
 
-      // Get leaderboard entries for the period
-      const query = this.leaderboardRepository
-        .createQueryBuilder("leaderboard")
-        .leftJoinAndSelect("leaderboard.user", "user")
-        .where("leaderboard.period = :period", { period })
-        .andWhere("leaderboard.periodStart = :periodStart", { periodStart })
-        .andWhere("leaderboard.periodEnd = :periodEnd", { periodEnd })
-        .andWhere("leaderboard.isActive = :isActive", { isActive: true });
+      // Get user statistics for the period
+      const userStats = await this.getUserStatsForPeriod(
+        periodStart,
+        periodEnd
+      );
 
-      // Apply sorting based on sortBy parameter
-      switch (sortBy) {
-        case "mileage":
-          query
-            .orderBy("leaderboard.totalMileage", "DESC")
-            .addOrderBy("leaderboard.totalCarbonSaved", "DESC")
-            .addOrderBy("leaderboard.uploadCount", "DESC");
-          break;
-        case "carbon":
-          query
-            .orderBy("leaderboard.totalCarbonSaved", "DESC")
-            .addOrderBy("leaderboard.totalMileage", "DESC")
-            .addOrderBy("leaderboard.uploadCount", "DESC");
-          break;
-        case "rewards":
-          query
-            .orderBy("leaderboard.totalRewards", "DESC")
-            .addOrderBy("leaderboard.totalMileage", "DESC")
-            .addOrderBy("leaderboard.totalCarbonSaved", "DESC");
-          break;
-        case "points":
-          query
-            .orderBy("leaderboard.totalPoints", "DESC")
-            .addOrderBy("leaderboard.totalMileage", "DESC")
-            .addOrderBy("leaderboard.totalCarbonSaved", "DESC");
-          break;
-        default:
-          query
-            .orderBy("leaderboard.totalMileage", "DESC")
-            .addOrderBy("leaderboard.totalCarbonSaved", "DESC")
-            .addOrderBy("leaderboard.uploadCount", "DESC");
-      }
+      // Sort by the specified criteria
+      const sortedStats = userStats.sort((a, b) => {
+        switch (sortBy) {
+          case "mileage":
+            return b.totalMileage - a.totalMileage;
+          case "carbon":
+            return b.totalCarbonSaved - a.totalCarbonSaved;
+          case "rewards":
+            return b.totalRewards - a.totalRewards;
+          case "points":
+            return b.totalPoints - a.totalPoints;
+          default:
+            return b.totalMileage - a.totalMileage;
+        }
+      });
 
-      const total = await query.getCount();
-      const entries = await query.skip(offset).take(limit).getMany();
+      // Get paginated results
+      const paginatedStats = sortedStats.slice(offset, offset + limit);
 
-      // Get user rank if authenticated
+      // Get user details for the paginated results
+      const entries: LeaderboardEntryDto[] = await Promise.all(
+        paginatedStats.map(async (stat, index) => {
+          const user = await this.userRepository.findOne({
+            where: { id: stat.userId },
+          });
+
+          if (!user) {
+            return null;
+          }
+
+          const rank = offset + index + 1;
+
+          return {
+            rank,
+            userId: stat.userId,
+            walletAddress: user.walletAddress,
+            username: user.username || "Anonymous",
+            profileImageUrl: user.profileImageUrl || "",
+            totalMileage: stat.totalMileage,
+            totalCarbonSaved: stat.totalCarbonSaved,
+            totalRewards: stat.totalRewards,
+            totalPoints: stat.totalPoints,
+            uploadCount: stat.uploadCount,
+            rankDisplay: this.getRankDisplay(rank),
+          };
+        })
+      );
+
+      // Filter out null entries
+      const validEntries = entries.filter(Boolean);
+
+      // Get current user's rank if provided
       let userRank: number | undefined;
       if (userId) {
         userRank = await this.getUserRank(
@@ -92,33 +107,16 @@ export class LeaderboardService {
         );
       }
 
-      // Transform entries to DTOs
-      const leaderboardEntries: LeaderboardEntryDto[] = entries.map(
-        (entry, index) => ({
-          rank: offset + index + 1,
-          userId: entry.userId,
-          walletAddress: entry.user.walletAddress,
-          username: entry.user.username || "Anonymous",
-          profileImageUrl: entry.user.profileImageUrl,
-          totalMileage: parseFloat(entry.totalMileage.toString()),
-          totalCarbonSaved: parseFloat(entry.totalCarbonSaved.toString()),
-          totalRewards: parseFloat(entry.totalRewards.toString()),
-          totalPoints: entry.totalPoints,
-          uploadCount: entry.uploadCount,
-          rankDisplay: this.getRankDisplay(offset + index + 1),
-        })
-      );
-
       return {
         period,
         periodStart: periodStart.toISOString().split("T")[0],
         periodEnd: periodEnd.toISOString().split("T")[0],
         userRank,
-        totalParticipants: total,
-        entries: leaderboardEntries,
+        totalParticipants: userStats.length,
+        entries: validEntries,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(userStats.length / limit),
       };
     } catch (error) {
       this.logger.error(`Failed to get leaderboard: ${error.message}`);
@@ -135,35 +133,33 @@ export class LeaderboardService {
     try {
       const { periodStart, periodEnd } = this.getPeriodDates(period);
 
-      // Get all users with their stats for the period
+      // Get user statistics for the period
       const userStats = await this.getUserStatsForPeriod(
         periodStart,
         periodEnd
       );
 
-      // Clear existing leaderboard entries for the period
+      // Clear existing leaderboard entries for this period
       await this.leaderboardRepository.delete({
         period,
-        periodStart,
-        periodEnd,
+        isActive: true,
       });
 
       // Create new leaderboard entries
-      const leaderboardEntries = userStats.map((stats, index) => {
-        const entry = this.leaderboardRepository.create({
-          userId: stats.userId,
+      const leaderboardEntries = userStats.map((stat, index) => {
+        return this.leaderboardRepository.create({
           period,
-          totalMileage: stats.totalMileage,
-          totalCarbonSaved: stats.totalCarbonSaved,
-          totalRewards: stats.totalRewards,
-          totalPoints: stats.totalPoints,
-          uploadCount: stats.uploadCount,
+          userId: stat.userId,
           rank: index + 1,
+          totalMileage: stat.totalMileage,
+          totalCarbonSaved: stat.totalCarbonSaved,
+          totalRewards: stat.totalRewards,
+          totalPoints: stat.totalPoints,
+          uploadCount: stat.uploadCount,
           periodStart,
           periodEnd,
           isActive: true,
         });
-        return entry;
       });
 
       await this.leaderboardRepository.save(leaderboardEntries);
@@ -176,7 +172,7 @@ export class LeaderboardService {
   }
 
   /**
-   * Get user rank for a specific period
+   * Get user's rank for a specific period
    */
   async getUserRank(
     userId: string,
@@ -185,17 +181,13 @@ export class LeaderboardService {
     periodEnd: Date
   ): Promise<number> {
     try {
-      const entry = await this.leaderboardRepository.findOne({
-        where: {
-          userId,
-          period,
-          periodStart,
-          periodEnd,
-          isActive: true,
-        },
-      });
+      const userStats = await this.getUserStatsForPeriod(
+        periodStart,
+        periodEnd
+      );
+      const userIndex = userStats.findIndex((stat) => stat.userId === userId);
 
-      return entry?.rank || 0;
+      return userIndex >= 0 ? userIndex + 1 : 0;
     } catch (error) {
       this.logger.error(`Failed to get user rank: ${error.message}`);
       return 0;
@@ -203,7 +195,7 @@ export class LeaderboardService {
   }
 
   /**
-   * Get period dates based on period type
+   * Get period start and end dates
    */
   private getPeriodDates(period: LeaderboardPeriod): {
     periodStart: Date;
@@ -215,20 +207,15 @@ export class LeaderboardService {
 
     switch (period) {
       case LeaderboardPeriod.DAILY:
-        periodStart = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate()
-        );
-        periodEnd = new Date(periodStart);
+        periodStart = new Date(now);
+        periodStart.setHours(0, 0, 0, 0);
+        periodEnd = new Date(now);
         periodEnd.setDate(periodEnd.getDate() + 1);
         break;
 
       case LeaderboardPeriod.WEEKLY:
-        const dayOfWeek = now.getDay();
-        const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
         periodStart = new Date(now);
-        periodStart.setDate(now.getDate() - daysToMonday);
+        periodStart.setDate(periodStart.getDate() - periodStart.getDay());
         periodStart.setHours(0, 0, 0, 0);
         periodEnd = new Date(periodStart);
         periodEnd.setDate(periodEnd.getDate() + 7);
@@ -269,7 +256,7 @@ export class LeaderboardService {
       ])
       .where("upload.createdAt >= :periodStart", { periodStart })
       .andWhere("upload.createdAt < :periodEnd", { periodEnd })
-      .andWhere("upload.status = :status", { status: "completed" as any })
+      .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
       .groupBy("upload.userId")
       .orderBy("totalMileage", "DESC")
       .addOrderBy("totalCarbonSaved", "DESC")

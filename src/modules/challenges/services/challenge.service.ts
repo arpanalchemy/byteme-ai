@@ -19,7 +19,10 @@ import {
 } from "../entity/user-challenge.entity";
 import { User } from "../../users/entity/user.entity";
 import { Vehicle } from "../../vehicles/entity/vehicle.entity";
-import { OdometerUpload } from "../../odometer/entity/odometer-upload.entity";
+import {
+  OdometerUpload,
+  UploadStatus,
+} from "../../odometer/entity/odometer-upload.entity";
 import {
   CreateChallengeDto,
   UpdateChallengeDto,
@@ -44,8 +47,6 @@ export class ChallengeService {
     private readonly odometerUploadRepository: Repository<OdometerUpload>
   ) {}
 
-  // Challenge Management (Admin)
-
   /**
    * Create a new challenge
    */
@@ -56,15 +57,10 @@ export class ChallengeService {
     try {
       const challenge = this.challengeRepository.create({
         ...createDto,
-        startDate: new Date(createDto.startDate),
-        endDate: new Date(createDto.endDate),
         createdBy: adminId,
-        status: ChallengeStatus.DRAFT,
       });
 
       const savedChallenge = await this.challengeRepository.save(challenge);
-
-      this.logger.log(`Challenge created: ${savedChallenge.id}`);
       return this.transformChallengeToResponse(savedChallenge);
     } catch (error) {
       this.logger.error(`Failed to create challenge: ${error.message}`);
@@ -73,7 +69,7 @@ export class ChallengeService {
   }
 
   /**
-   * Get all challenges with filtering
+   * Get all challenges with pagination and filters
    */
   async getChallenges(
     page: number = 1,
@@ -137,15 +133,22 @@ export class ChallengeService {
    * Get challenge by ID
    */
   async getChallengeById(challengeId: string): Promise<ChallengeResponseDto> {
-    const challenge = await this.challengeRepository.findOne({
-      where: { id: challengeId },
-    });
+    try {
+      const challenge = await this.challengeRepository.findOne({
+        where: { id: challengeId },
+      });
 
-    if (!challenge) {
-      throw new NotFoundException("Challenge not found");
+      if (!challenge) {
+        throw new NotFoundException("Challenge not found");
+      }
+
+      return this.transformChallengeToResponse(challenge);
+    } catch (error) {
+      this.logger.error(
+        `Failed to get challenge ${challengeId}: ${error.message}`
+      );
+      throw error;
     }
-
-    return this.transformChallengeToResponse(challenge);
   }
 
   /**
@@ -164,27 +167,14 @@ export class ChallengeService {
         throw new NotFoundException("Challenge not found");
       }
 
-      if (!challenge.canBeEdited) {
-        throw new BadRequestException(
-          "Cannot edit challenge that has participants"
-        );
-      }
-
-      // Update date fields if provided
-      if (updateDto.startDate) {
-        challenge.startDate = new Date(updateDto.startDate);
-      }
-      if (updateDto.endDate) {
-        challenge.endDate = new Date(updateDto.endDate);
-      }
-
       Object.assign(challenge, updateDto);
       const updatedChallenge = await this.challengeRepository.save(challenge);
 
-      this.logger.log(`Challenge updated: ${challengeId}`);
       return this.transformChallengeToResponse(updatedChallenge);
     } catch (error) {
-      this.logger.error(`Failed to update challenge: ${error.message}`);
+      this.logger.error(
+        `Failed to update challenge ${challengeId}: ${error.message}`
+      );
       throw new BadRequestException("Failed to update challenge");
     }
   }
@@ -203,19 +193,19 @@ export class ChallengeService {
       }
 
       challenge.status = ChallengeStatus.ACTIVE;
-      challenge.publishedAt = new Date();
-      const updatedChallenge = await this.challengeRepository.save(challenge);
+      const publishedChallenge = await this.challengeRepository.save(challenge);
 
-      this.logger.log(`Challenge published: ${challengeId}`);
-      return this.transformChallengeToResponse(updatedChallenge);
+      return this.transformChallengeToResponse(publishedChallenge);
     } catch (error) {
-      this.logger.error(`Failed to publish challenge: ${error.message}`);
+      this.logger.error(
+        `Failed to publish challenge ${challengeId}: ${error.message}`
+      );
       throw new BadRequestException("Failed to publish challenge");
     }
   }
 
   /**
-   * Delete challenge (soft delete)
+   * Delete challenge
    */
   async deleteChallenge(challengeId: string): Promise<void> {
     try {
@@ -227,23 +217,14 @@ export class ChallengeService {
         throw new NotFoundException("Challenge not found");
       }
 
-      if (!challenge.canBeEdited) {
-        throw new BadRequestException(
-          "Cannot delete challenge that has participants"
-        );
-      }
-
-      challenge.status = ChallengeStatus.CANCELLED;
-      await this.challengeRepository.save(challenge);
-
-      this.logger.log(`Challenge deleted: ${challengeId}`);
+      await this.challengeRepository.remove(challenge);
     } catch (error) {
-      this.logger.error(`Failed to delete challenge: ${error.message}`);
+      this.logger.error(
+        `Failed to delete challenge ${challengeId}: ${error.message}`
+      );
       throw new BadRequestException("Failed to delete challenge");
     }
   }
-
-  // User Challenge Management
 
   /**
    * Get available challenges for user
@@ -252,71 +233,19 @@ export class ChallengeService {
     userId: string
   ): Promise<ChallengeResponseDto[]> {
     try {
-      const user = await this.userRepository.findOne({
-        where: { id: userId },
-      });
-
-      if (!user) {
-        throw new NotFoundException("User not found");
-      }
-
-      // Get active challenges
-      const activeChallenges = await this.challengeRepository.find({
+      const challenges = await this.challengeRepository.find({
         where: { status: ChallengeStatus.ACTIVE },
       });
 
-      // Get user's joined challenges
-      const joinedChallengeIds = await this.userChallengeRepository
-        .createQueryBuilder("userChallenge")
-        .select("userChallenge.challengeId")
-        .where("userChallenge.userId = :userId", { userId })
-        .getMany();
-
-      const joinedChallengeIdSet = new Set(
-        joinedChallengeIds.map((uc) => uc.challengeId)
-      );
-
-      // Filter challenges based on requirements and user eligibility
-      const availableChallenges = activeChallenges.filter((challenge) => {
-        // Skip if user already joined
-        if (joinedChallengeIdSet.has(challenge.id)) {
-          return false;
-        }
-
-        // Check if challenge is full
-        if (challenge.isFull) {
-          return false;
-        }
-
-        // Check requirements
-        if (challenge.requirements) {
-          const { requirements } = challenge;
-
-          if (
-            requirements.minLevel &&
-            user.totalPoints < requirements.minLevel
-          ) {
-            return false;
-          }
-
-          if (
-            requirements.minMileage &&
-            parseFloat(user.totalMileage.toString()) < requirements.minMileage
-          ) {
-            return false;
-          }
-
-          if (
-            requirements.minCarbonSaved &&
-            parseFloat(user.totalCarbonSaved.toString()) <
-              requirements.minCarbonSaved
-          ) {
-            return false;
-          }
-        }
-
-        return true;
+      const userChallenges = await this.userChallengeRepository.find({
+        where: { userId },
+        select: ["challengeId"],
       });
+
+      const joinedChallengeIds = userChallenges.map((uc) => uc.challengeId);
+      const availableChallenges = challenges.filter(
+        (challenge) => !joinedChallengeIds.includes(challenge.id)
+      );
 
       return availableChallenges.map((challenge) =>
         this.transformChallengeToResponse(challenge)
@@ -328,7 +257,7 @@ export class ChallengeService {
   }
 
   /**
-   * Join challenge
+   * Join a challenge
    */
   async joinChallenge(
     userId: string,
@@ -343,12 +272,8 @@ export class ChallengeService {
         throw new NotFoundException("Challenge not found");
       }
 
-      if (!challenge.isActive) {
+      if (challenge.status !== ChallengeStatus.ACTIVE) {
         throw new BadRequestException("Challenge is not active");
-      }
-
-      if (challenge.isFull) {
-        throw new BadRequestException("Challenge is full");
       }
 
       // Check if user already joined
@@ -365,18 +290,18 @@ export class ChallengeService {
         userId,
         challengeId,
         status: UserChallengeStatus.JOINED,
-        progress: {},
-        isVisible: true,
+        progress: {
+          mileage: 0,
+          carbonSaved: 0,
+          uploadCount: 0,
+          vehicleCount: 0,
+          rewardsEarned: 0,
+        },
       });
 
       const savedUserChallenge =
         await this.userChallengeRepository.save(userChallenge);
 
-      // Update challenge participant count
-      challenge.currentParticipants += 1;
-      await this.challengeRepository.save(challenge);
-
-      this.logger.log(`User ${userId} joined challenge ${challengeId}`);
       return this.transformUserChallengeToResponse(savedUserChallenge);
     } catch (error) {
       this.logger.error(`Failed to join challenge: ${error.message}`);
@@ -403,8 +328,7 @@ export class ChallengeService {
       const query = this.userChallengeRepository
         .createQueryBuilder("userChallenge")
         .leftJoinAndSelect("userChallenge.challenge", "challenge")
-        .where("userChallenge.userId = :userId", { userId })
-        .andWhere("userChallenge.isVisible = :isVisible", { isVisible: true });
+        .where("userChallenge.userId = :userId", { userId });
 
       const total = await query.getCount();
       const userChallenges = await query
@@ -444,33 +368,29 @@ export class ChallengeService {
         throw new NotFoundException("User challenge not found");
       }
 
-      if (userChallenge.isCompleted) {
-        return this.transformUserChallengeToResponse(userChallenge);
-      }
-
-      // Get user statistics for the challenge period
+      // Get user stats for the challenge period
       const userStats = await this.getUserStatsForChallenge(
         userId,
         userChallenge.challenge
       );
 
       // Update progress
-      userChallenge.progress = userStats;
+      userChallenge.progress = {
+        mileage: userStats.mileage,
+        carbonSaved: userStats.carbonSaved,
+        uploadCount: userStats.uploadCount,
+        vehicleCount: userStats.vehicleCount,
+        rewardsEarned: userStats.rewardsEarned,
+      };
 
       // Check if challenge is completed
-      if (await this.checkChallengeCompletion(userChallenge)) {
+      const isCompleted = await this.checkChallengeCompletion(userChallenge);
+      if (
+        isCompleted &&
+        userChallenge.status !== UserChallengeStatus.COMPLETED
+      ) {
         userChallenge.status = UserChallengeStatus.COMPLETED;
         userChallenge.completedAt = new Date();
-
-        // Calculate rewards
-        userChallenge.rewards =
-          await this.calculateChallengeRewards(userChallenge);
-
-        // Update challenge completed count
-        userChallenge.challenge.completedParticipants += 1;
-        await this.challengeRepository.save(userChallenge.challenge);
-      } else {
-        userChallenge.status = UserChallengeStatus.IN_PROGRESS;
       }
 
       const updatedUserChallenge =
@@ -502,59 +422,38 @@ export class ChallengeService {
         throw new NotFoundException("User challenge not found");
       }
 
-      if (!userChallenge.isCompleted) {
+      if (userChallenge.status !== UserChallengeStatus.COMPLETED) {
         throw new BadRequestException("Challenge not completed");
       }
 
       if (userChallenge.rewardsClaimed) {
-        throw new ConflictException("Rewards already claimed");
+        throw new BadRequestException("Rewards already claimed");
       }
-
-      if (!userChallenge.hasRewards) {
-        throw new BadRequestException("No rewards to claim");
-      }
-
-      // Update user with rewards
-      const user = await this.userRepository.findOne({
-        where: { id: userId },
-      });
-
-      if (userChallenge.rewards.b3trTokens) {
-        user.b3trBalance += userChallenge.rewards.b3trTokens;
-      }
-
-      if (userChallenge.rewards.points) {
-        user.totalPoints += userChallenge.rewards.points;
-      }
-
-      await this.userRepository.save(user);
 
       // Mark rewards as claimed
       userChallenge.rewardsClaimed = true;
       userChallenge.claimedAt = new Date();
-      await this.userChallengeRepository.save(userChallenge);
 
-      this.logger.log(`Challenge rewards claimed: ${userChallengeId}`);
-      return this.transformUserChallengeToResponse(userChallenge);
+      const updatedUserChallenge =
+        await this.userChallengeRepository.save(userChallenge);
+
+      return this.transformUserChallengeToResponse(updatedUserChallenge);
     } catch (error) {
       this.logger.error(`Failed to claim challenge rewards: ${error.message}`);
       throw new BadRequestException("Failed to claim challenge rewards");
     }
   }
 
-  // Helper methods
-
   /**
-   * Get user statistics for a specific challenge period
+   * Get user statistics for a challenge
    */
   private async getUserStatsForChallenge(
     userId: string,
     challenge: Challenge
   ): Promise<any> {
-    const startDate = new Date(challenge.startDate);
-    const endDate = new Date(challenge.endDate);
+    const { startDate, endDate } = challenge;
 
-    // Get mileage and carbon saved for the challenge period
+    // Get upload statistics for the challenge period
     const stats = await this.odometerUploadRepository
       .createQueryBuilder("upload")
       .select([
@@ -565,7 +464,7 @@ export class ChallengeService {
       .where("upload.userId = :userId", { userId })
       .andWhere("upload.createdAt >= :startDate", { startDate })
       .andWhere("upload.createdAt <= :endDate", { endDate })
-      .andWhere("upload.status = :status", { status: "completed" as any })
+      .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
       .getRawOne();
 
     // Get vehicle count
