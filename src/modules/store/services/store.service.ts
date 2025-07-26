@@ -14,80 +14,11 @@ import {
 } from "../entity/product.entity";
 import { Order, OrderStatus, PaymentStatus } from "../entity/order.entity";
 import { User } from "../../users/entity/user.entity";
-
-export interface CreateProductDto {
-  name: string;
-  description?: string;
-  category: ProductCategory;
-  price: number;
-  originalPrice?: number;
-  stockQuantity: number;
-  imageUrl?: string;
-  images?: string[];
-  specifications?: Record<string, any>;
-  tags?: string[];
-  discountInfo?: {
-    percentage?: number;
-    validUntil?: Date;
-    minimumPurchase?: number;
-  };
-  isEcoFriendly?: boolean;
-  ecoDescription?: string;
-  shippingInfo?: {
-    weight?: number;
-    dimensions?: {
-      length: number;
-      width: number;
-      height: number;
-    };
-    shippingCost?: number;
-    estimatedDelivery?: string;
-  };
-}
-
-export interface UpdateProductDto {
-  name?: string;
-  description?: string;
-  category?: ProductCategory;
-  price?: number;
-  originalPrice?: number;
-  stockQuantity?: number;
-  status?: ProductStatus;
-  imageUrl?: string;
-  images?: string[];
-  specifications?: Record<string, any>;
-  tags?: string[];
-  discountInfo?: {
-    percentage?: number;
-    validUntil?: Date;
-    minimumPurchase?: number;
-  };
-  isEcoFriendly?: boolean;
-  ecoDescription?: string;
-  shippingInfo?: {
-    weight?: number;
-    dimensions?: {
-      length: number;
-      width: number;
-      height: number;
-    };
-    shippingCost?: number;
-    estimatedDelivery?: string;
-  };
-}
-
-export interface CreateOrderDto {
-  productId: string;
-  quantity: number;
-  shippingAddress?: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  customerNotes?: string;
-}
+import {
+  CreateProductDto,
+  UpdateProductDto,
+  CreateOrderDto,
+} from "../dto/store.dto";
 
 @Injectable()
 export class StoreService {

@@ -8,6 +8,7 @@ import { User } from '../users/entity/user.entity';
 import { S3Service } from '../../common/upload/s3.service';
 import { OpenAIService } from '../../common/ai/openai.service';
 import { RedisService } from '../../common/cache/redis.service';
+import { AwsTextractService } from "../../common/ocr/aws-textract.service";
 
 import { VehicleService } from "../vehicles/services/vehicle.service";
 
@@ -20,6 +21,7 @@ import { VehicleService } from "../vehicles/services/vehicle.service";
     S3Service,
     OpenAIService,
     RedisService,
+    AwsTextractService,
   ],
   exports: [OdometerService],
 })

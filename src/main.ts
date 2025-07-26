@@ -4,26 +4,19 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  console.log("🚀 Starting Drive & Earn API...");
-  console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🔧 Port: ${process.env.PORT || 3000}`);
-  console.log(`🌐 Process ID: ${process.pid}`);
-
   try {
     const app = await NestFactory.create(AppModule);
-    console.log("✅ NestJS application created successfully");
 
     // Enable CORS with specific origins
-    const allowedOrigins = process.env.ALLOWED_ORIGINS ? 
-      process.env.ALLOWED_ORIGINS.split(',') : 
-      ["http://localhost:3000", "http://localhost:3001"];
+    const allowedOrigins = process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(",")
+      : ["http://localhost:3000", "http://localhost:3001"];
 
     app.enableCors({
       origin: allowedOrigins,
       methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
       credentials: true,
     });
-    console.log("✅ CORS enabled with origins:", allowedOrigins);
 
     // Global validation pipe
     app.useGlobalPipes(
@@ -36,7 +29,6 @@ async function bootstrap() {
         },
       })
     );
-    console.log("✅ Validation pipe configured");
 
     // Swagger documentation
     const config = new DocumentBuilder()
@@ -55,13 +47,21 @@ async function bootstrap() {
 
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup("api", app, document);
-    console.log("✅ Swagger documentation configured");
+
+    // Serve Swagger JSON document
+    app.use("/api-json", (req, res) => {
+      res.setHeader("Content-Type", "application/json");
+      res.send(document);
+    });
 
     const port = process.env.PORT || 3000;
     await app.listen(port, "0.0.0.0");
     console.log(`✅ Application successfully listening on port ${port}`);
     console.log(`🚗 Drive & Earn API is running on: http://localhost:${port}`);
-    console.log(`📚 API Documentation: http://localhost:${port}/api`);
+    console.log(`📚 API Documentation (UI): http://localhost:${port}/api`);
+    console.log(
+      `📄 API Documentation (JSON): http://localhost:${port}/api-json`
+    );
     console.log(`🏥 Health Check: http://localhost:${port}/healthcheck`);
     console.log(`🎉 Application startup completed successfully!`);
   } catch (error) {

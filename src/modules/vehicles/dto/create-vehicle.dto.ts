@@ -22,6 +22,14 @@ export class CreateVehicleDto {
   vehicleType: VehicleType;
 
   @ApiPropertyOptional({
+    description: "Custom name for the vehicle (user-defined)",
+    example: "My Tesla",
+  })
+  @IsOptional()
+  @IsString()
+  customName?: string;
+
+  @ApiPropertyOptional({
     description: "Vehicle manufacturer/brand",
     example: "Tesla",
   })

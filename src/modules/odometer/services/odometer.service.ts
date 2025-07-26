@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { S3Service } from '../../../common/upload/s3.service';
 import { OpenAIService } from '../../../common/ai/openai.service';
 import { RedisService } from '../../../common/cache/redis.service';
+import { AwsTextractService } from "../../../common/ocr/aws-textract.service";
 
 import {
   OdometerUpload,
@@ -37,7 +38,8 @@ export class OdometerService {
     private readonly userRepository: Repository<User>,
     private readonly s3Service: S3Service,
     private readonly openaiService: OpenAIService,
-    private readonly redisService: RedisService
+    private readonly redisService: RedisService,
+    private readonly awsTextractService: AwsTextractService
   ) {}
 
   /**
@@ -165,15 +167,24 @@ export class OdometerService {
     extractedNumbers: string[];
   }> {
     try {
-      // Placeholder OCR processing - will be replaced with actual OCR later
-      this.logger.log("OCR processing placeholder - using dummy data");
+      this.logger.log("Processing OCR using AWS Textract");
 
-      // Return dummy data for now
+      // Download image from S3
+      const imageBuffer = await this.downloadImageFromS3(upload.s3ImageUrl);
+
+      // Process with AWS Textract
+      const ocrResult =
+        await this.awsTextractService.extractOdometerReading(imageBuffer);
+
+      this.logger.log(
+        `OCR completed: ${ocrResult.mileage} miles (confidence: ${ocrResult.confidence}%)`
+      );
+
       return {
-        extractedMileage: 15000,
-        confidence: 0.8,
-        rawText: "15000",
-        extractedNumbers: ["15000"],
+        extractedMileage: ocrResult.mileage,
+        confidence: ocrResult.confidence / 100, // Convert percentage to decimal
+        rawText: ocrResult.rawText,
+        extractedNumbers: [ocrResult.rawText],
       };
     } catch (error) {
       this.logger.error(`OCR processing failed: ${error.message}`);

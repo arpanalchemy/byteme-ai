@@ -39,6 +39,9 @@ export class Vehicle {
   })
   vehicleType: VehicleType;
 
+  @Column({ name: "custom_name", nullable: true })
+  customName?: string;
+
   @Column({ nullable: true })
   make?: string;
 
@@ -146,6 +149,9 @@ export class Vehicle {
 
   // Virtual properties
   get displayName(): string {
+    if (this.customName) {
+      return this.customName;
+    }
     if (this.make && this.model) {
       return `${this.make} ${this.model}`;
     }

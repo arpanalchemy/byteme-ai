@@ -13,12 +13,12 @@ import {
 import { ApiTags, ApiResponse, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../../../common/decorators/current-user.decorator";
+import { StoreService } from "../services/store.service";
 import {
-  StoreService,
   CreateProductDto,
   UpdateProductDto,
   CreateOrderDto,
-} from "../services/store.service";
+} from "../dto/store.dto";
 import { Product } from "../entity/product.entity";
 import { Order } from "../entity/order.entity";
 import { User } from "../../users/entity/user.entity";

@@ -47,6 +47,7 @@ export class VehicleService {
       const vehicle = this.vehicleRepository.create({
         userId,
         vehicleType: createDto.vehicleType,
+        customName: createDto.customName,
         make: createDto.make,
         model: createDto.model,
         year: createDto.year,
@@ -80,6 +81,7 @@ export class VehicleService {
 
       const vehicleDto: CreateVehicleDto = {
         vehicleType: createDto.vehicleType,
+        customName: createDto.customName,
         make: createDto.make,
         model: createDto.model,
         year: createDto.year,
