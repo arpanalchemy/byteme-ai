@@ -1,5 +1,18 @@
 import { ApiProperty } from "@nestjs/swagger";
 import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsEnum,
+  IsArray,
+  IsDate,
+  IsBoolean,
+  IsNotEmpty,
+  Min,
+  Max,
+  IsUUID,
+} from "class-validator";
+import {
   RewardType,
   RewardStatus,
   BlockchainStatus,
@@ -10,6 +23,8 @@ export class CreateRewardDto {
     description: "User ID",
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
+  @IsUUID()
+  @IsNotEmpty()
   userId: string;
 
   @ApiProperty({
@@ -17,12 +32,17 @@ export class CreateRewardDto {
     enum: RewardType,
     example: RewardType.UPLOAD,
   })
+  @IsEnum(RewardType)
+  @IsNotEmpty()
   type: RewardType;
 
   @ApiProperty({
     description: "Reward amount in B3TR tokens",
     example: 10.5,
   })
+  @IsNumber()
+  @Min(0)
+  @IsNotEmpty()
   amount: number;
 
   @ApiProperty({
@@ -30,6 +50,9 @@ export class CreateRewardDto {
     example: 150.5,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   milesDriven?: number;
 
   @ApiProperty({
@@ -37,6 +60,9 @@ export class CreateRewardDto {
     example: 2500.5,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   carbonSaved?: number;
 
   @ApiProperty({
@@ -44,6 +70,9 @@ export class CreateRewardDto {
     example: 1,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   cycleId?: number;
 
   @ApiProperty({
@@ -51,6 +80,8 @@ export class CreateRewardDto {
     example: "Reward for uploading 150 miles",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @ApiProperty({
@@ -65,6 +96,7 @@ export class CreateRewardDto {
     },
     required: false,
   })
+  @IsOptional()
   proofData?: {
     proofTypes?: string[];
     proofValues?: string[];
@@ -89,6 +121,7 @@ export class CreateRewardDto {
     },
     required: false,
   })
+  @IsOptional()
   metadata?: {
     source?: string;
     trigger?: string;
@@ -108,6 +141,8 @@ export class UpdateRewardDto {
     enum: RewardStatus,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(RewardStatus)
   status?: RewardStatus;
 
   @ApiProperty({
@@ -115,42 +150,59 @@ export class UpdateRewardDto {
     enum: BlockchainStatus,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(BlockchainStatus)
   blockchainStatus?: BlockchainStatus;
 
   @ApiProperty({
     description: "Reward amount in B3TR tokens",
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   amount?: number;
 
   @ApiProperty({
     description: "Miles driven for this reward",
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   milesDriven?: number;
 
   @ApiProperty({
     description: "Carbon saved in grams",
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   carbonSaved?: number;
 
   @ApiProperty({
     description: "Blockchain cycle ID",
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   cycleId?: number;
 
   @ApiProperty({
     description: "Description of the reward",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @ApiProperty({
     description: "Proof data for blockchain",
     required: false,
   })
+  @IsOptional()
   proofData?: {
     proofTypes?: string[];
     proofValues?: string[];
@@ -169,6 +221,7 @@ export class UpdateRewardDto {
     description: "Blockchain transaction data",
     required: false,
   })
+  @IsOptional()
   blockchainData?: {
     txHash?: string;
     blockNumber?: number;
@@ -184,6 +237,7 @@ export class UpdateRewardDto {
     description: "Additional metadata",
     required: false,
   })
+  @IsOptional()
   metadata?: {
     source?: string;
     trigger?: string;
@@ -200,6 +254,8 @@ export class UpdateRewardDto {
     description: "Failure reason",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   failureReason?: string;
 }
 
@@ -355,7 +411,6 @@ export class RewardResponseDto {
   })
   updatedAt: Date;
 
-  // Virtual properties
   @ApiProperty({
     description: "Whether the reward is pending",
     example: true,
@@ -543,6 +598,9 @@ export class RewardQueryDto {
     example: 1,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   page?: number;
 
   @ApiProperty({
@@ -550,6 +608,10 @@ export class RewardQueryDto {
     example: 20,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(100)
   limit?: number;
 
   @ApiProperty({
@@ -557,6 +619,8 @@ export class RewardQueryDto {
     enum: RewardType,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(RewardType)
   type?: RewardType;
 
   @ApiProperty({
@@ -564,6 +628,8 @@ export class RewardQueryDto {
     enum: RewardStatus,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(RewardStatus)
   status?: RewardStatus;
 
   @ApiProperty({
@@ -571,6 +637,8 @@ export class RewardQueryDto {
     enum: BlockchainStatus,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(BlockchainStatus)
   blockchainStatus?: BlockchainStatus;
 
   @ApiProperty({
@@ -578,6 +646,8 @@ export class RewardQueryDto {
     example: "upload",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   search?: string;
 
   @ApiProperty({
@@ -585,6 +655,8 @@ export class RewardQueryDto {
     example: "2024-01-01",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   startDate?: string;
 
   @ApiProperty({
@@ -592,6 +664,8 @@ export class RewardQueryDto {
     example: "2024-01-31",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   endDate?: string;
 
   @ApiProperty({
@@ -599,6 +673,8 @@ export class RewardQueryDto {
     example: "createdAt",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   sortBy?: string;
 
   @ApiProperty({
@@ -606,6 +682,8 @@ export class RewardQueryDto {
     example: "DESC",
     required: false,
   })
+  @IsOptional()
+  @IsEnum(["ASC", "DESC"])
   sortOrder?: "ASC" | "DESC";
 }
 
@@ -700,47 +778,63 @@ export class BatchRewardDto {
     description: "User wallet address",
     example: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
   })
+  @IsString()
+  @IsNotEmpty()
   user: string;
 
   @ApiProperty({
     description: "Miles driven",
     example: 150.5,
   })
+  @IsNumber()
+  @Min(0)
   miles: number;
 
   @ApiProperty({
     description: "Reward amount in B3TR tokens",
     example: 10.5,
   })
+  @IsNumber()
+  @Min(0)
   amount: number;
 
   @ApiProperty({
     description: "Proof types",
     example: ["image"],
   })
+  @IsArray()
+  @IsString({ each: true })
   proofTypes: string[];
 
   @ApiProperty({
     description: "Proof values",
     example: ["hash123"],
   })
+  @IsArray()
+  @IsString({ each: true })
   proofValues: string[];
 
   @ApiProperty({
     description: "Impact codes",
     example: ["carbon"],
   })
+  @IsArray()
+  @IsString({ each: true })
   impactCodes: string[];
 
   @ApiProperty({
     description: "Impact values",
     example: [2500],
   })
+  @IsArray()
+  @IsNumber({}, { each: true })
   impactValues: number[];
 
   @ApiProperty({
     description: "Description",
     example: "Reward for uploading 150 miles",
   })
+  @IsString()
+  @IsNotEmpty()
   description: string;
 }

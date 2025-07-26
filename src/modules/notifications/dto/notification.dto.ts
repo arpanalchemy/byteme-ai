@@ -1,5 +1,18 @@
 import { ApiProperty } from "@nestjs/swagger";
 import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsEnum,
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  Min,
+  Max,
+  IsUUID,
+  IsDateString,
+} from "class-validator";
+import {
   NotificationType,
   NotificationPriority,
   NotificationStatus,
@@ -11,6 +24,8 @@ export class CreateNotificationDto {
     description: "User ID to send notification to",
     example: "123e4567-e89b-12d3-a456-426614174000",
   })
+  @IsUUID()
+  @IsNotEmpty()
   userId: string;
 
   @ApiProperty({
@@ -18,6 +33,8 @@ export class CreateNotificationDto {
     enum: NotificationType,
     example: NotificationType.BADGE_EARNED,
   })
+  @IsEnum(NotificationType)
+  @IsNotEmpty()
   type: NotificationType;
 
   @ApiProperty({
@@ -26,18 +43,24 @@ export class CreateNotificationDto {
     example: NotificationPriority.MEDIUM,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(NotificationPriority)
   priority?: NotificationPriority;
 
   @ApiProperty({
     description: "Notification title",
     example: "Badge Earned!",
   })
+  @IsString()
+  @IsNotEmpty()
   title: string;
 
   @ApiProperty({
     description: "Notification message",
     example: 'Congratulations! You earned the "First 1000 km" badge.',
   })
+  @IsString()
+  @IsNotEmpty()
   message: string;
 
   @ApiProperty({
@@ -49,6 +72,7 @@ export class CreateNotificationDto {
     },
     required: false,
   })
+  @IsOptional()
   data?: {
     badgeId?: string;
     challengeId?: string;
@@ -73,6 +97,9 @@ export class CreateNotificationDto {
     example: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
     required: false,
   })
+  @IsOptional()
+  @IsArray()
+  @IsEnum(NotificationChannel, { each: true })
   channels?: NotificationChannel[];
 
   @ApiProperty({
@@ -80,6 +107,8 @@ export class CreateNotificationDto {
     example: "2024-01-15T10:00:00Z",
     required: false,
   })
+  @IsOptional()
+  @IsDateString()
   scheduledAt?: string;
 
   @ApiProperty({
@@ -87,6 +116,8 @@ export class CreateNotificationDto {
     example: "Welcome notification for new user",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 
@@ -99,6 +130,9 @@ export class CreateBulkNotificationDto {
     ],
     isArray: true,
   })
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  @IsNotEmpty()
   userIds: string[];
 
   @ApiProperty({
@@ -106,6 +140,8 @@ export class CreateBulkNotificationDto {
     enum: NotificationType,
     example: NotificationType.SYSTEM_ANNOUNCEMENT,
   })
+  @IsEnum(NotificationType)
+  @IsNotEmpty()
   type: NotificationType;
 
   @ApiProperty({
@@ -114,24 +150,31 @@ export class CreateBulkNotificationDto {
     example: NotificationPriority.MEDIUM,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(NotificationPriority)
   priority?: NotificationPriority;
 
   @ApiProperty({
     description: "Notification title",
     example: "System Maintenance",
   })
+  @IsString()
+  @IsNotEmpty()
   title: string;
 
   @ApiProperty({
     description: "Notification message",
     example: "The platform will be under maintenance from 2-4 AM.",
   })
+  @IsString()
+  @IsNotEmpty()
   message: string;
 
   @ApiProperty({
     description: "Notification data",
     required: false,
   })
+  @IsOptional()
   data?: {
     badgeId?: string;
     challengeId?: string;
@@ -156,6 +199,9 @@ export class CreateBulkNotificationDto {
     example: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
     required: false,
   })
+  @IsOptional()
+  @IsArray()
+  @IsEnum(NotificationChannel, { each: true })
   channels?: NotificationChannel[];
 
   @ApiProperty({
@@ -163,6 +209,8 @@ export class CreateBulkNotificationDto {
     example: "2024-01-15T10:00:00Z",
     required: false,
   })
+  @IsOptional()
+  @IsDateString()
   scheduledAt?: string;
 
   @ApiProperty({
@@ -170,6 +218,8 @@ export class CreateBulkNotificationDto {
     example: "Bulk system announcement",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 
@@ -180,6 +230,8 @@ export class UpdateNotificationDto {
     example: NotificationStatus.READ,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(NotificationStatus)
   status?: NotificationStatus;
 
   @ApiProperty({
@@ -187,6 +239,8 @@ export class UpdateNotificationDto {
     example: true,
     required: false,
   })
+  @IsOptional()
+  @IsBoolean()
   isRead?: boolean;
 
   @ApiProperty({
@@ -194,6 +248,8 @@ export class UpdateNotificationDto {
     example: false,
     required: false,
   })
+  @IsOptional()
+  @IsBoolean()
   isArchived?: boolean;
 
   @ApiProperty({
@@ -201,6 +257,8 @@ export class UpdateNotificationDto {
     example: false,
     required: false,
   })
+  @IsOptional()
+  @IsBoolean()
   isDeleted?: boolean;
 }
 
@@ -354,7 +412,6 @@ export class NotificationResponseDto {
   })
   updatedAt: Date;
 
-  // Virtual properties
   @ApiProperty({
     description: "Whether notification is unread",
     example: true,
@@ -434,6 +491,9 @@ export class NotificationQueryDto {
     example: 1,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   page?: number;
 
   @ApiProperty({
@@ -441,6 +501,10 @@ export class NotificationQueryDto {
     example: 20,
     required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(100)
   limit?: number;
 
   @ApiProperty({
@@ -448,6 +512,8 @@ export class NotificationQueryDto {
     enum: NotificationType,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(NotificationType)
   type?: NotificationType;
 
   @ApiProperty({
@@ -455,6 +521,8 @@ export class NotificationQueryDto {
     enum: NotificationStatus,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(NotificationStatus)
   status?: NotificationStatus;
 
   @ApiProperty({
@@ -462,6 +530,8 @@ export class NotificationQueryDto {
     enum: NotificationPriority,
     required: false,
   })
+  @IsOptional()
+  @IsEnum(NotificationPriority)
   priority?: NotificationPriority;
 
   @ApiProperty({
@@ -469,6 +539,8 @@ export class NotificationQueryDto {
     example: "badge",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   search?: string;
 
   @ApiProperty({
@@ -476,6 +548,8 @@ export class NotificationQueryDto {
     example: "2024-01-01",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   startDate?: string;
 
   @ApiProperty({
@@ -483,6 +557,8 @@ export class NotificationQueryDto {
     example: "2024-01-31",
     required: false,
   })
+  @IsOptional()
+  @IsString()
   endDate?: string;
 }
 

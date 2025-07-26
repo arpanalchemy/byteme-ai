@@ -15,7 +15,7 @@
 - [ ] `VECHAIN_NETWORK=mainnet`
 - [ ] `VECHAIN_NODE_URL=https://mainnet.vechain.org`
 - [ ] `B3TR_CONTRACT_ADDRESS` (Your smart contract address)
-- [ ] `ADMIN_PRIVATE_KEY` (Admin wallet private key)
+- [ ] `VECHAIN_MNEMONIC` (Admin wallet mnemonic phrase)
 - [ ] `AWS_ACCESS_KEY_ID` (AWS access key)
 - [ ] `AWS_SECRET_ACCESS_KEY` (AWS secret key)
 - [ ] `AWS_REGION=us-east-1`

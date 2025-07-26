@@ -14,9 +14,13 @@ import { OdometerUpload } from "../odometer/entity/odometer-upload.entity";
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get("JWT_SECRET"),
+        secret:
+          configService.get("JWT_SECRET") ||
+          configService.get("app.jwt.secret"),
         signOptions: {
-          expiresIn: configService.get("JWT_EXPIRES_IN", "7d"),
+          expiresIn:
+            configService.get("JWT_EXPIRES_IN") ||
+            configService.get("app.jwt.expiresIn", "3m"),
         },
       }),
       inject: [ConfigService],

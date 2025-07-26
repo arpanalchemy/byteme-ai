@@ -1,35 +1,13 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsObject,
+  IsIn,
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class VerifySignatureDto {
-  @ApiProperty({
-    description: "Wallet address",
-    example: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
-  })
-  @IsString()
-  @IsNotEmpty()
-  walletAddress: string;
-
-  @ApiProperty({
-    description:
-      "Message that was signed (required for legacy signature verification)",
-    example: "Sign this message to authenticate with Drive & Earn: 1234567890",
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  message?: string;
-
-  @ApiProperty({
-    description:
-      "Signature of the message (required for legacy signature verification)",
-    example: "0x1234567890abcdef...",
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  signature?: string;
-
   @ApiProperty({
     description: "VeChain Certificate for authentication (new method)",
     example: {
@@ -44,11 +22,10 @@ export class VerifySignatureDto {
       domain: "localhost:3000",
       timestamp: 1753430586,
     },
-    required: false,
+    required: true,
   })
   @IsObject()
-  @IsOptional()
-  certificate?: {
+  certificate: {
     purpose: string;
     payload: {
       type: string;
@@ -59,4 +36,30 @@ export class VerifySignatureDto {
     domain: string;
     timestamp: number;
   };
+
+  @ApiPropertyOptional({
+    description: "Type of wallet being connected",
+    enum: ["veworld", "sync2", "walletconnect"],
+    example: "veworld",
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(["veworld", "sync2", "walletconnect"])
+  walletType?: "veworld" | "sync2" | "walletconnect";
+
+  @ApiPropertyOptional({
+    description: "Username for the account (optional)",
+    example: "john_doe",
+  })
+  @IsOptional()
+  @IsString()
+  username?: string;
+
+  @ApiPropertyOptional({
+    description: "Email address (optional)",
+    example: "john@example.com",
+  })
+  @IsOptional()
+  @IsString()
+  email?: string;
 }
