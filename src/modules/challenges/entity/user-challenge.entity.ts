@@ -162,7 +162,7 @@ export class UserChallenge {
     if (objectives.carbonSaved && progress.carbonSaved !== undefined) {
       totalProgress += Math.min(
         progress.carbonSaved / objectives.carbonSaved,
-        1
+        1,
       );
       totalObjectives += 1;
     }
@@ -170,7 +170,7 @@ export class UserChallenge {
     if (objectives.uploadCount && progress.uploadCount !== undefined) {
       totalProgress += Math.min(
         progress.uploadCount / objectives.uploadCount,
-        1
+        1,
       );
       totalObjectives += 1;
     }
@@ -178,7 +178,7 @@ export class UserChallenge {
     if (objectives.vehicleCount && progress.vehicleCount !== undefined) {
       totalProgress += Math.min(
         progress.vehicleCount / objectives.vehicleCount,
-        1
+        1,
       );
       totalObjectives += 1;
     }
@@ -186,7 +186,7 @@ export class UserChallenge {
     if (objectives.rewardsEarned && progress.rewardsEarned !== undefined) {
       totalProgress += Math.min(
         progress.rewardsEarned / objectives.rewardsEarned,
-        1
+        1,
       );
       totalObjectives += 1;
     }

@@ -31,7 +31,7 @@ export class TokenMigrationUtil {
    */
   static convertLegacyToNew(
     legacyPayload: LegacyTokenPayload,
-    user: any
+    user: any,
   ): NewTokenPayload {
     return {
       sub: legacyPayload.sub,
@@ -61,11 +61,11 @@ export class TokenMigrationUtil {
   static async generateNewTokenFromLegacy(
     legacyToken: string,
     jwtService: JwtService,
-    user: any
+    user: any,
   ): Promise<string> {
     try {
       // Verify the legacy token
-      const payload = jwtService.verify(legacyToken) as LegacyTokenPayload;
+      const payload = jwtService.verify(legacyToken);
 
       // Convert to new format
       const newPayload = this.convertLegacyToNew(payload, user);

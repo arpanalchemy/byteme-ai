@@ -43,7 +43,7 @@ export class BadgeController {
     @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20,
     @Query("type") type?: BadgeType,
     @Query("status") status?: BadgeStatus,
-    @Query("search") search?: string
+    @Query("search") search?: string,
   ) {
     return this.badgeService.getBadges(page, limit, type, status, search);
   }
@@ -58,7 +58,7 @@ export class BadgeController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async getAvailableBadges(
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<BadgeResponseDto[]> {
     return this.badgeService.getAvailableBadges(user.id);
   }
@@ -84,7 +84,7 @@ export class BadgeController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async checkAndAwardBadges(
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<UserBadgeResponseDto[]> {
     return this.badgeService.checkAndAwardBadges(user.id);
   }
@@ -108,7 +108,7 @@ export class UserBadgeController {
   async getUserBadges(
     @CurrentUser() user: User,
     @Query("page", new ParseIntPipe({ optional: true })) page: number = 1,
-    @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20
+    @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20,
   ) {
     return this.badgeService.getUserBadges(user.id, page, limit);
   }
@@ -124,7 +124,7 @@ export class UserBadgeController {
   @ApiResponse({ status: 409, description: "Rewards already claimed" })
   async claimBadgeRewards(
     @CurrentUser() user: User,
-    @Param("userBadgeId") userBadgeId: string
+    @Param("userBadgeId") userBadgeId: string,
   ): Promise<UserBadgeResponseDto> {
     return this.badgeService.claimBadgeRewards(user.id, userBadgeId);
   }
@@ -146,7 +146,7 @@ export class AdminBadgeController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async createBadge(
     @CurrentUser() admin: User,
-    @Body() createDto: CreateBadgeDto
+    @Body() createDto: CreateBadgeDto,
   ): Promise<BadgeResponseDto> {
     return this.badgeService.createBadge(createDto, admin.id);
   }
@@ -167,7 +167,7 @@ export class AdminBadgeController {
     @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20,
     @Query("type") type?: BadgeType,
     @Query("status") status?: BadgeStatus,
-    @Query("search") search?: string
+    @Query("search") search?: string,
   ) {
     return this.badgeService.getBadges(page, limit, type, status, search);
   }
@@ -198,7 +198,7 @@ export class AdminBadgeController {
   })
   async updateBadge(
     @Param("id") badgeId: string,
-    @Body() updateDto: UpdateBadgeDto
+    @Body() updateDto: UpdateBadgeDto,
   ): Promise<BadgeResponseDto> {
     return this.badgeService.updateBadge(badgeId, updateDto);
   }

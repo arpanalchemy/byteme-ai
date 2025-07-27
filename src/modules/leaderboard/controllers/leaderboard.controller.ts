@@ -46,14 +46,14 @@ export class LeaderboardController {
     @Query("page", new ParseIntPipe({ optional: true })) page: number = 1,
     @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20,
     @Query("sortBy")
-    sortBy: "mileage" | "carbon" | "rewards" | "points" = "mileage"
+    sortBy: "mileage" | "carbon" | "rewards" | "points" = "mileage",
   ): Promise<LeaderboardResponseDto> {
     return this.leaderboardService.getLeaderboard(
       period,
       page,
       limit,
       undefined,
-      sortBy
+      sortBy,
     );
   }
 
@@ -86,14 +86,14 @@ export class LeaderboardController {
     @Query("page", new ParseIntPipe({ optional: true })) page: number = 1,
     @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20,
     @Query("sortBy")
-    sortBy: "mileage" | "carbon" | "rewards" | "points" = "mileage"
+    sortBy: "mileage" | "carbon" | "rewards" | "points" = "mileage",
   ): Promise<LeaderboardResponseDto> {
     return this.leaderboardService.getLeaderboard(
       period,
       page,
       limit,
       user.id,
-      sortBy
+      sortBy,
     );
   }
 

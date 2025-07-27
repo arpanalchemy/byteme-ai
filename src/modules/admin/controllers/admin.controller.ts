@@ -6,10 +6,9 @@ import {
   Param,
   Body,
   Query,
-  UseGuards,
   ParseIntPipe,
 } from "@nestjs/common";
-import { ApiTags, ApiResponse, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
+import { ApiTags, ApiResponse, ApiQuery } from "@nestjs/swagger";
 import { AdminService } from "../services/admin.service";
 import { AdminLoginDto } from "../dto/admin-login.dto";
 import {
@@ -17,6 +16,10 @@ import {
   AdminUserStatsDto,
 } from "../dto/admin-dashboard.dto";
 import { Public } from "../../../common/decorators/public.decorator";
+import {
+  RefreshTokenDto,
+  RefreshTokenResponseDto,
+} from "../../auth/dto/auth-response.dto";
 
 @ApiTags("Admin")
 @Controller("admin")
@@ -28,12 +31,44 @@ export class AdminController {
   @ApiResponse({
     status: 200,
     description: "Admin login successful",
+    type: "object",
     schema: {
       type: "object",
       properties: {
-        token: {
+        accessToken: {
           type: "string",
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        },
+        refreshToken: {
+          type: "string",
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        },
+        expiresIn: {
+          type: "number",
+          example: 180,
+        },
+        refreshExpiresIn: {
+          type: "number",
+          example: 604800,
+        },
+        user: {
+          type: "object",
+          properties: {
+            id: { type: "string", example: "admin" },
+            username: { type: "string", example: "admin" },
+            email: { type: "string", example: "admin@system.com" },
+            walletAddress: {
+              type: "string",
+              example: "0x0000000000000000000000000000000000000000",
+            },
+            isActive: { type: "boolean", example: true },
+            isVerified: { type: "boolean", example: true },
+            totalMileage: { type: "number", example: 0 },
+            totalCarbonSaved: { type: "number", example: 0 },
+            totalPoints: { type: "number", example: 0 },
+            currentTier: { type: "string", example: "admin" },
+            b3trBalance: { type: "number", example: 0 },
+          },
         },
         message: {
           type: "string",
@@ -45,6 +80,38 @@ export class AdminController {
   @ApiResponse({ status: 401, description: "Invalid admin credentials" })
   async adminLogin(@Body() loginDto: AdminLoginDto) {
     return this.adminService.adminLogin(loginDto);
+  }
+
+  @Post("refresh")
+  @Public()
+  @ApiResponse({
+    status: 200,
+    description: "Admin token refreshed successfully",
+    type: RefreshTokenResponseDto,
+  })
+  @ApiResponse({ status: 401, description: "Invalid refresh token" })
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.adminService.refreshToken(refreshTokenDto.refreshToken);
+  }
+
+  @Post("logout")
+  @Public()
+  @ApiResponse({
+    status: 200,
+    description: "Admin logged out successfully",
+    schema: {
+      type: "object",
+      properties: {
+        message: {
+          type: "string",
+          example: "Admin logged out successfully",
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: "Invalid refresh token" })
+  async logout(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.adminService.logout(refreshTokenDto.refreshToken);
   }
 
   @Get("dashboard/stats")
@@ -80,7 +147,7 @@ export class AdminController {
   async getAllUsers(
     @Query("page", new ParseIntPipe({ optional: true })) page: number = 1,
     @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20,
-    @Query("search") search?: string
+    @Query("search") search?: string,
   ) {
     return this.adminService.getAllUsers(page, limit, search);
   }
@@ -93,7 +160,7 @@ export class AdminController {
   })
   @ApiResponse({ status: 404, description: "User not found" })
   async getUserDetails(
-    @Param("id") userId: string
+    @Param("id") userId: string,
   ): Promise<AdminUserStatsDto> {
     return this.adminService.getUserDetails(userId);
   }

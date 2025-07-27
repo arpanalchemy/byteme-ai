@@ -33,7 +33,7 @@ export class RewardService {
     private readonly rewardRepository: Repository<Reward>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly vechainService: VeChainService
+    private readonly vechainService: VeChainService,
   ) {}
 
   // Reward Management (Admin)
@@ -53,17 +53,20 @@ export class RewardService {
       }
 
       const reward = this.rewardRepository.create({
-        ...createDto,
-        milesDriven: createDto.milesDriven || 0,
-        carbonSaved: createDto.carbonSaved || 0,
-        cycleId: createDto.cycleId || null,
-        submissionId: null,
+        userId: createDto.userId,
+        type: createDto.type,
+        amount: createDto.amount,
+        description: createDto.description,
+        metadata: createDto.metadata,
+        processedAt: createDto.processedAt
+          ? new Date(createDto.processedAt)
+          : undefined,
       });
 
       const savedReward = await this.rewardRepository.save(reward);
 
       this.logger.log(
-        `Reward created: ${savedReward.id} for user: ${createDto.userId}`
+        `Reward created: ${savedReward.id} for user: ${createDto.userId}`,
       );
       return this.transformRewardToResponse(savedReward);
     } catch (error) {
@@ -77,7 +80,7 @@ export class RewardService {
    */
   async getRewards(
     query: RewardQueryDto,
-    userId?: string
+    userId?: string,
   ): Promise<{
     rewards: RewardResponseDto[];
     total: number;
@@ -122,7 +125,7 @@ export class RewardService {
       if (search) {
         queryBuilder.andWhere(
           "reward.description ILIKE :search OR reward.type ILIKE :search",
-          { search: `%${search}%` }
+          { search: `%${search}%` },
         );
       }
 
@@ -142,12 +145,12 @@ export class RewardService {
       const rewards = await queryBuilder
         .skip(offset)
         .take(limit)
-        .orderBy(`reward.${sortBy}`, sortOrder as "ASC" | "DESC")
+        .orderBy(`reward.${sortBy}`, sortOrder)
         .getMany();
 
       return {
         rewards: rewards.map((reward) =>
-          this.transformRewardToResponse(reward)
+          this.transformRewardToResponse(reward),
         ),
         total,
         page,
@@ -164,7 +167,7 @@ export class RewardService {
    */
   async getRewardById(
     rewardId: string,
-    userId?: string
+    userId?: string,
   ): Promise<RewardResponseDto> {
     const queryBuilder = this.rewardRepository
       .createQueryBuilder("reward")
@@ -189,7 +192,7 @@ export class RewardService {
   async updateReward(
     rewardId: string,
     updateDto: UpdateRewardDto,
-    userId?: string
+    userId?: string,
   ): Promise<RewardResponseDto> {
     try {
       const queryBuilder = this.rewardRepository
@@ -257,7 +260,7 @@ export class RewardService {
    */
   async getUserRewards(
     userId: string,
-    query: RewardQueryDto
+    query: RewardQueryDto,
   ): Promise<{
     rewards: RewardResponseDto[];
     total: number;
@@ -402,7 +405,7 @@ export class RewardService {
         if (!userRewards.has(reward.userId)) {
           userRewards.set(reward.userId, []);
         }
-        userRewards.get(reward.userId)!.push(reward);
+        userRewards.get(reward.userId).push(reward);
       });
 
       // Process each user's rewards
@@ -419,7 +422,7 @@ export class RewardService {
    */
   private async processUserRewards(
     userId: string,
-    rewards: Reward[]
+    rewards: Reward[],
   ): Promise<void> {
     try {
       // Get user wallet address
@@ -434,14 +437,14 @@ export class RewardService {
 
       // Prepare batch data for blockchain
       const batchData: BatchRewardDto[] = rewards.map((reward) => ({
-        user: user.walletAddress!,
+        user: user.walletAddress,
         miles: reward.milesDriven,
         amount: reward.amount,
-        proofTypes: reward.proofData?.proofTypes || ["image"],
+        proofTypes: ["image"],
         proofValues: reward.proofData?.proofValues || [
           reward.proofData?.imageHash || "",
         ],
-        impactCodes: reward.proofData?.impactCodes || ["carbon"],
+        impactCodes: ["carbon"],
         impactValues: reward.proofData?.impactValues || [reward.carbonSaved],
         description: reward.description || `Reward for ${reward.type}`,
       }));
@@ -468,7 +471,7 @@ export class RewardService {
       }
 
       this.logger.log(
-        `Processed ${rewards.length} rewards for user ${userId}: ${txHash}`
+        `Processed ${rewards.length} rewards for user ${userId}: ${txHash}`,
       );
     } catch (error) {
       this.logger.error(`Failed to process rewards for user ${userId}:`, error);
@@ -509,7 +512,7 @@ export class RewardService {
       for (const reward of sentRewards) {
         if (reward.blockchainData?.txHash) {
           const isConfirmed = await this.vechainService.isTransactionConfirmed(
-            reward.blockchainData.txHash
+            reward.blockchainData.txHash.txid
           );
 
           if (isConfirmed) {
@@ -629,7 +632,7 @@ export class RewardService {
     uploadId: string,
     milesDriven: number,
     carbonSaved: number,
-    imageHash: string
+    imageHash: string,
   ): Promise<RewardResponseDto> {
     const rewardAmount = this.calculateUploadReward(milesDriven, carbonSaved);
 
@@ -662,7 +665,7 @@ export class RewardService {
     userId: string,
     badgeId: string,
     badgeName: string,
-    rewardAmount: number
+    rewardAmount: number,
   ): Promise<RewardResponseDto> {
     return this.createReward({
       userId,
@@ -690,7 +693,7 @@ export class RewardService {
     userId: string,
     challengeId: string,
     challengeName: string,
-    rewardAmount: number
+    rewardAmount: number,
   ): Promise<RewardResponseDto> {
     return this.createReward({
       userId,
@@ -716,7 +719,7 @@ export class RewardService {
    */
   private calculateUploadReward(
     milesDriven: number,
-    carbonSaved: number
+    carbonSaved: number,
   ): number {
     // Base reward: 0.1 B3TR per mile
     const baseReward = milesDriven * 0.1;

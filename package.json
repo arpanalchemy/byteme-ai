@@ -30,6 +30,7 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
@@ -41,7 +42,9 @@
     "@types/multer": "^2.0.0",
     "@types/nodemailer": "^6.4.17",
     "@vechain/connex": "^2.2.1",
+    "@vechain/connex-framework": "^2.2.1",
     "@vechain/connex-types": "^2.2.1",
+    "@vechain/sdk-network": "^1.0.0-beta.30",
     "bcryptjs": "^3.0.2",
     "bip39": "^3.1.0",
     "class-transformer": "^0.5.1",
@@ -59,7 +62,9 @@
     "sharp": "^0.34.3",
     "swagger-ui-express": "^5.0.1",
     "thor-devkit": "^2.1.1",
+    "thorify": "^1.6.2",
     "typeorm": "^0.3.25",
+    "web3": "^1.10.4",
     "winston": "^3.17.0"
   },
   "devDependencies": {

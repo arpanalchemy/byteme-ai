@@ -3,12 +3,13 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { EventEmitterModule } from "@nestjs/event-emitter";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
 import { getDatabaseConfig } from "./config/database.config";
-import { JwtAuthGuard } from "./modules/auth/guards/jwt-auth.guard";
+
 import { OdometerModule } from "./modules/odometer/odometer.module";
 import { VehiclesModule } from "./modules/vehicles/vehicles.module";
 import { AdminModule } from "./modules/admin/admin.module";
@@ -20,6 +21,8 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
 import { HistoryModule } from "./modules/history/history.module";
 import { RewardsModule } from "./modules/rewards/rewards.module";
 import { HealthcheckModule } from "./modules/healthcheck/healthcheck.module";
+import { AnalyticsModule } from "./modules/analytics/analytics.module";
+import { BlockchainModule } from "./modules/blockchain/blockchain.module";
 
 @Module({
   imports: [
@@ -49,6 +52,7 @@ import { HealthcheckModule } from "./modules/healthcheck/healthcheck.module";
         limit: 100, // 100 requests per minute
       },
     ]),
+    EventEmitterModule.forRoot(),
     AuthModule,
     UsersModule,
     OdometerModule,
@@ -62,6 +66,8 @@ import { HealthcheckModule } from "./modules/healthcheck/healthcheck.module";
     HistoryModule,
     RewardsModule,
     HealthcheckModule,
+    AnalyticsModule,
+    BlockchainModule,
   ],
   controllers: [AppController],
   providers: [

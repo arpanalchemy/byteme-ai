@@ -52,7 +52,7 @@ export class StoreController {
     @Query("search") search?: string,
     @Query("minPrice", new ParseIntPipe({ optional: true })) minPrice?: number,
     @Query("maxPrice", new ParseIntPipe({ optional: true })) maxPrice?: number,
-    @Query("ecoFriendly") ecoFriendly?: boolean
+    @Query("ecoFriendly") ecoFriendly?: boolean,
   ) {
     return this.storeService.getProducts(
       page,
@@ -61,7 +61,7 @@ export class StoreController {
       search,
       minPrice,
       maxPrice,
-      ecoFriendly
+      ecoFriendly,
     );
   }
 
@@ -90,7 +90,7 @@ export class StoreController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async createOrder(
     @Body() createDto: CreateOrderDto,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<Order> {
     return this.storeService.createOrder(user.id, createDto);
   }
@@ -108,7 +108,7 @@ export class StoreController {
   async getUserOrders(
     @CurrentUser() user: User,
     @Query("page", new ParseIntPipe({ optional: true })) page: number = 1,
-    @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20
+    @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20,
   ) {
     return this.storeService.getUserOrders(user.id, page, limit);
   }
@@ -125,7 +125,7 @@ export class StoreController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async getOrderById(
     @Param("id") orderId: string,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<Order> {
     return this.storeService.getOrderById(orderId, user.id);
   }
@@ -144,7 +144,7 @@ export class StoreController {
   async cancelOrder(
     @Param("id") orderId: string,
     @CurrentUser() user: User,
-    @Body() body: { reason?: string }
+    @Body() body: { reason?: string },
   ): Promise<Order> {
     return this.storeService.cancelOrder(orderId, user.id, body.reason);
   }
@@ -180,7 +180,7 @@ export class AdminStoreController {
   @ApiResponse({ status: 404, description: "Product not found" })
   async updateProduct(
     @Param("id") productId: string,
-    @Body() updateDto: UpdateProductDto
+    @Body() updateDto: UpdateProductDto,
   ): Promise<Product> {
     return this.storeService.updateProduct(productId, updateDto);
   }
@@ -192,7 +192,7 @@ export class AdminStoreController {
   })
   @ApiResponse({ status: 404, description: "Product not found" })
   async deleteProduct(
-    @Param("id") productId: string
+    @Param("id") productId: string,
   ): Promise<{ message: string }> {
     await this.storeService.deleteProduct(productId);
     return { message: "Product deleted successfully" };
@@ -211,7 +211,7 @@ export class AdminStoreController {
   async getAllOrders(
     @Query("page", new ParseIntPipe({ optional: true })) page: number = 1,
     @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20,
-    @Query("status") status?: OrderStatus
+    @Query("status") status?: OrderStatus,
   ) {
     return this.storeService.getAllOrders(page, limit, status);
   }
@@ -236,12 +236,12 @@ export class AdminStoreController {
   @ApiResponse({ status: 404, description: "Order not found" })
   async updateOrderStatus(
     @Param("id") orderId: string,
-    @Body() body: { status: OrderStatus; notes?: string }
+    @Body() body: { status: OrderStatus; notes?: string },
   ): Promise<Order> {
     return this.storeService.updateOrderStatus(
       orderId,
       body.status,
-      body.notes
+      body.notes,
     );
   }
 }

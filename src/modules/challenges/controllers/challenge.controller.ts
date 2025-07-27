@@ -49,7 +49,7 @@ export class ChallengeController {
     @Query("type") type?: ChallengeType,
     @Query("status") status?: ChallengeStatus,
     @Query("visibility") visibility?: ChallengeVisibility,
-    @Query("search") search?: string
+    @Query("search") search?: string,
   ) {
     return this.challengeService.getChallenges(
       page,
@@ -57,7 +57,7 @@ export class ChallengeController {
       type,
       status,
       visibility,
-      search
+      search,
     );
   }
 
@@ -71,7 +71,7 @@ export class ChallengeController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async getAvailableChallenges(
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<ChallengeResponseDto[]> {
     return this.challengeService.getAvailableChallenges(user.id);
   }
@@ -84,7 +84,7 @@ export class ChallengeController {
   })
   @ApiResponse({ status: 404, description: "Challenge not found" })
   async getChallengeById(
-    @Param("id") challengeId: string
+    @Param("id") challengeId: string,
   ): Promise<ChallengeResponseDto> {
     return this.challengeService.getChallengeById(challengeId);
   }
@@ -102,7 +102,7 @@ export class ChallengeController {
   @ApiResponse({ status: 409, description: "Already joined challenge" })
   async joinChallenge(
     @CurrentUser() user: User,
-    @Param("id") challengeId: string
+    @Param("id") challengeId: string,
   ): Promise<UserChallengeResponseDto> {
     return this.challengeService.joinChallenge(user.id, challengeId);
   }
@@ -119,7 +119,7 @@ export class ChallengeController {
   @ApiResponse({ status: 404, description: "User challenge not found" })
   async updateChallengeProgress(
     @CurrentUser() user: User,
-    @Param("id") challengeId: string
+    @Param("id") challengeId: string,
   ): Promise<UserChallengeResponseDto> {
     return this.challengeService.updateChallengeProgress(user.id, challengeId);
   }
@@ -143,7 +143,7 @@ export class UserChallengeController {
   async getUserChallenges(
     @CurrentUser() user: User,
     @Query("page", new ParseIntPipe({ optional: true })) page: number = 1,
-    @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20
+    @Query("limit", new ParseIntPipe({ optional: true })) limit: number = 20,
   ) {
     return this.challengeService.getUserChallenges(user.id, page, limit);
   }
@@ -159,11 +159,11 @@ export class UserChallengeController {
   @ApiResponse({ status: 409, description: "Rewards already claimed" })
   async claimChallengeRewards(
     @CurrentUser() user: User,
-    @Param("userChallengeId") userChallengeId: string
+    @Param("userChallengeId") userChallengeId: string,
   ): Promise<UserChallengeResponseDto> {
     return this.challengeService.claimChallengeRewards(
       user.id,
-      userChallengeId
+      userChallengeId,
     );
   }
 }
@@ -184,7 +184,7 @@ export class AdminChallengeController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async createChallenge(
     @CurrentUser() admin: User,
-    @Body() createDto: CreateChallengeDto
+    @Body() createDto: CreateChallengeDto,
   ): Promise<ChallengeResponseDto> {
     return this.challengeService.createChallenge(createDto, admin.id);
   }
@@ -207,7 +207,7 @@ export class AdminChallengeController {
     @Query("type") type?: ChallengeType,
     @Query("status") status?: ChallengeStatus,
     @Query("visibility") visibility?: ChallengeVisibility,
-    @Query("search") search?: string
+    @Query("search") search?: string,
   ) {
     return this.challengeService.getChallenges(
       page,
@@ -215,7 +215,7 @@ export class AdminChallengeController {
       type,
       status,
       visibility,
-      search
+      search,
     );
   }
 
@@ -228,7 +228,7 @@ export class AdminChallengeController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Challenge not found" })
   async getChallengeById(
-    @Param("id") challengeId: string
+    @Param("id") challengeId: string,
   ): Promise<ChallengeResponseDto> {
     return this.challengeService.getChallengeById(challengeId);
   }
@@ -247,7 +247,7 @@ export class AdminChallengeController {
   })
   async updateChallenge(
     @Param("id") challengeId: string,
-    @Body() updateDto: UpdateChallengeDto
+    @Body() updateDto: UpdateChallengeDto,
   ): Promise<ChallengeResponseDto> {
     return this.challengeService.updateChallenge(challengeId, updateDto);
   }
@@ -261,7 +261,7 @@ export class AdminChallengeController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Challenge not found" })
   async publishChallenge(
-    @Param("id") challengeId: string
+    @Param("id") challengeId: string,
   ): Promise<ChallengeResponseDto> {
     return this.challengeService.publishChallenge(challengeId);
   }

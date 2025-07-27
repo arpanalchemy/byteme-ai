@@ -38,7 +38,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly vechainWalletService: VeChainWalletService,
-    private readonly userWalletService: UserWalletService
+    private readonly userWalletService: UserWalletService,
   ) {}
 
   @Post("login")
@@ -160,7 +160,7 @@ export class UserController {
   @ApiResponse({ status: 404, description: "User not found" })
   async updateUserProfile(
     @CurrentUser() user: any,
-    @Body() updateDto: UpdateUserProfileDto
+    @Body() updateDto: UpdateUserProfileDto,
   ): Promise<UserProfileDto> {
     return this.userService.updateUserProfile(user.id, updateDto);
   }
@@ -187,7 +187,7 @@ export class UserController {
   @ApiResponse({ status: 201, description: "Wallet generated successfully" })
   async generateWalletFromMnemonic(
     @Body("mnemonic") mnemonic: string,
-    @Body("index") index: number = 0
+    @Body("index") index: number = 0,
   ): Promise<{
     message: string;
     wallet: Omit<VeChainWallet, "privateKey">;
@@ -195,7 +195,7 @@ export class UserController {
   }> {
     const wallet = this.vechainWalletService.generateWalletFromMnemonic(
       mnemonic,
-      index
+      index,
     );
 
     return {
@@ -225,7 +225,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: "Message signed successfully" })
   async signMessage(
     @Body("message") message: string,
-    @Body("privateKey") privateKey: string
+    @Body("privateKey") privateKey: string,
   ): Promise<{
     message: string;
     signature: string;
@@ -233,7 +233,7 @@ export class UserController {
   }> {
     const signature = this.vechainWalletService.signMessage(
       message,
-      privateKey
+      privateKey,
     );
     const wallet =
       this.vechainWalletService.generateWalletFromPrivateKey(privateKey);
@@ -251,7 +251,7 @@ export class UserController {
   async verifySignature(
     @Body("message") message: string,
     @Body("signature") signature: string,
-    @Body("address") address: string
+    @Body("address") address: string,
   ): Promise<{
     isValid: boolean;
     message: string;
@@ -259,7 +259,7 @@ export class UserController {
     const isValid = this.vechainWalletService.verifySignature(
       message,
       signature,
-      address
+      address,
     );
 
     return {
@@ -331,7 +331,7 @@ export class UserController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async signMessageWithWallet(
     @CurrentUser() user: any,
-    @Body("message") message: string
+    @Body("message") message: string,
   ): Promise<{
     message: string;
     signature: string;

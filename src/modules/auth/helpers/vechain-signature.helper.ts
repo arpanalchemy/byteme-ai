@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 import { Certificate } from "thor-devkit";
 
 @Injectable()
@@ -13,20 +13,20 @@ export class VeChainSignatureHelper {
   async verifyCertificate(signedCertificate: any): Promise<boolean> {
     try {
       this.logger.debug(
-        `Verifying certificate for signer: ${signedCertificate.signer}`
+        `Verifying certificate for signer: ${signedCertificate.signer}`,
       );
 
       // Verify the certificate using thor-devkit
       Certificate.verify(signedCertificate);
 
       this.logger.debug(
-        `Certificate verification successful for: ${signedCertificate.signer}`
+        `Certificate verification successful for: ${signedCertificate.signer}`,
       );
       return true;
     } catch (error) {
       this.logger.error(
         `Certificate verification failed for ${signedCertificate.signer}:`,
-        error.message
+        error.message,
       );
       return false;
     }
@@ -42,15 +42,15 @@ export class VeChainSignatureHelper {
   async verifySignature(
     message: string,
     signature: string,
-    walletAddress: string
+    walletAddress: string,
   ): Promise<boolean> {
     console.log(
       "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ signature:",
-      signature
+      signature,
     );
     console.log(
       "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ message:",
-      message
+      message,
     );
     try {
       this.logger.debug(`Verifying signature for wallet: ${walletAddress}`);
@@ -61,14 +61,14 @@ export class VeChainSignatureHelper {
         : signature;
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ signature:",
-        cleanSignature
+        cleanSignature,
       );
       const cleanAddress = walletAddress.startsWith("0x")
         ? walletAddress.slice(2)
         : walletAddress;
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ cleanAddress:",
-        cleanAddress
+        cleanAddress,
       );
 
       // Convert message to bytes
@@ -79,14 +79,14 @@ export class VeChainSignatureHelper {
       const messageHash = keccak256(messageBytes);
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ messageHash:",
-        messageHash
+        messageHash,
       );
 
       // Parse signature
       const signatureBuffer = Buffer.from(cleanSignature, "hex");
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ signatureBuffer:",
-        signatureBuffer
+        signatureBuffer,
       );
 
       // Extract r, s, and v from signature
@@ -98,16 +98,16 @@ export class VeChainSignatureHelper {
       const { secp256k1 } = await import("thor-devkit");
       const publicKey = secp256k1.recover(
         messageHash,
-        Buffer.concat([r, s, Buffer.from([v])])
+        Buffer.concat([r, s, Buffer.from([v])]),
       );
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ publicKey:",
-        publicKey
+        publicKey,
       );
 
       if (!publicKey) {
         this.logger.warn(
-          `Failed to recover public key from signature for wallet: ${walletAddress}`
+          `Failed to recover public key from signature for wallet: ${walletAddress}`,
         );
         return false;
       }
@@ -116,17 +116,17 @@ export class VeChainSignatureHelper {
       const publicKeyWithoutPrefix = publicKey.slice(1);
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ publicKeyWithoutPrefix:",
-        publicKeyWithoutPrefix
+        publicKeyWithoutPrefix,
       );
       const addressHash = keccak256(publicKeyWithoutPrefix);
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ addressHash:",
-        addressHash
+        addressHash,
       );
       const recoveredAddress = addressHash.slice(-20).toString("hex");
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ recoveredAddress:",
-        recoveredAddress
+        recoveredAddress,
       );
 
       // Compare addresses (case-insensitive)
@@ -134,22 +134,22 @@ export class VeChainSignatureHelper {
         recoveredAddress.toLowerCase() === cleanAddress.toLowerCase();
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ cleanAddress:",
-        cleanAddress
+        cleanAddress,
       );
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ recoveredAddress:",
-        recoveredAddress
+        recoveredAddress,
       );
 
       this.logger.debug(
-        `Signature verification result for ${walletAddress}: ${isValid}`
+        `Signature verification result for ${walletAddress}: ${isValid}`,
       );
 
       return isValid;
     } catch (error) {
       this.logger.error(
         `Error verifying signature for wallet ${walletAddress}:`,
-        error
+        error,
       );
       return false;
     }
@@ -165,30 +165,30 @@ export class VeChainSignatureHelper {
   async verifyPersonalSignature(
     message: string,
     signature: string,
-    walletAddress: string
+    walletAddress: string,
   ): Promise<boolean> {
     try {
       this.logger.debug(
-        `Verifying personal signature for wallet: ${walletAddress}`
+        `Verifying personal signature for wallet: ${walletAddress}`,
       );
 
       // VeChain personal message prefix (similar to Ethereum)
       const personalMessagePrefix = `\x19VeChain Signed Message:\n${message.length}`;
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifyPersonalSignature ~ personalMessagePrefix:",
-        personalMessagePrefix
+        personalMessagePrefix,
       );
       const prefixedMessage = message;
       console.log(
         "🚀 ~ VeChainSignatureHelper ~ verifyPersonalSignature ~ prefixedMessage:",
-        prefixedMessage
+        prefixedMessage,
       );
 
       return this.verifySignature(prefixedMessage, signature, walletAddress);
     } catch (error) {
       this.logger.error(
         `Error verifying personal signature for wallet ${walletAddress}:`,
-        error
+        error,
       );
       return false;
     }

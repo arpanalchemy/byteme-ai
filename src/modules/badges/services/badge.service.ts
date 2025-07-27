@@ -36,7 +36,7 @@ export class BadgeService {
     @InjectRepository(Vehicle)
     private readonly vehicleRepository: Repository<Vehicle>,
     @InjectRepository(OdometerUpload)
-    private readonly odometerUploadRepository: Repository<OdometerUpload>
+    private readonly odometerUploadRepository: Repository<OdometerUpload>,
   ) {}
 
   /**
@@ -44,7 +44,7 @@ export class BadgeService {
    */
   async createBadge(
     createDto: CreateBadgeDto,
-    adminId: string
+    adminId: string,
   ): Promise<BadgeResponseDto> {
     try {
       const badge = this.badgeRepository.create({
@@ -68,7 +68,7 @@ export class BadgeService {
     limit: number = 20,
     type?: BadgeType,
     status?: BadgeStatus,
-    search?: string
+    search?: string,
   ): Promise<{
     badges: BadgeResponseDto[];
     total: number;
@@ -91,7 +91,7 @@ export class BadgeService {
       if (search) {
         query.andWhere(
           "badge.name ILIKE :search OR badge.description ILIKE :search",
-          { search: `%${search}%` }
+          { search: `%${search}%` },
         );
       }
 
@@ -139,7 +139,7 @@ export class BadgeService {
    */
   async updateBadge(
     badgeId: string,
-    updateDto: UpdateBadgeDto
+    updateDto: UpdateBadgeDto,
   ): Promise<BadgeResponseDto> {
     try {
       const badge = await this.badgeRepository.findOne({
@@ -209,7 +209,7 @@ export class BadgeService {
   async getUserBadges(
     userId: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
   ): Promise<{
     userBadges: UserBadgeResponseDto[];
     total: number;
@@ -233,7 +233,7 @@ export class BadgeService {
 
       return {
         userBadges: userBadges.map((userBadge) =>
-          this.transformUserBadgeToResponse(userBadge)
+          this.transformUserBadgeToResponse(userBadge),
         ),
         total,
         page,
@@ -261,11 +261,11 @@ export class BadgeService {
 
       const earnedBadgeIds = userBadges.map((ub) => ub.badgeId);
       const availableBadges = badges.filter(
-        (badge) => !earnedBadgeIds.includes(badge.id)
+        (badge) => !earnedBadgeIds.includes(badge.id),
       );
 
       return availableBadges.map((badge) =>
-        this.transformBadgeToResponse(badge)
+        this.transformBadgeToResponse(badge),
       );
     } catch (error) {
       this.logger.error(`Failed to get available badges: ${error.message}`);
@@ -290,13 +290,13 @@ export class BadgeService {
         if (badge) {
           const meetsConditions = await this.checkBadgeConditions(
             badge,
-            userStats
+            userStats,
           );
           if (meetsConditions) {
             const awardedBadge = await this.awardBadge(
               userId,
               badge.id,
-              userStats
+              userStats,
             );
             awardedBadges.push(awardedBadge);
           }
@@ -315,7 +315,7 @@ export class BadgeService {
    */
   async claimBadgeRewards(
     userId: string,
-    userBadgeId: string
+    userBadgeId: string,
   ): Promise<UserBadgeResponseDto> {
     try {
       const userBadge = await this.userBadgeRepository.findOne({
@@ -388,7 +388,7 @@ export class BadgeService {
    */
   private async checkBadgeConditions(
     badge: Badge,
-    userStats: any
+    userStats: any,
   ): Promise<boolean> {
     const { conditions } = badge;
     if (!conditions) return false;
@@ -431,7 +431,7 @@ export class BadgeService {
   private async awardBadge(
     userId: string,
     badgeId: string,
-    userStats: any
+    userStats: any,
   ): Promise<UserBadgeResponseDto> {
     const badge = await this.badgeRepository.findOne({
       where: { id: badgeId },
@@ -505,7 +505,7 @@ export class BadgeService {
    * Transform user badge to response DTO
    */
   private transformUserBadgeToResponse(
-    userBadge: UserBadge
+    userBadge: UserBadge,
   ): UserBadgeResponseDto {
     return {
       id: userBadge.id,

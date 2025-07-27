@@ -56,7 +56,12 @@ export class ChallengeService {
   ): Promise<ChallengeResponseDto> {
     try {
       const challenge = this.challengeRepository.create({
-        ...createDto,
+        name: createDto.name,
+        description: createDto.description,
+        type: createDto.type,
+        startDate: new Date(createDto.startDate),
+        endDate: new Date(createDto.endDate),
+        imageUrl: createDto.imageUrl,
         createdBy: adminId,
       });
 
@@ -540,6 +545,10 @@ export class ChallengeService {
     userChallenge: UserChallenge
   ): Promise<any> {
     const { challenge } = userChallenge;
+    console.log(
+      "🚀 ~ ChallengeService ~ calculateChallengeRewards ~ challenge:",
+      challenge
+    );
     const rewards = { ...challenge.rewards };
 
     // Add leaderboard rewards if applicable
@@ -570,8 +579,8 @@ export class ChallengeService {
       objectives: challenge.objectives,
       rewards: challenge.rewards,
       leaderboardRewards: challenge.leaderboardRewards,
-      startDate: challenge.startDate.toISOString().split("T")[0],
-      endDate: challenge.endDate.toISOString().split("T")[0],
+      startDate: challenge.startDate as any,
+      endDate: challenge.endDate as any,
       maxParticipants: challenge.maxParticipants,
       currentParticipants: challenge.currentParticipants,
       completedParticipants: challenge.completedParticipants,
@@ -611,17 +620,8 @@ export class ChallengeService {
       rank: userChallenge.rank,
       notes: userChallenge.notes,
       isVisible: userChallenge.isVisible,
-      isCompleted: userChallenge.isCompleted,
-      isFailed: userChallenge.isFailed,
-      isAbandoned: userChallenge.isAbandoned,
-      isInProgress: userChallenge.isInProgress,
-      hasRewards: userChallenge.hasRewards,
-      isRewardsClaimed: userChallenge.isRewardsClaimed,
-      formattedRewards: userChallenge.formattedRewards,
-      progressPercentage: userChallenge.progressPercentage,
-      timeSinceJoined: userChallenge.timeSinceJoined,
-      rankDisplay: userChallenge.rankDisplay,
       createdAt: userChallenge.createdAt,
+      updatedAt: userChallenge.updatedAt,
     };
   }
 }

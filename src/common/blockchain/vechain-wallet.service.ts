@@ -61,7 +61,7 @@ export class VeChainWalletService {
    */
   generateWalletFromMnemonic(
     mnemonic: string,
-    index: number = 0
+    index: number = 0,
   ): VeChainWallet {
     try {
       // Validate mnemonic
@@ -88,7 +88,7 @@ export class VeChainWalletService {
       const address = this.publicKeyToAddress(publicKey);
 
       this.logger.log(
-        `Generated VeChain wallet from mnemonic at index ${index}: ${address}`
+        `Generated VeChain wallet from mnemonic at index ${index}: ${address}`,
       );
 
       return {
@@ -100,7 +100,7 @@ export class VeChainWalletService {
     } catch (error) {
       this.logger.error(
         "Failed to generate VeChain wallet from mnemonic:",
-        error
+        error,
       );
       throw new Error("Failed to generate VeChain wallet from mnemonic");
     }
@@ -134,7 +134,7 @@ export class VeChainWalletService {
     } catch (error) {
       this.logger.error(
         "Failed to generate VeChain wallet from private key:",
-        error
+        error,
       );
       throw new Error("Failed to generate VeChain wallet from private key");
     }
@@ -224,7 +224,7 @@ export class VeChainWalletService {
   verifySignature(
     message: string,
     signature: string,
-    address: string
+    address: string,
   ): boolean {
     try {
       const messageHash = keccak256(Buffer.from(message, "utf8"));
@@ -260,7 +260,7 @@ export class VeChainWalletService {
    */
   generateMultipleWallets(
     mnemonic: string,
-    count: number = 5
+    count: number = 5,
   ): VeChainWallet[] {
     const wallets: VeChainWallet[] = [];
 

@@ -20,6 +20,11 @@ import {
   AdminDashboardStatsDto,
   AdminUserStatsDto,
 } from "../dto/admin-dashboard.dto";
+import { RefreshTokenService } from "../../auth/services/refresh-token.service";
+import {
+  AuthResponseDto,
+  RefreshTokenResponseDto,
+} from "../../auth/dto/auth-response.dto";
 
 @Injectable()
 export class AdminService {
@@ -37,15 +42,14 @@ export class AdminService {
     @InjectRepository(OdometerUpload)
     private readonly odometerUploadRepository: Repository<OdometerUpload>,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
   /**
    * Admin login
    */
-  async adminLogin(
-    loginDto: AdminLoginDto
-  ): Promise<{ token: string; message: string }> {
+  async adminLogin(loginDto: AdminLoginDto): Promise<AuthResponseDto> {
     try {
       const { username, password } = loginDto;
 
@@ -57,25 +61,109 @@ export class AdminService {
         throw new UnauthorizedException("Invalid admin credentials");
       }
 
-      // Generate JWT token
-      const payload = {
-        sub: "admin",
+      // Create a virtual admin user for token generation
+      const adminUser = {
+        id: "admin",
         username: username,
-        role: "admin",
-      };
+        email: "admin@system.com",
+        walletAddress: "0x0000000000000000000000000000000000000000",
+        isActive: true,
+        isVerified: true,
+        totalMileage: 0,
+        totalCarbonSaved: 0,
+        totalPoints: 0,
+        currentTier: "admin" as any,
+        b3trBalance: 0,
+        profileImageUrl: null,
+      } as User;
 
-      const token = this.jwtService.sign(payload, {
-        secret: this.configService.get("JWT_SECRET"),
-        expiresIn: "24h",
-      });
+      // Generate access and refresh tokens using the refresh token service
+      const tokens = await this.refreshTokenService.generateTokens(adminUser);
 
       return {
-        token,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn,
+        refreshExpiresIn: tokens.refreshExpiresIn,
+        user: {
+          id: adminUser.id,
+          username: adminUser.username,
+          email: adminUser.email,
+          walletAddress: adminUser.walletAddress,
+          isActive: adminUser.isActive,
+          isVerified: adminUser.isVerified,
+          totalMileage: adminUser.totalMileage,
+          totalCarbonSaved: adminUser.totalCarbonSaved,
+          totalPoints: adminUser.totalPoints,
+          currentTier: adminUser.currentTier,
+          b3trBalance: adminUser.b3trBalance,
+          profileImageUrl: adminUser.profileImageUrl,
+        },
         message: "Admin login successful",
       };
     } catch (error) {
       this.logger.error("Admin login failed", error);
       throw error;
+    }
+  }
+
+  /**
+   * Refresh admin token
+   */
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponseDto> {
+    try {
+      // Create a virtual admin user for token generation
+      const _adminUser = {
+        id: "admin",
+        username: "admin",
+        email: "admin@system.com",
+        walletAddress: "0x0000000000000000000000000000000000000000",
+        isActive: true,
+        isVerified: true,
+        totalMileage: 0,
+        totalCarbonSaved: 0,
+        totalPoints: 0,
+        currentTier: "admin" as any,
+        b3trBalance: 0,
+        profileImageUrl: null,
+      } as User;
+
+      // Use the refresh token service to refresh tokens
+      const tokens =
+        await this.refreshTokenService.refreshAccessToken(refreshToken);
+
+      return {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn,
+        refreshExpiresIn: tokens.refreshExpiresIn,
+        message: "Admin token refreshed successfully",
+      };
+    } catch (error) {
+      this.logger.error("Admin token refresh failed", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Admin logout
+   */
+  async logout(refreshToken: string): Promise<{ message: string }> {
+    try {
+      // Verify the refresh token to get the token ID
+      const payload = this.jwtService.verify(refreshToken);
+
+      if (payload.jti) {
+        // Revoke the refresh token
+        await this.refreshTokenService.revokeRefreshToken(payload.jti);
+      }
+
+      return {
+        message: "Admin logged out successfully",
+      };
+    } catch (error) {
+      this.logger.error("Admin logout failed", error);
+      throw new UnauthorizedException("Invalid refresh token");
     }
   }
 
@@ -129,7 +217,7 @@ export class AdminService {
         totalEvMiles: parseFloat(userStats?.totalEvMiles || "0"),
         totalCarbonSaved: parseFloat(userStats?.totalCarbonSaved || "0"),
         totalTokensDistributed: parseFloat(
-          userStats?.totalTokensDistributed || "0"
+          userStats?.totalTokensDistributed || "0",
         ),
         weeklyRewardsDistributed,
         totalUploads,
@@ -149,7 +237,7 @@ export class AdminService {
   async getAllUsers(
     page: number = 1,
     limit: number = 20,
-    search?: string
+    search?: string,
   ): Promise<{
     users: AdminUserStatsDto[];
     total: number;
@@ -164,7 +252,7 @@ export class AdminService {
       if (search) {
         query.where(
           "user.walletAddress ILIKE :search OR user.email ILIKE :search OR user.username ILIKE :search",
-          { search: `%${search}%` }
+          { search: `%${search}%` },
         );
       }
 
@@ -235,7 +323,7 @@ export class AdminService {
    * Block/Unblock user
    */
   async toggleUserStatus(
-    userId: string
+    userId: string,
   ): Promise<{ message: string; isActive: boolean }> {
     try {
       const user = await this.userRepository.findOne({
@@ -315,7 +403,7 @@ export class AdminService {
     } catch (error) {
       this.logger.error(
         `Failed to get upload history for user ${userId}`,
-        error
+        error,
       );
       throw new BadRequestException("Failed to get user upload history");
     }

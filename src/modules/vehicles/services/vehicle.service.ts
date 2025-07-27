@@ -3,11 +3,11 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Vehicle, VehicleType } from '../entity/vehicle.entity';
-import { CreateVehicleFromUploadDto } from '../../odometer/dto/upload-odometer.dto';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Vehicle, VehicleType } from "../entity/vehicle.entity";
+import { CreateVehicleFromUploadDto } from "../../odometer/dto/upload-odometer.dto";
 import { CreateVehicleDto, UpdateVehicleDto, SearchVehicleDto } from "../dto";
 
 @Injectable()
@@ -16,7 +16,7 @@ export class VehicleService {
 
   constructor(
     @InjectRepository(Vehicle)
-    private readonly vehicleRepository: Repository<Vehicle>
+    private readonly vehicleRepository: Repository<Vehicle>,
   ) {}
 
   /**
@@ -24,7 +24,7 @@ export class VehicleService {
    */
   async createVehicle(
     userId: string,
-    createDto: CreateVehicleDto
+    createDto: CreateVehicleDto,
   ): Promise<Vehicle> {
     try {
       this.logger.log(`Creating vehicle for user: ${userId}`);
@@ -40,7 +40,7 @@ export class VehicleService {
       if (isPrimary) {
         await this.vehicleRepository.update(
           { userId, isPrimary: true },
-          { isPrimary: false }
+          { isPrimary: false },
         );
       }
 
@@ -74,7 +74,7 @@ export class VehicleService {
    */
   async createVehicleFromUpload(
     userId: string,
-    createDto: CreateVehicleFromUploadDto
+    createDto: CreateVehicleFromUploadDto,
   ): Promise<Vehicle> {
     try {
       this.logger.log(`Creating vehicle from upload for user: ${userId}`);
@@ -92,7 +92,7 @@ export class VehicleService {
       return this.createVehicle(userId, vehicleDto);
     } catch (error) {
       this.logger.error(
-        `Failed to create vehicle from upload: ${error.message}`
+        `Failed to create vehicle from upload: ${error.message}`,
       );
       throw new BadRequestException("Failed to create vehicle from upload");
     }
@@ -104,7 +104,7 @@ export class VehicleService {
   async updateVehicle(
     vehicleId: string,
     userId: string,
-    updateDto: UpdateVehicleDto
+    updateDto: UpdateVehicleDto,
   ): Promise<Vehicle> {
     try {
       this.logger.log(`Updating vehicle: ${vehicleId}`);
@@ -121,7 +121,7 @@ export class VehicleService {
       if (updateDto.isPrimary) {
         await this.vehicleRepository.update(
           { userId, isPrimary: true },
-          { isPrimary: false }
+          { isPrimary: false },
         );
       }
 
@@ -207,7 +207,7 @@ export class VehicleService {
       // Unset current primary vehicle
       await this.vehicleRepository.update(
         { userId, isPrimary: true },
-        { isPrimary: false }
+        { isPrimary: false },
       );
 
       // Set new primary vehicle
@@ -236,7 +236,7 @@ export class VehicleService {
   async updateVehicleStats(
     vehicleId: string,
     mileage: number,
-    carbonSaved: number
+    carbonSaved: number,
   ): Promise<void> {
     try {
       await this.vehicleRepository.update(vehicleId, {
@@ -260,11 +260,11 @@ export class VehicleService {
 
       const totalMileage = vehicles.reduce(
         (sum, vehicle) => sum + vehicle.totalMileage,
-        0
+        0,
       );
       const totalCarbonSaved = vehicles.reduce(
         (sum, vehicle) => sum + vehicle.totalCarbonSaved,
-        0
+        0,
       );
 
       return {
@@ -275,7 +275,7 @@ export class VehicleService {
           vehicles.length > 0
             ? vehicles.reduce(
                 (sum, vehicle) => sum + vehicle.emissionFactor,
-                0
+                0,
               ) / vehicles.length
             : 0,
       };
@@ -337,7 +337,7 @@ export class VehicleService {
    */
   async searchVehicles(
     userId: string,
-    criteria: SearchVehicleDto
+    criteria: SearchVehicleDto,
   ): Promise<{
     vehicles: Vehicle[];
     total: number;
@@ -409,7 +409,7 @@ export class VehicleService {
    */
   async getVehicleUploadHistory(
     vehicleId: string,
-    userId: string
+    userId: string,
   ): Promise<any[]> {
     try {
       // This would need to be implemented with the odometer upload repository
@@ -418,7 +418,7 @@ export class VehicleService {
       return [];
     } catch (error) {
       this.logger.error(
-        `Failed to get vehicle upload history: ${error.message}`
+        `Failed to get vehicle upload history: ${error.message}`,
       );
       return [];
     }
@@ -454,7 +454,7 @@ export class VehicleService {
    */
   async updateVehicleEmissionFactors(
     userId: string,
-    updates: Array<{ vehicleId: string; emissionFactor: number }>
+    updates: Array<{ vehicleId: string; emissionFactor: number }>,
   ): Promise<void> {
     try {
       for (const update of updates) {
@@ -463,7 +463,7 @@ export class VehicleService {
         await this.vehicleRepository.save(vehicle);
       }
       this.logger.log(
-        `Updated emission factors for ${updates.length} vehicles`
+        `Updated emission factors for ${updates.length} vehicles`,
       );
     } catch (error) {
       this.logger.error(`Failed to update emission factors: ${error.message}`);
@@ -509,7 +509,7 @@ export class VehicleService {
   async isPlateNumberUnique(
     userId: string,
     plateNumber: string,
-    excludeVehicleId?: string
+    excludeVehicleId?: string,
   ): Promise<boolean> {
     try {
       const query = this.vehicleRepository
@@ -526,7 +526,7 @@ export class VehicleService {
       return count === 0;
     } catch (error) {
       this.logger.error(
-        `Failed to check plate number uniqueness: ${error.message}`
+        `Failed to check plate number uniqueness: ${error.message}`,
       );
       return false;
     }

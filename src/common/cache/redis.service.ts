@@ -1,6 +1,6 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import Redis from 'redis';
+import { Injectable, Logger, OnModuleDestroy } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import Redis from "redis";
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
@@ -12,40 +12,40 @@ export class RedisService implements OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {
     try {
       const redisUrl = this.configService.get(
-        'REDIS_URL',
-        'redis://localhost:6379',
+        "REDIS_URL",
+        "redis://localhost:6379",
       );
-      const redisPassword = this.configService.get('REDIS_PASSWORD');
+      const redisPassword = this.configService.get("REDIS_PASSWORD");
 
       // Only create Redis client if URL is provided and not empty
-      if (redisUrl && redisUrl !== 'redis://localhost:6379') {
+      if (redisUrl && redisUrl !== "redis://localhost:6379") {
         this.redisClient = Redis.createClient({
           url: redisUrl,
           password: redisPassword,
         });
 
-        this.redisClient.on('error', (err) => {
-          this.logger.error('Redis Client Error:', err);
+        this.redisClient.on("error", (err) => {
+          this.logger.error("Redis Client Error:", err);
           this.isConnected = false;
         });
 
-        this.redisClient.on('connect', () => {
-          this.logger.log('Redis Client Connected');
+        this.redisClient.on("connect", () => {
+          this.logger.log("Redis Client Connected");
           this.isConnected = true;
         });
 
         this.redisClient.connect().catch((err) => {
-          this.logger.error('Failed to connect to Redis:', err);
+          this.logger.error("Failed to connect to Redis:", err);
           this.isConnected = false;
         });
       } else {
         this.logger.warn(
-          'Redis URL not configured, running without Redis cache',
+          "Redis URL not configured, running without Redis cache",
         );
       }
     } catch (error) {
-      console.log('🚀 ~ RedisService ~ constructor ~ error:', error);
-      this.logger.error('Failed to initialize Redis client:', error);
+      console.log("🚀 ~ RedisService ~ constructor ~ error:", error);
+      this.logger.error("Failed to initialize Redis client:", error);
       this.isConnected = false;
     }
   }
@@ -190,8 +190,8 @@ export class RedisService implements OnModuleDestroy {
    * Generate cache key from image URL
    */
   generateImageHash(imageUrl: string): string {
-    const crypto = require('crypto');
-    return crypto.createHash('md5').update(imageUrl).digest('hex');
+    const crypto = require("crypto");
+    return crypto.createHash("md5").update(imageUrl).digest("hex");
   }
 
   /**
@@ -199,15 +199,15 @@ export class RedisService implements OnModuleDestroy {
    */
   async clearAll(): Promise<void> {
     if (!this.redisClient || !this.isConnected) {
-      this.logger.debug('Redis not available, skipping cache clear');
+      this.logger.debug("Redis not available, skipping cache clear");
       return;
     }
 
     try {
       await this.redisClient.flushAll();
-      this.logger.log('All cache cleared');
+      this.logger.log("All cache cleared");
     } catch (error) {
-      this.logger.error('Failed to clear cache:', error);
+      this.logger.error("Failed to clear cache:", error);
     }
   }
 
@@ -216,22 +216,22 @@ export class RedisService implements OnModuleDestroy {
    */
   async getStats(): Promise<{ keys: number; memory: string }> {
     if (!this.redisClient || !this.isConnected) {
-      this.logger.debug('Redis not available, returning empty stats');
-      return { keys: 0, memory: 'not available' };
+      this.logger.debug("Redis not available, returning empty stats");
+      return { keys: 0, memory: "not available" };
     }
 
     try {
-      const info = await this.redisClient.info('memory');
+      const info = await this.redisClient.info("memory");
       const keys = await this.redisClient.dbSize();
 
       // Parse memory info
       const memoryMatch = info.match(/used_memory_human:(\S+)/);
-      const memory = memoryMatch ? memoryMatch[1] : 'unknown';
+      const memory = memoryMatch ? memoryMatch[1] : "unknown";
 
       return { keys, memory };
     } catch (error) {
-      this.logger.error('Failed to get cache stats:', error);
-      return { keys: 0, memory: 'unknown' };
+      this.logger.error("Failed to get cache stats:", error);
+      return { keys: 0, memory: "unknown" };
     }
   }
 
@@ -240,15 +240,15 @@ export class RedisService implements OnModuleDestroy {
    */
   async onModuleDestroy() {
     if (!this.redisClient || !this.isConnected) {
-      this.logger.debug('Redis not available, skipping cleanup');
+      this.logger.debug("Redis not available, skipping cleanup");
       return;
     }
 
     try {
       await this.redisClient.quit();
-      this.logger.log('Redis connection closed');
+      this.logger.log("Redis connection closed");
     } catch (error) {
-      this.logger.error('Error closing Redis connection:', error);
+      this.logger.error("Error closing Redis connection:", error);
     }
   }
 }

@@ -22,7 +22,7 @@ export class LeaderboardService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(OdometerUpload)
-    private readonly odometerUploadRepository: Repository<OdometerUpload>
+    private readonly odometerUploadRepository: Repository<OdometerUpload>,
   ) {}
 
   /**
@@ -33,7 +33,7 @@ export class LeaderboardService {
     page: number = 1,
     limit: number = 20,
     userId?: string,
-    sortBy: "mileage" | "carbon" | "rewards" | "points" = "mileage"
+    sortBy: "mileage" | "carbon" | "rewards" | "points" = "mileage",
   ): Promise<LeaderboardResponseDto> {
     try {
       const { periodStart, periodEnd } = this.getPeriodDates(period);
@@ -42,7 +42,7 @@ export class LeaderboardService {
       // Get user statistics for the period
       const userStats = await this.getUserStatsForPeriod(
         periodStart,
-        periodEnd
+        periodEnd,
       );
 
       // Sort by the specified criteria
@@ -90,7 +90,7 @@ export class LeaderboardService {
             uploadCount: stat.uploadCount,
             rankDisplay: this.getRankDisplay(rank),
           };
-        })
+        }),
       );
 
       // Filter out null entries
@@ -103,7 +103,7 @@ export class LeaderboardService {
           userId,
           period,
           periodStart,
-          periodEnd
+          periodEnd,
         );
       }
 
@@ -128,7 +128,7 @@ export class LeaderboardService {
    * Update leaderboard for a specific period
    */
   async updateLeaderboard(
-    period: LeaderboardPeriod = LeaderboardPeriod.WEEKLY
+    period: LeaderboardPeriod = LeaderboardPeriod.WEEKLY,
   ): Promise<void> {
     try {
       const { periodStart, periodEnd } = this.getPeriodDates(period);
@@ -136,7 +136,7 @@ export class LeaderboardService {
       // Get user statistics for the period
       const userStats = await this.getUserStatsForPeriod(
         periodStart,
-        periodEnd
+        periodEnd,
       );
 
       // Clear existing leaderboard entries for this period
@@ -178,12 +178,12 @@ export class LeaderboardService {
     userId: string,
     period: LeaderboardPeriod,
     periodStart: Date,
-    periodEnd: Date
+    periodEnd: Date,
   ): Promise<number> {
     try {
       const userStats = await this.getUserStatsForPeriod(
         periodStart,
-        periodEnd
+        periodEnd,
       );
       const userIndex = userStats.findIndex((stat) => stat.userId === userId);
 
@@ -244,7 +244,7 @@ export class LeaderboardService {
    */
   private async getUserStatsForPeriod(
     periodStart: Date,
-    periodEnd: Date
+    periodEnd: Date,
   ): Promise<any[]> {
     const stats = await this.odometerUploadRepository
       .createQueryBuilder("upload")
@@ -285,7 +285,7 @@ export class LeaderboardService {
           totalPoints: Math.floor(points),
           uploadCount: parseInt(stat.uploadCount || "0"),
         };
-      })
+      }),
     );
 
     return userStats.filter(Boolean);

@@ -7,17 +7,21 @@ import {
   ManyToOne,
   OneToMany,
   Index,
-} from 'typeorm';
-import { User } from '../../users/entity/user.entity';
+} from "typeorm";
+import { User } from "../../users/entity/user.entity";
 
 export enum VehicleType {
-  CAR = 'car',
-  SUV = 'suv',
-  MOTORCYCLE = 'motorcycle',
-  SCOOTER = 'scooter',
-  TRUCK = 'truck',
-  VAN = 'van',
-  OTHER = 'other',
+  CAR = "car",
+  SUV = "suv",
+  MOTORCYCLE = "motorcycle",
+  SCOOTER = "scooter",
+  TRUCK = "truck",
+  ELECTRIC = "electric",
+  HYBRID = "hybrid",
+  PLUGIN_HYBRID = "plugin_hybrid",
+  FUEL_CELL = "fuel_cell",
+  VAN = "van",
+  OTHER = "other",
 }
 
 @Entity("vehicles")

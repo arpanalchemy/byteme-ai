@@ -147,19 +147,31 @@ export class History {
     tags?: string[];
   };
 
-  @Column({ type: "decimal", precision: 10, scale: 2, default: 0 })
+  @Column({
+    name: "value",
+    type: "decimal",
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
   value: number; // Numeric value for sorting/filtering
 
-  @Column({ type: "decimal", precision: 10, scale: 2, default: 0 })
+  @Column({
+    name: "previous_value",
+    type: "decimal",
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
   previousValue: number; // Previous value for comparison
 
-  @Column({ default: true })
+  @Column({ name: "is_visible", default: true })
   isVisible: boolean; // Whether the history entry is visible to user
 
-  @Column({ default: false })
+  @Column({ name: "is_deleted", default: false })
   isDeleted: boolean; // Soft delete
 
-  @Column({ nullable: true })
+  @Column({ name: "deleted_at", nullable: true })
   deletedAt: Date;
 
   @Column({ type: "text", nullable: true })
@@ -209,15 +221,15 @@ export class History {
   get formattedValue(): string {
     switch (this.category) {
       case HistoryCategory.UPLOAD:
-        return `${this.value.toFixed(1)} km`;
+        return `${this.value} km`;
       case HistoryCategory.REWARDS:
-        return `${this.value.toFixed(2)} B3TR`;
+        return `${this.value} B3TR`;
       case HistoryCategory.ACHIEVEMENTS:
         return `${this.value} points`;
       case HistoryCategory.LEADERBOARD:
         return `Rank #${this.value}`;
       default:
-        return this.value.toString();
+        return this.value?.toString();
     }
   }
 

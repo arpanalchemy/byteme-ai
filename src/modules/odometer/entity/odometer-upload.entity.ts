@@ -6,58 +6,58 @@ import {
   UpdateDateColumn,
   ManyToOne,
   Index,
-} from 'typeorm';
-import { User } from '../../users/entity/user.entity';
-import { Vehicle } from '../../vehicles/entity/vehicle.entity';
+} from "typeorm";
+import { User } from "../../users/entity/user.entity";
+import { Vehicle } from "../../vehicles/entity/vehicle.entity";
 
 export enum UploadStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  REJECTED = 'rejected',
+  PENDING = "pending",
+  PROCESSING = "processing",
+  COMPLETED = "completed",
+  FAILED = "failed",
+  REJECTED = "rejected",
 }
 
 export enum ValidationStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  FLAGGED = 'flagged',
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  FLAGGED = "flagged",
 }
 
-@Entity('odometer_uploads')
+@Entity("odometer_uploads")
 export class OdometerUpload {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
   user: User;
 
   @Index()
-  @Column({ name: 'user_id' })
+  @Column({ name: "user_id" })
   userId: string;
 
-  @ManyToOne(() => Vehicle, { onDelete: 'SET NULL' })
+  @ManyToOne(() => Vehicle, { onDelete: "SET NULL" })
   vehicle: Vehicle;
 
   @Index()
-  @Column({ name: 'vehicle_id', nullable: true })
+  @Column({ name: "vehicle_id", nullable: true })
   vehicleId?: string;
 
   // Image URLs
-  @Column({ name: 's3_image_url' })
+  @Column({ name: "s3_image_url" })
   s3ImageUrl: string;
 
-  @Column({ name: 's3_thumbnail_url' })
+  @Column({ name: "s3_thumbnail_url" })
   s3ThumbnailUrl: string;
 
-  @Column({ name: 'image_hash', nullable: true })
+  @Column({ name: "image_hash", nullable: true })
   imageHash?: string;
 
   // OCR Results
   @Column({
-    name: 'extracted_mileage',
-    type: 'decimal',
+    name: "extracted_mileage",
+    type: "decimal",
     precision: 10,
     scale: 2,
     nullable: true,
@@ -65,19 +65,19 @@ export class OdometerUpload {
   extractedMileage?: number;
 
   @Column({
-    name: 'ocr_confidence_score',
-    type: 'decimal',
+    name: "ocr_confidence_score",
+    type: "decimal",
     precision: 3,
     scale: 2,
     nullable: true,
   })
   ocrConfidenceScore?: number;
 
-  @Column({ name: 'ocr_raw_text', nullable: true })
+  @Column({ name: "ocr_raw_text", nullable: true })
   ocrRawText?: string;
 
   // OpenAI Analysis
-  @Column({ name: 'openai_analysis', type: 'json', nullable: true })
+  @Column({ name: "openai_analysis", type: "json", nullable: true })
   openaiAnalysis?: {
     vehicleType: string;
     estimatedMake?: string;
@@ -89,7 +89,7 @@ export class OdometerUpload {
     vehicleFeatures: string[];
   };
 
-  @Column({ name: 'vehicle_detected', type: 'json', nullable: true })
+  @Column({ name: "vehicle_detected", type: "json", nullable: true })
   vehicleDetected?: {
     vehicleType: string;
     make?: string;
@@ -99,7 +99,7 @@ export class OdometerUpload {
     confidence: number;
   };
 
-  @Column({ name: 'ai_validation_result', type: 'json', nullable: true })
+  @Column({ name: "ai_validation_result", type: "json", nullable: true })
   aiValidationResult?: {
     isValid: boolean;
     confidence: number;
@@ -109,29 +109,30 @@ export class OdometerUpload {
 
   // Validation and Status
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: UploadStatus,
     default: UploadStatus.PENDING,
   })
   status: UploadStatus;
 
   @Column({
-    type: 'enum',
+    name: "validation_status",
+    type: "enum",
     enum: ValidationStatus,
     default: ValidationStatus.PENDING,
   })
   validationStatus: ValidationStatus;
 
-  @Column({ name: 'validation_notes', nullable: true })
+  @Column({ name: "validation_notes", nullable: true })
   validationNotes?: string;
 
-  @Column({ name: 'is_approved', default: false })
+  @Column({ name: "is_approved", default: false })
   isApproved: boolean;
 
   // Mileage and Carbon Data
   @Column({
-    name: 'final_mileage',
-    type: 'decimal',
+    name: "final_mileage",
+    type: "decimal",
     precision: 10,
     scale: 2,
     nullable: true,
@@ -139,8 +140,8 @@ export class OdometerUpload {
   finalMileage?: number;
 
   @Column({
-    name: 'mileage_difference',
-    type: 'decimal',
+    name: "mileage_difference",
+    type: "decimal",
     precision: 10,
     scale: 2,
     nullable: true,
@@ -148,8 +149,8 @@ export class OdometerUpload {
   mileageDifference?: number;
 
   @Column({
-    name: 'carbon_saved',
-    type: 'decimal',
+    name: "carbon_saved",
+    type: "decimal",
     precision: 10,
     scale: 2,
     default: 0,
@@ -157,8 +158,8 @@ export class OdometerUpload {
   carbonSaved: number;
 
   @Column({
-    name: 'emission_factor_used',
-    type: 'decimal',
+    name: "emission_factor_used",
+    type: "decimal",
     precision: 10,
     scale: 4,
     nullable: true,
@@ -166,29 +167,29 @@ export class OdometerUpload {
   emissionFactorUsed?: number;
 
   // Processing Metadata
-  @Column({ name: 'processing_time_ms', nullable: true })
+  @Column({ name: "processing_time_ms", nullable: true })
   processingTimeMs?: number;
 
-  @Column({ name: 'ocr_processing_time_ms', nullable: true })
+  @Column({ name: "ocr_processing_time_ms", nullable: true })
   ocrProcessingTimeMs?: number;
 
-  @Column({ name: 'ai_processing_time_ms', nullable: true })
+  @Column({ name: "ai_processing_time_ms", nullable: true })
   aiProcessingTimeMs?: number;
 
-  @Column({ name: 'file_size_bytes', nullable: true })
+  @Column({ name: "file_size_bytes", nullable: true })
   fileSizeBytes?: number;
 
-  @Column({ name: 'image_dimensions', nullable: true })
+  @Column({ name: "image_dimensions", nullable: true })
   imageDimensions?: string; // "1920x1080"
 
   // Timestamps
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 
-  @Column({ name: 'processed_at', nullable: true })
+  @Column({ name: "processed_at", nullable: true })
   processedAt?: Date;
 
   // Virtual properties
@@ -212,7 +213,7 @@ export class OdometerUpload {
   }
 
   get mileageFormatted(): string {
-    return this.finalMileage ? `${this.finalMileage.toFixed(1)} km` : 'N/A';
+    return this.finalMileage ? `${this.finalMileage.toFixed(1)} km` : "N/A";
   }
 
   get imageUrl(): string {

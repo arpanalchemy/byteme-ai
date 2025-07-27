@@ -35,43 +35,50 @@ export class UserWalletService {
       const existingWallet = await this.userWalletRepository.findOne({
         where: { userId },
       });
-
-      if (existingWallet) {
-        throw new Error("User already has a wallet");
-      }
-
-      // Generate new VeChain wallet
-      const wallet = this.vechainWalletService.generateWallet();
-
-      // Encrypt wallet data
-      const encryptedData = this.encryptionService.encryptWalletData({
-        mnemonic: wallet.mnemonic,
-        privateKey: wallet.privateKey,
-        publicKey: wallet.publicKey,
-      });
-
-      // Store encrypted wallet in database
-      const userWallet = this.userWalletRepository.create({
-        userId,
-        encryptedMnemonic: encryptedData.encryptedMnemonic,
-        encryptedPrivateKey: encryptedData.encryptedPrivateKey,
-        encryptedPublicKey: encryptedData.encryptedPublicKey,
-        walletAddress: wallet.address,
-        walletType: "sync2",
-        mnemonicIv: encryptedData.mnemonicIv,
-        mnemonicSalt: encryptedData.mnemonicSalt,
-        privateKeyIv: encryptedData.privateKeyIv,
-        privateKeySalt: encryptedData.privateKeySalt,
-        publicKeyIv: encryptedData.publicKeyIv,
-        publicKeySalt: encryptedData.publicKeySalt,
-        isBackedUp: false,
-      });
-
-      await this.userWalletRepository.save(userWallet);
-
-      this.logger.log(
-        `Created encrypted wallet for user ${userId}: ${wallet.address}`
+      console.log(
+        "🚀 ~ UserWalletService ~ createUserWallet ~ existingWallet:",
+        existingWallet
       );
+
+      let wallet = null;
+
+      if (!existingWallet) {
+        wallet = this.vechainWalletService.generateWallet();
+        const encryptedData = this.encryptionService.encryptWalletData({
+          mnemonic: wallet.mnemonic,
+          privateKey: wallet.privateKey,
+          publicKey: wallet.publicKey,
+        });
+        console.log(
+          "🚀 ~ UserWalletService ~ createUserWallet ~ encryptedData:",
+          encryptedData
+        );
+
+        // Store encrypted wallet in database
+        const userWallet = this.userWalletRepository.create({
+          userId,
+          encryptedMnemonic: encryptedData.encryptedMnemonic,
+          encryptedPrivateKey: encryptedData.encryptedPrivateKey,
+          encryptedPublicKey: encryptedData.encryptedPublicKey,
+          walletAddress: wallet.address,
+          walletType: "sync2",
+          mnemonicIv: encryptedData.mnemonicIv,
+          mnemonicSalt: encryptedData.mnemonicSalt,
+          privateKeyIv: encryptedData.privateKeyIv,
+          privateKeySalt: encryptedData.privateKeySalt,
+          publicKeyIv: encryptedData.publicKeyIv,
+          publicKeySalt: encryptedData.publicKeySalt,
+          isBackedUp: false,
+        });
+
+        await this.userWalletRepository.save(userWallet);
+
+        this.logger.log(
+          `Created encrypted wallet for user ${userId}: ${wallet.address}`
+        );
+      } else {
+        wallet = existingWallet;
+      }
 
       return {
         walletAddress: wallet.address,

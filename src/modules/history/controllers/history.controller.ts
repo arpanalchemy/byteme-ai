@@ -56,7 +56,7 @@ export class HistoryController {
     @Query("startDate") startDate?: string,
     @Query("endDate") endDate?: string,
     @Query("sortBy") sortBy?: string,
-    @Query("sortOrder") sortOrder?: "ASC" | "DESC"
+    @Query("sortOrder") sortOrder?: "ASC" | "DESC",
   ) {
     const query: HistoryQueryDto = {
       page,
@@ -93,7 +93,7 @@ export class HistoryController {
   @ApiResponse({ status: 404, description: "History entry not found" })
   async getHistoryById(
     @CurrentUser() user: User,
-    @Param("id") historyId: string
+    @Param("id") historyId: string,
   ): Promise<HistoryResponseDto> {
     return this.historyService.getHistoryById(historyId, user.id);
   }
@@ -107,7 +107,7 @@ export class HistoryController {
   @ApiResponse({ status: 404, description: "History entry not found" })
   async deleteHistory(
     @CurrentUser() user: User,
-    @Param("id") historyId: string
+    @Param("id") historyId: string,
   ): Promise<void> {
     return this.historyService.deleteHistory(historyId, user.id);
   }
@@ -128,7 +128,7 @@ export class AdminHistoryController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async createHistory(
-    @Body() createDto: CreateHistoryDto
+    @Body() createDto: CreateHistoryDto,
   ): Promise<HistoryResponseDto> {
     return this.historyService.createHistory(createDto);
   }
@@ -157,7 +157,7 @@ export class AdminHistoryController {
     @Query("startDate") startDate?: string,
     @Query("endDate") endDate?: string,
     @Query("sortBy") sortBy?: string,
-    @Query("sortOrder") sortOrder?: "ASC" | "DESC"
+    @Query("sortOrder") sortOrder?: "ASC" | "DESC",
   ) {
     const query: HistoryQueryDto = {
       page,
@@ -193,7 +193,7 @@ export class AdminHistoryController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "History entry not found" })
   async getHistoryById(
-    @Param("id") historyId: string
+    @Param("id") historyId: string,
   ): Promise<HistoryResponseDto> {
     return this.historyService.getHistoryById(historyId);
   }
@@ -208,7 +208,7 @@ export class AdminHistoryController {
   @ApiResponse({ status: 404, description: "History entry not found" })
   async updateHistory(
     @Param("id") historyId: string,
-    @Body() updateDto: UpdateHistoryDto
+    @Body() updateDto: UpdateHistoryDto,
   ): Promise<HistoryResponseDto> {
     return this.historyService.updateHistory(historyId, updateDto);
   }

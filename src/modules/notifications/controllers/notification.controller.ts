@@ -59,7 +59,7 @@ export class NotificationController {
     @Query("priority") priority?: NotificationPriority,
     @Query("search") search?: string,
     @Query("startDate") startDate?: string,
-    @Query("endDate") endDate?: string
+    @Query("endDate") endDate?: string,
   ) {
     const query: NotificationQueryDto = {
       page,
@@ -82,7 +82,7 @@ export class NotificationController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async getNotificationStats(
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<NotificationStatsDto> {
     return this.notificationService.getNotificationStats(user.id);
   }
@@ -97,11 +97,11 @@ export class NotificationController {
   @ApiResponse({ status: 404, description: "Notification not found" })
   async getNotificationById(
     @CurrentUser() user: User,
-    @Param("id") notificationId: string
+    @Param("id") notificationId: string,
   ): Promise<NotificationResponseDto> {
     return this.notificationService.getNotificationById(
       notificationId,
-      user.id
+      user.id,
     );
   }
 
@@ -115,7 +115,7 @@ export class NotificationController {
   @ApiResponse({ status: 404, description: "Notification not found" })
   async markAsRead(
     @CurrentUser() user: User,
-    @Param("id") notificationId: string
+    @Param("id") notificationId: string,
   ): Promise<NotificationResponseDto> {
     return this.notificationService.markAsRead(notificationId, user.id);
   }
@@ -130,7 +130,7 @@ export class NotificationController {
   @ApiResponse({ status: 404, description: "Notification not found" })
   async markAsUnread(
     @CurrentUser() user: User,
-    @Param("id") notificationId: string
+    @Param("id") notificationId: string,
   ): Promise<NotificationResponseDto> {
     return this.notificationService.markAsUnread(notificationId, user.id);
   }
@@ -145,11 +145,11 @@ export class NotificationController {
   @ApiResponse({ status: 404, description: "Notification not found" })
   async archiveNotification(
     @CurrentUser() user: User,
-    @Param("id") notificationId: string
+    @Param("id") notificationId: string,
   ): Promise<NotificationResponseDto> {
     return this.notificationService.archiveNotification(
       notificationId,
-      user.id
+      user.id,
     );
   }
 
@@ -163,11 +163,11 @@ export class NotificationController {
   @ApiResponse({ status: 404, description: "Notification not found" })
   async unarchiveNotification(
     @CurrentUser() user: User,
-    @Param("id") notificationId: string
+    @Param("id") notificationId: string,
   ): Promise<NotificationResponseDto> {
     return this.notificationService.unarchiveNotification(
       notificationId,
-      user.id
+      user.id,
     );
   }
 
@@ -190,7 +190,7 @@ export class NotificationController {
   @ApiResponse({ status: 404, description: "Notification not found" })
   async deleteNotification(
     @CurrentUser() user: User,
-    @Param("id") notificationId: string
+    @Param("id") notificationId: string,
   ): Promise<void> {
     return this.notificationService.deleteNotification(notificationId, user.id);
   }
@@ -211,7 +211,7 @@ export class AdminNotificationController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async createNotification(
-    @Body() createDto: CreateNotificationDto
+    @Body() createDto: CreateNotificationDto,
   ): Promise<NotificationResponseDto> {
     return this.notificationService.createNotification(createDto);
   }
@@ -224,7 +224,7 @@ export class AdminNotificationController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async createBulkNotifications(
-    @Body() createDto: CreateBulkNotificationDto
+    @Body() createDto: CreateBulkNotificationDto,
   ): Promise<NotificationResponseDto[]> {
     return this.notificationService.createBulkNotifications(createDto);
   }
@@ -251,7 +251,7 @@ export class AdminNotificationController {
     @Query("priority") priority?: NotificationPriority,
     @Query("search") search?: string,
     @Query("startDate") startDate?: string,
-    @Query("endDate") endDate?: string
+    @Query("endDate") endDate?: string,
   ) {
     const query: NotificationQueryDto = {
       page,
@@ -286,7 +286,7 @@ export class AdminNotificationController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Notification not found" })
   async getNotificationById(
-    @Param("id") notificationId: string
+    @Param("id") notificationId: string,
   ): Promise<NotificationResponseDto> {
     return this.notificationService.getNotificationById(notificationId);
   }
@@ -301,11 +301,11 @@ export class AdminNotificationController {
   @ApiResponse({ status: 404, description: "Notification not found" })
   async updateNotification(
     @Param("id") notificationId: string,
-    @Body() updateDto: UpdateNotificationDto
+    @Body() updateDto: UpdateNotificationDto,
   ): Promise<NotificationResponseDto> {
     return this.notificationService.updateNotification(
       notificationId,
-      updateDto
+      updateDto,
     );
   }
 

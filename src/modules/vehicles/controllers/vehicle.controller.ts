@@ -7,7 +7,7 @@ import {
   Param,
   Body,
   Query,
-  UseGuards
+  UseGuards,
 } from "@nestjs/common";
 import { ApiTags, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
@@ -18,7 +18,8 @@ import { User } from "../../users/entity/user.entity";
 import {
   CreateVehicleDto,
   UpdateVehicleDto,
-  SearchVehicleDto, VehicleSearchResponseDto
+  SearchVehicleDto,
+  VehicleSearchResponseDto,
 } from "../dto";
 
 @ApiTags("Vehicles")
@@ -37,7 +38,7 @@ export class VehicleController {
   @ApiResponse({ status: 400, description: "Invalid vehicle data" })
   async createVehicle(
     @Body() createDto: CreateVehicleDto,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<Vehicle> {
     if (!this.vehicleService.validateVehicleData(createDto)) {
       throw new Error("Invalid vehicle data");
@@ -83,7 +84,7 @@ export class VehicleController {
   })
   async searchVehicles(
     @CurrentUser() user: User,
-    @Query() criteria: SearchVehicleDto
+    @Query() criteria: SearchVehicleDto,
   ): Promise<VehicleSearchResponseDto> {
     return this.vehicleService.searchVehicles(user.id, criteria);
   }
@@ -97,7 +98,7 @@ export class VehicleController {
   @ApiResponse({ status: 404, description: "Vehicle not found" })
   async getVehicleById(
     @Param("id") vehicleId: string,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<Vehicle> {
     return this.vehicleService.getVehicleById(vehicleId, user.id);
   }
@@ -112,7 +113,7 @@ export class VehicleController {
   async updateVehicle(
     @Param("id") vehicleId: string,
     @Body() updateDto: UpdateVehicleDto,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<Vehicle> {
     return this.vehicleService.updateVehicle(vehicleId, user.id, updateDto);
   }
@@ -125,7 +126,7 @@ export class VehicleController {
   @ApiResponse({ status: 404, description: "Vehicle not found" })
   async deleteVehicle(
     @Param("id") vehicleId: string,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<{ message: string }> {
     await this.vehicleService.deleteVehicle(vehicleId, user.id);
     return { message: "Vehicle deleted successfully" };
@@ -140,7 +141,7 @@ export class VehicleController {
   @ApiResponse({ status: 404, description: "Vehicle not found" })
   async setPrimaryVehicle(
     @Param("id") vehicleId: string,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<Vehicle> {
     return this.vehicleService.setPrimaryVehicle(vehicleId, user.id);
   }
@@ -153,7 +154,7 @@ export class VehicleController {
   @ApiResponse({ status: 404, description: "Vehicle not found" })
   async getVehicleAnalytics(
     @Param("id") vehicleId: string,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ) {
     return this.vehicleService.getVehicleAnalytics(vehicleId, user.id);
   }
@@ -166,7 +167,7 @@ export class VehicleController {
   @ApiResponse({ status: 404, description: "Vehicle not found" })
   async getVehicleUploadHistory(
     @Param("id") vehicleId: string,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ) {
     return this.vehicleService.getVehicleUploadHistory(vehicleId, user.id);
   }
@@ -187,7 +188,7 @@ export class VehicleController {
   })
   async updateVehicleEmissionFactors(
     @CurrentUser() user: User,
-    @Body() updates: Array<{ vehicleId: string; emissionFactor: number }>
+    @Body() updates: Array<{ vehicleId: string; emissionFactor: number }>,
   ) {
     await this.vehicleService.updateVehicleEmissionFactors(user.id, updates);
     return { message: "Emission factors updated successfully" };
@@ -200,12 +201,12 @@ export class VehicleController {
   })
   async validatePlateNumber(
     @Param("plateNumber") plateNumber: string,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ) {
     const isValid = this.vehicleService.validatePlateNumber(plateNumber);
     const isUnique = await this.vehicleService.isPlateNumberUnique(
       user.id,
-      plateNumber
+      plateNumber,
     );
 
     return {
@@ -224,13 +225,13 @@ export class VehicleController {
   async validatePlateNumberForUpdate(
     @Param("plateNumber") plateNumber: string,
     @Param("vehicleId") vehicleId: string,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ) {
     const isValid = this.vehicleService.validatePlateNumber(plateNumber);
     const isUnique = await this.vehicleService.isPlateNumberUnique(
       user.id,
       plateNumber,
-      vehicleId
+      vehicleId,
     );
 
     return {

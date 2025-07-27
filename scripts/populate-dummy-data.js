@@ -11,239 +11,27 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD || "i!m%GpJ;x$8$vx&",
 });
 
-// Existing users from your data
-const existingUsers = [
-  {
-    id: "a944016f-ef7b-4040-b276-643f361bb257",
-    name: "AppTester",
-    email: "AppTester@mailinator.com",
-    walletAddress: "0x24573b50c8172ecb900059a2f77736f2168720de",
-    walletType: "sync2",
-    phone: null,
-    lastLoginAt: "2025-07-26 05:17:54.714000",
-    isActive: true,
-    isVerified: true,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-  {
-    id: "eb895d62-8df9-4fa2-8943-752b3d1c9b25",
-    name: "datta",
-    email: "datta@example.com",
-    walletAddress: "0x595c73ec5279a3833ba535753bfd762da6bbac1d",
-    walletType: "veworld",
-    phone: "054971554de3f7404839a85e620203ec",
-    lastLoginAt: null,
-    isActive: true,
-    isVerified: false,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-  {
-    id: "c696b12b-9b3e-4f07-9f8b-d64439c940eb",
-    name: "Demo User 1",
-    email: "demo0001@yopmail.com",
-    walletAddress: null,
-    walletType: null,
-    phone: "767913",
-    lastLoginAt: null,
-    isActive: true,
-    isVerified: false,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-  {
-    id: "9052cf3f-8326-4891-9981-c6a230a09079",
-    name: "Demo User 2",
-    email: "demo0002@yopmail.com",
-    walletAddress: null,
-    walletType: null,
-    phone: "320432",
-    lastLoginAt: null,
-    isActive: true,
-    isVerified: false,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-  {
-    id: "a3004f1b-745a-4647-8655-b56d24c6d763",
-    name: "Demo User 25",
-    email: "demo00025@yopmail.com",
-    walletAddress: "0x0d6aed50b3feafba75e3e4d9df5056ff7f8d9715",
-    walletType: "sync2",
-    phone: "342440",
-    lastLoginAt: "2025-07-25 16:46:50.220000",
-    isActive: true,
-    isVerified: true,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-  {
-    id: "9da7ca1b-bed8-4fcd-b051-9fb41e47833e",
-    name: "Dhara",
-    email: "dhara@alchemytech.ca",
-    walletAddress: "0xda40c5bedb2dbf94e0dcd69149760106422cbf11",
-    walletType: "sync2",
-    phone: null,
-    lastLoginAt: "2025-07-26 05:06:16.161000",
-    isActive: true,
-    isVerified: true,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-  {
-    id: "1517aa5a-5f4c-431a-9248-08ac453435e9",
-    name: "Demo User 26",
-    email: "demo00026@yopmail.com",
-    walletAddress: null,
-    walletType: null,
-    phone: "450569",
-    lastLoginAt: null,
-    isActive: true,
-    isVerified: false,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-  {
-    id: "207428b2-0e66-4814-ac1f-373af59944e8",
-    name: "Demo User 679",
-    email: "demo000679@yopmail.com",
-    walletAddress: "0xa1d4fcddab0d308acb3ee5c29cfa187d2d7de787",
-    walletType: "sync2",
-    phone: null,
-    lastLoginAt: "2025-07-25 17:09:02.225000",
-    isActive: true,
-    isVerified: true,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-  {
-    id: "716873d5-2af0-478b-b7d7-3ee4cc3bbfc7",
-    name: "john_doe",
-    email: "john01@yopmail.com",
-    walletAddress: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
-    walletType: "veworld",
-    phone: "75034fd819569e870d234735410a4f8f",
-    lastLoginAt: null,
-    isActive: true,
-    isVerified: false,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-  {
-    id: "52dae707-0fd3-4575-8d64-45673562fcf5",
-    name: "Non Existent User",
-    email: "nonexistent@example.com",
-    walletAddress: null,
-    walletType: null,
-    phone: null,
-    lastLoginAt: null,
-    isActive: true,
-    isVerified: false,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-  {
-    id: "c08658df-283c-4f3d-9e0c-6a007f15f76f",
-    name: "Test User",
-    email: "test@example.com",
-    walletAddress: null,
-    walletType: null,
-    phone: null,
-    lastLoginAt: null,
-    isActive: true,
-    isVerified: false,
-    tier: "bronze",
-    totalRewards: 0.0,
-    totalCarbonSaved: 0.0,
-    totalMiles: 0,
-    points: 0,
-  },
-];
+// Global variable to store created users
+let allUsers = [];
 
-// Add some new users for variety
-const newUsers = [
-  {
-    id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
-    walletType: "veworld",
-    phone: "1234567890",
-    lastLoginAt: new Date().toISOString(),
-    isActive: true,
-    isVerified: true,
-    tier: "silver",
-    totalRewards: 150.5,
-    totalCarbonSaved: 25.75,
-    totalMiles: 1250,
-    points: 1250,
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440000",
-    name: "Bob Smith",
-    email: "bob@example.com",
-    walletAddress: "0xabcdef1234567890abcdef1234567890abcdef12",
-    walletType: "sync2",
-    phone: "0987654321",
-    lastLoginAt: new Date().toISOString(),
-    isActive: true,
-    isVerified: true,
-    tier: "gold",
-    totalRewards: 320.75,
-    totalCarbonSaved: 45.2,
-    totalMiles: 2800,
-    points: 2800,
-  },
-  {
-    id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-    name: "Carol Davis",
-    email: "carol@example.com",
-    walletAddress: "0x9876543210fedcba9876543210fedcba98765432",
-    walletType: "veworld",
-    phone: "5551234567",
-    lastLoginAt: new Date().toISOString(),
-    isActive: true,
-    isVerified: true,
-    tier: "platinum",
-    totalRewards: 750.25,
-    totalCarbonSaved: 85.5,
-    totalMiles: 5200,
-    points: 5200,
-  },
-];
+// Function to create users
+async function fetchUsers(client) {
+  console.log("👥 Fetching existing users...");
 
-const allUsers = [...existingUsers, ...newUsers];
+  const result = await client.query(
+    `
+      SELECT id, username, email, wallet_address, wallet_type, nonce, email_otp, 
+             last_login, is_active, is_verified, profile_image_url, total_mileage, 
+             total_carbon_saved, total_points, current_tier, b3tr_balance, 
+             created_at, updated_at
+      FROM users
+      ORDER BY created_at DESC
+    `
+  );
+
+  allUsers.push(...result.rows);
+  console.log(`✅ Fetched ${allUsers.length} existing users`);
+}
 
 async function populateDatabase() {
   const client = await pool.connect();
@@ -251,34 +39,8 @@ async function populateDatabase() {
   try {
     console.log("🚀 Starting database population...");
 
-    // Update existing users with realistic data
-    for (const user of allUsers) {
-      await client.query(
-        `
-        UPDATE users 
-        SET 
-          username = $1,
-          current_tier = $2,
-          b3tr_balance = $3,
-          total_carbon_saved = $4,
-          total_mileage = $5,
-          total_points = $6,
-          updated_at = NOW()
-        WHERE id = $7
-      `,
-        [
-          user.name,
-          user.tier,
-          user.totalRewards,
-          user.totalCarbonSaved,
-          user.totalMiles,
-          user.points,
-          user.id,
-        ]
-      );
-    }
-
-    console.log("✅ Updated existing users with realistic data");
+    // Create users first
+    await fetchUsers(client);
 
     // // Create vehicles for users
     // await createVehicles(client);
@@ -296,7 +58,7 @@ async function populateDatabase() {
     // await createBadges(client);
 
     // Create user badges
-    await createUserBadges(client);
+    // await createUserBadges(client);
 
     // // Create challenges
     // await createChallenges(client);
@@ -314,7 +76,10 @@ async function populateDatabase() {
     // await createRewards(client);
 
     // // Update leaderboard
-    // await updateLeaderboard(client);
+    await updateLeaderboard(client);
+
+    // // Create user wallets
+    // await createUserWallets(client);
 
     console.log("🎉 Database population completed successfully!");
   } catch (error) {
@@ -351,7 +116,7 @@ async function createVehicles(client) {
       await client.query(
         `
         INSERT INTO vehicles (
-          id, user_id, make, model, "vehicleType", fuel_type, plate_number, vin, 
+          id, user_id, make, model, vehicle_type, fuel_type, plate_number, vin, 
           battery_capacity, insurance_info, maintenance_info, 
           is_primary, created_at, updated_at
         ) VALUES (
@@ -411,16 +176,24 @@ async function createOdometerUploads(client) {
       const mileage = Math.floor(Math.random() * 50000) + 1000; // 1000-51000 miles
       const carbonSaved = mileage * 0.4; // 0.4 kg CO2 per mile saved
       const confidence = Math.random() * 0.3 + 0.7; // 70-100% confidence
+      const status = confidence > 0.8 ? "completed" : "pending";
+      const validationStatus = confidence > 0.8 ? "approved" : "pending";
+
+      // Get a random vehicle for this user
+      const vehicleResult = await client.query(
+        `SELECT id FROM vehicles WHERE user_id = $1 ORDER BY RANDOM() LIMIT 1`,
+        [user.id]
+      );
+      const vehicleId =
+        vehicleResult.rows.length > 0 ? vehicleResult.rows[0].id : null;
 
       await client.query(
         `
         INSERT INTO odometer_uploads (
           id, user_id, s3_image_url, s3_thumbnail_url, extracted_mileage, carbon_saved, ocr_confidence_score,
-          status, "validationStatus", vehicle_id, validation_notes, created_at, updated_at
+          status, validation_status, vehicle_id, validation_notes, created_at, updated_at
         ) VALUES (
-          gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8,
-          (SELECT id FROM vehicles WHERE user_id = $1 LIMIT 1), 
-          $9, NOW(), NOW()
+          gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()
         )
       `,
         [
@@ -430,8 +203,9 @@ async function createOdometerUploads(client) {
           mileage,
           carbonSaved,
           confidence,
-          confidence > 0.8 ? "completed" : "pending",
-          confidence > 0.8 ? "approved" : "pending",
+          status,
+          validationStatus,
+          vehicleId,
           `Upload ${i + 1} for ${user.name}`,
         ]
       );
@@ -447,7 +221,7 @@ async function createProducts(client) {
       name: "Eco-Friendly Water Bottle",
       description: "Reusable stainless steel water bottle",
       price: 25.0,
-      category: "lifestyle",
+      category: "clothing",
       stock: 100,
       image_url: "https://example.com/products/water-bottle.jpg",
     },
@@ -463,7 +237,7 @@ async function createProducts(client) {
       name: "Bamboo Toothbrush Set",
       description: "Pack of 4 biodegradable bamboo toothbrushes",
       price: 15.0,
-      category: "lifestyle",
+      category: "clothing",
       stock: 200,
       image_url: "https://example.com/products/bamboo-toothbrush.jpg",
     },
@@ -479,7 +253,7 @@ async function createProducts(client) {
       name: "Organic Cotton Tote Bag",
       description: "Reusable shopping bag made from organic cotton",
       price: 12.0,
-      category: "lifestyle",
+      category: "clothing",
       stock: 150,
       image_url: "https://example.com/products/tote-bag.jpg",
     },
@@ -684,7 +458,7 @@ async function createUserBadges(client) {
           id, user_id, badge_id, earned_data, rewards, rewards_claimed, claimed_at,
           notes, is_visible, created_at, updated_at
         ) VALUES (
-          gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW()
+          gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()
         )
       `,
         [
@@ -705,9 +479,8 @@ async function createUserBadges(client) {
           }),
           rewardsClaimed,
           rewardsClaimed ? earnedDate : null,
-          `Earned by ${user.name} for their achievements`,
+          `Earned by ${user.username || user.name} for their achievements`,
           true,
-          earnedDate,
         ]
       );
     }
@@ -948,13 +721,25 @@ async function createNotifications(client) {
 async function createHistoryEntries(client) {
   const users = allUsers.slice(0, 8); // First 8 users
   const historyTypes = [
+    "vehicle_upload",
+    "reward_earned",
+    "badge_earned",
+    "challenge_completed",
+    "order_placed",
+    "vehicle_added",
+    "leaderboard_rank",
+    "milestone_reached",
+  ];
+
+  const historyCategories = [
     "upload",
-    "reward",
-    "badge",
-    "challenge",
-    "order",
-    "vehicle",
+    "rewards",
+    "achievements",
+    "challenges",
+    "orders",
+    "vehicles",
     "leaderboard",
+    "system",
   ];
 
   for (const user of users) {
@@ -963,25 +748,39 @@ async function createHistoryEntries(client) {
     for (let i = 0; i < numEntries; i++) {
       const type =
         historyTypes[Math.floor(Math.random() * historyTypes.length)];
+      const category =
+        historyCategories[Math.floor(Math.random() * historyCategories.length)];
+      const value = Math.floor(Math.random() * 1000) + 10;
+      const previousValue = Math.floor(Math.random() * 1000) + 5;
+
+      const data = {
+        activity: type,
+        timestamp: new Date().toISOString(),
+        userId: user.id,
+        value: value,
+        previousValue: previousValue,
+      };
 
       await client.query(
         `
         INSERT INTO history (
-          id, user_id, type, title, description, metadata,
-          created_at, updated_at
+          id, user_id, type, category, title, description, data, value, previous_value,
+          is_visible, is_deleted, created_at, updated_at
         ) VALUES (
-          gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW()
+          gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()
         )
       `,
         [
           user.id,
           type,
-          `${type.charAt(0).toUpperCase() + type.slice(1)} Activity`,
-          `User performed ${type} activity`,
-          JSON.stringify({
-            activity: type,
-            timestamp: new Date().toISOString(),
-          }),
+          category,
+          `${type.replace(/_/g, " ").toUpperCase()} for ${user.username}`,
+          `User performed ${type.replace(/_/g, " ")} activity`,
+          JSON.stringify(data),
+          value,
+          previousValue,
+          true, // is_visible
+          false, // is_deleted
         ]
       );
     }
@@ -1199,17 +998,6 @@ async function updateLeaderboard(client) {
         ) VALUES (
           gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
         )
-        ON CONFLICT (user_id, period) DO UPDATE SET
-          total_mileage = $3,
-          total_carbon_saved = $4,
-          total_rewards = $5,
-          total_points = $6,
-          upload_count = $7,
-          rank = $8,
-          period_start = $9,
-          period_end = $10,
-          is_active = $11,
-          updated_at = NOW()
       `,
         [
           user.id,
@@ -1229,6 +1017,106 @@ async function updateLeaderboard(client) {
   }
 
   console.log("✅ Updated leaderboard");
+}
+
+async function createUserWallets(client) {
+  const users = allUsers.slice(0, 10); // First 10 users
+  const walletTypes = [
+    "sync2",
+    "veworld",
+    "metamask",
+    "trust_wallet",
+    "coinbase_wallet",
+  ];
+
+  for (const user of users) {
+    const hasWallet = Math.random() > 0.3; // 70% chance of having a wallet
+    const walletType =
+      walletTypes[Math.floor(Math.random() * walletTypes.length)];
+    const isBackedUp = Math.random() > 0.4; // 60% chance of being backed up
+
+    // Generate wallet address if user has wallet
+    const walletAddress = hasWallet
+      ? "0x" + Math.random().toString(16).substring(2, 42)
+      : null;
+
+    // Generate encrypted data if wallet exists
+    const encryptedMnemonic = hasWallet
+      ? "encrypted_mnemonic_" + Math.random().toString(36).substring(2)
+      : null;
+    const encryptedPrivateKey = hasWallet
+      ? "encrypted_private_key_" + Math.random().toString(36).substring(2)
+      : null;
+    const encryptedPublicKey = hasWallet
+      ? "encrypted_public_key_" + Math.random().toString(36).substring(2)
+      : null;
+
+    // Generate IV and salt values
+    const mnemonicIv = hasWallet
+      ? "iv_" + Math.random().toString(36).substring(2, 18)
+      : null;
+    const mnemonicSalt = hasWallet
+      ? "salt_" + Math.random().toString(36).substring(2, 18)
+      : null;
+    const privateKeyIv = hasWallet
+      ? "iv_" + Math.random().toString(36).substring(2, 18)
+      : null;
+    const privateKeySalt = hasWallet
+      ? "salt_" + Math.random().toString(36).substring(2, 18)
+      : null;
+    const publicKeyIv = hasWallet
+      ? "iv_" + Math.random().toString(36).substring(2, 18)
+      : null;
+    const publicKeySalt = hasWallet
+      ? "salt_" + Math.random().toString(36).substring(2, 18)
+      : null;
+
+    await client.query(
+      `
+      INSERT INTO user_wallets (
+        id, user_id, encrypted_mnemonic, encrypted_private_key, encrypted_public_key,
+        wallet_address, wallet_type, mnemonic_iv, mnemonic_salt, private_key_iv,
+        private_key_salt, public_key_iv, public_key_salt, is_backed_up, backed_up_at,
+        created_at, updated_at
+      ) VALUES (
+        gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
+      )
+      ON CONFLICT (user_id) DO UPDATE SET
+        encrypted_mnemonic = $2,
+        encrypted_private_key = $3,
+        encrypted_public_key = $4,
+        wallet_address = $5,
+        wallet_type = $6,
+        mnemonic_iv = $7,
+        mnemonic_salt = $8,
+        private_key_iv = $9,
+        private_key_salt = $10,
+        public_key_iv = $11,
+        public_key_salt = $12,
+        is_backed_up = $13,
+        backed_up_at = $14,
+        updated_at = NOW()
+    `,
+      [
+        user.id,
+        encryptedMnemonic,
+        encryptedPrivateKey,
+        encryptedPublicKey,
+        walletAddress,
+        walletType,
+        mnemonicIv,
+        mnemonicSalt,
+        privateKeyIv,
+        privateKeySalt,
+        publicKeyIv,
+        publicKeySalt,
+        isBackedUp,
+        isBackedUp ? new Date().toISOString() : null,
+      ]
+    );
+  }
+
+  console.log("✅ Created user wallets");
 }
 
 // Run the population script

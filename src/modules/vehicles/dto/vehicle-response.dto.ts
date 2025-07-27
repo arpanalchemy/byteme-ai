@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { VehicleType } from '../entity/vehicle.entity';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { VehicleType } from "../entity/vehicle.entity";
 
 export class VehicleResponseDto {
   @ApiProperty({
@@ -114,25 +114,25 @@ export class VehicleResponseDto {
 
 export class VehicleStatsResponseDto {
   @ApiProperty({
-    description: 'Total number of vehicles',
+    description: "Total number of vehicles",
     example: 3,
   })
   totalVehicles: number;
 
   @ApiProperty({
-    description: 'Total mileage across all vehicles',
+    description: "Total mileage across all vehicles",
     example: 45000.5,
   })
   totalMileage: number;
 
   @ApiProperty({
-    description: 'Total carbon saved across all vehicles',
+    description: "Total carbon saved across all vehicles",
     example: 9000.3,
   })
   totalCarbonSaved: number;
 
   @ApiProperty({
-    description: 'Average emission factor across all vehicles',
+    description: "Average emission factor across all vehicles",
     example: 0.22,
   })
   averageEmissionFactor: number;
@@ -140,26 +140,26 @@ export class VehicleStatsResponseDto {
 
 export class VehicleSearchResponseDto {
   @ApiProperty({
-    description: 'List of vehicles matching search criteria',
+    description: "List of vehicles matching search criteria",
     type: [VehicleResponseDto],
   })
   vehicles: VehicleResponseDto[];
 
   @ApiProperty({
-    description: 'Total count of matching vehicles',
+    description: "Total count of matching vehicles",
     example: 5,
   })
   total: number;
 
   @ApiProperty({
-    description: 'Current page number',
+    description: "Current page number",
     example: 1,
   })
   page: number;
 
   @ApiProperty({
-    description: 'Number of items per page',
+    description: "Number of items per page",
     example: 10,
   })
   limit: number;
-} 
+}

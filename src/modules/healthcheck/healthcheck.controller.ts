@@ -1,6 +1,6 @@
-import { Controller, Get, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpStatus } from "@nestjs/common";
 
-@Controller('healthcheck')
+@Controller("healthcheck")
 export class HealthcheckController {
   private startTime: number;
 
@@ -12,23 +12,23 @@ export class HealthcheckController {
   healthCheck() {
     try {
       const response = {
-        status: 'healthy',
+        status: "healthy",
         statusCode: HttpStatus.OK,
         timestamp: new Date().toISOString(),
         uptime: (Date.now() - this.startTime) / 1000,
-        environment: process.env.NODE_ENV || 'development',
-        version: process.env.npm_package_version || '1.0.0',
-        port: process.env.PORT || '3031'
+        environment: process.env.NODE_ENV || "development",
+        version: process.env.npm_package_version || "1.0.0",
+        port: process.env.PORT || "3031",
       };
-      console.log('Health check response:', response);
+      console.log("Health check response:", response);
       return response;
     } catch (error) {
-      console.error('Health check failed:', error);
+      console.error("Health check failed:", error);
       return {
-        status: 'unhealthy',
+        status: "unhealthy",
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     }
   }

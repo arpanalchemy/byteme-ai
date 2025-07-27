@@ -213,7 +213,7 @@ export class Challenge {
     if (this.maxParticipants === 0) return 0;
     return Math.min(
       (this.currentParticipants / this.maxParticipants) * 100,
-      100
+      100,
     );
   }
 
