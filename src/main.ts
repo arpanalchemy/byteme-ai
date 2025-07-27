@@ -52,7 +52,7 @@ async function bootstrap() {
 
     const port = process.env.PORT || 3000;
     await app.listen(port, "0.0.0.0");
-    console.log(`✅ Application successfully listening on port ${port}`);
+    console.log(`✅ Application successfully listening on port: ${port}`);
     console.log(`🚗 Drive & Earn API is running on: http://localhost:${port}`);
     console.log(`📚 API Documentation (UI): http://localhost:${port}/api`);
     console.log(
