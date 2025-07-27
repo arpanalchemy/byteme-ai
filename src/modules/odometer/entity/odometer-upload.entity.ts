@@ -34,8 +34,8 @@ export class OdometerUpload {
   user: User;
 
   @Index()
-  @Column({ name: "user_id" })
-  userId: string;
+  @Column({ name: "user_id", nullable: true })
+  userId?: string;
 
   @ManyToOne(() => Vehicle, { onDelete: "SET NULL" })
   vehicle: Vehicle;

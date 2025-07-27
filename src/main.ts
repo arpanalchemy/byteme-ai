@@ -7,13 +7,9 @@ async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule);
 
-    // Enable CORS with specific origins
-    const allowedOrigins = process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(",")
-      : ["http://localhost:3000", "http://localhost:3001"];
-
+    // Enable CORS with specific origin
     app.enableCors({
-      origin: allowedOrigins,
+      origin: "*",
       methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
       credentials: true,
     });
@@ -27,7 +23,7 @@ async function bootstrap() {
         transformOptions: {
           enableImplicitConversion: true,
         },
-      }),
+      })
     );
 
     // Swagger documentation
@@ -60,7 +56,7 @@ async function bootstrap() {
     console.log(`🚗 Drive & Earn API is running on: http://localhost:${port}`);
     console.log(`📚 API Documentation (UI): http://localhost:${port}/api`);
     console.log(
-      `📄 API Documentation (JSON): http://localhost:${port}/api-json`,
+      `📄 API Documentation (JSON): http://localhost:${port}/api-json`
     );
     console.log(`🏥 Health Check: http://localhost:${port}/healthcheck`);
     console.log(`🎉 Application startup completed successfully!`);
