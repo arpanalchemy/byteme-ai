@@ -138,6 +138,7 @@ export class UserService {
           walletAddress: null,
           isActive: true,
           isVerified: false,
+          emailVerified: false,
         });
       } else {
         // Update existing user's OTP
@@ -190,9 +191,23 @@ export class UserService {
         throw new BadRequestException("Invalid OTP");
       }
 
-      // Clear OTP
+      const isNewUser = !user.emailVerified;
+
+      // Clear OTP and mark email as verified
       user.emailOtp = undefined;
+      user.emailVerified = true;
       await this.userRepository.save(user);
+
+      // Send welcome email for new users after successful verification
+      if (isNewUser) {
+        await this.sendEmail(
+          email,
+          "Welcome to B3TR EV Rewards! 🌱",
+          EmailTemplates.getWelcomeEmailTemplate({
+            configService: this.configService,
+          })
+        );
+      }
 
       // Generate tokens
       const payload = {

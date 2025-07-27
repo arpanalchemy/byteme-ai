@@ -255,4 +255,45 @@ export class EmailTemplates {
 
     return EmailTemplates.getBaseTemplate().replace('{{content}}', content);
   }
+
+  public static getWelcomeEmailTemplate({ configService }: EmailTemplateProps) {
+    const content = `
+      <div class="header">
+        <h1 class="header-title">Welcome to B3TR EV Rewards!</h1>
+      </div>
+      
+      <div class="content">
+        <h2 class="title">Start Your Sustainable Journey</h2>
+        <p class="message">
+          Thank you for joining B3TR EV Rewards! We're excited to have you as part of our community of electric vehicle enthusiasts making a positive impact on the environment.
+        </p>
+
+        <div class="sustainability-icons">
+          🌱 🚗 ⚡
+        </div>
+
+        <p class="message">
+          With B3TR EV Rewards, you can:
+          <ul style="list-style-type: none; padding: 0;">
+            <li style="margin: 10px 0;">✅ Track your EV miles</li>
+            <li style="margin: 10px 0;">🌍 Monitor your carbon savings</li>
+            <li style="margin: 10px 0;">💰 Earn rewards for sustainable driving</li>
+            <li style="margin: 10px 0;">🏆 Compete on our global leaderboard</li>
+          </ul>
+        </p>
+
+        <p class="eco-message">
+          Together, we're driving towards a greener future! 🌿
+        </p>
+      </div>
+
+      <div class="footer">
+        <p>This is an automated message, please do not reply.</p>
+        <p>For any questions or support, please contact our team.</p>
+        <p>&copy; ${new Date().getFullYear()} B3TR - Powered by VeChain</p>
+      </div>
+    `;
+
+    return EmailTemplates.getBaseTemplate().replace('{{content}}', content);
+  }
 } 

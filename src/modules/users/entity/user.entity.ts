@@ -42,6 +42,9 @@ export class User {
   @Column({ name: 'is_verified', default: false })
   isVerified: boolean;
 
+  @Column({ name: 'email_verified', default: false })
+  emailVerified: boolean;
+
   @Column({ name: 'profile_image_url', nullable: true })
   profileImageUrl?: string;
 
@@ -92,6 +95,7 @@ export class User {
       walletAddress: this.walletAddress || null,
       isActive: this.isActive,
       isVerified: this.isVerified,
+      emailVerified: this.emailVerified,
     };
   }
 }
