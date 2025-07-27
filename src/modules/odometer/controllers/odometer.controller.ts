@@ -21,6 +21,8 @@ import {
 } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../../../common/decorators/current-user.decorator";
+import { OptionalCurrentUser } from "../../../common/decorators/optional-current-user.decorator";
+import { OptionalAuthGuard } from "../../../common/guards/optional-auth.guard";
 import { OdometerService } from "../services/odometer.service";
 import { VehicleService } from "../../vehicles/services/vehicle.service";
 import {
@@ -36,16 +38,15 @@ import { Public } from "src/common/decorators/public.decorator";
 
 @ApiTags("Odometer")
 @Controller("odometer")
-// @UseGuards(JwtAuthGuard)
-// @ApiBearerAuth()
 export class OdometerController {
   constructor(
     private readonly odometerService: OdometerService,
-    private readonly vehicleService: VehicleService,
+    private readonly vehicleService: VehicleService
   ) {}
 
-  @Public()
   @Post("upload")
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
   @UseInterceptors(
     FileInterceptor("image", {
       limits: {
@@ -59,7 +60,7 @@ export class OdometerController {
           callback(new BadRequestException("Invalid file type"), false);
         }
       },
-    }),
+    })
   )
   @ApiConsumes("multipart/form-data")
   @ApiBody({
@@ -88,21 +89,28 @@ export class OdometerController {
     type: ProcessingResultDto,
   })
   @ApiResponse({ status: 400, description: "Invalid file or data" })
-  // @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized (only if invalid token provided)",
+  })
   async uploadOdometer(
     @UploadedFile() file: Express.Multer.File,
     @Body() uploadDto: UploadOdometerDto,
-    // @CurrentUser() user: User,
+    @OptionalCurrentUser() user: User | null
   ): Promise<ProcessingResultDto> {
-    console.log("1:03:21 PM");
+    console.log("1:03:21 PM", user);
     if (!file) {
       throw new BadRequestException("No image file provided");
     }
 
-    return this.odometerService.uploadOdometer(file, "1", uploadDto);
+    // If user is authenticated, use their ID, otherwise pass null
+    const userId = user?.id || null;
+    return this.odometerService.uploadOdometer(file, userId, uploadDto);
   }
 
   @Post("process")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiBody({ type: ProcessOdometerDto })
   @ApiResponse({
     status: 201,
@@ -111,7 +119,7 @@ export class OdometerController {
   })
   async processOdometer(
     @Body() processDto: ProcessOdometerDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User
   ): Promise<ProcessingResultDto> {
     // This endpoint would handle processing of already uploaded images
     // Implementation would be similar to upload but without file handling
@@ -119,6 +127,8 @@ export class OdometerController {
   }
 
   @Post("upload/:uploadId/vehicle")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiBody({ type: CreateVehicleFromUploadDto })
   @ApiResponse({
     status: 201,
@@ -127,12 +137,12 @@ export class OdometerController {
   async createVehicleFromUpload(
     @Param("uploadId") uploadId: string,
     @Body() createVehicleDto: CreateVehicleFromUploadDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User
   ) {
     // Create new vehicle based on upload analysis
     const vehicle = await this.vehicleService.createVehicle(
       user.id,
-      createVehicleDto,
+      createVehicleDto
     );
 
     // Update upload with new vehicle
@@ -142,6 +152,8 @@ export class OdometerController {
   }
 
   @Get("uploads")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiResponse({
     status: 200,
     description: "User uploads retrieved successfully",
@@ -150,26 +162,34 @@ export class OdometerController {
   async getUserUploads(
     @CurrentUser() user: User,
     @Query("limit", ParseIntPipe) limit = 20,
-    @Query("offset", ParseIntPipe) offset = 0,
+    @Query("offset", ParseIntPipe) offset = 0
   ) {
     return this.odometerService.getUserUploads(user.id, limit, offset);
   }
-  @Public()
+
   @Get("uploads/:uploadId")
+  @UseGuards(OptionalAuthGuard)
+  @ApiBearerAuth()
   @ApiResponse({
     status: 200,
     description: "Upload details retrieved successfully",
     type: OdometerUploadResponseDto,
   })
   @ApiResponse({ status: 404, description: "Upload not found" })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized (only if invalid token provided)",
+  })
   async getUploadById(
     @Param("uploadId") uploadId: string,
-    @CurrentUser() user?: User,
+    @OptionalCurrentUser() user: User | null
   ) {
     return this.odometerService.getUploadById(uploadId, user?.id);
   }
 
   @Get("stats")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiResponse({
     status: 200,
     description: "User upload statistics",

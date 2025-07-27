@@ -396,10 +396,39 @@ export class ChallengeService {
       ) {
         userChallenge.status = UserChallengeStatus.COMPLETED;
         userChallenge.completedAt = new Date();
+        
+        // Calculate and assign rewards
+        const calculatedRewards = await this.calculateChallengeRewards(userChallenge);
+        userChallenge.rewards = calculatedRewards;
+        
+        this.logger.log(`Challenge completed! User: ${userId}, Challenge: ${challengeId}, Rewards: ${JSON.stringify(calculatedRewards)}`);
       }
 
       const updatedUserChallenge =
         await this.userChallengeRepository.save(userChallenge);
+
+      // If challenge was just completed, calculate rankings for all participants
+      if (isCompleted && userChallenge.status === UserChallengeStatus.COMPLETED) {
+        try {
+          await this.calculateChallengeRankings(challengeId);
+          
+          // Update the user challenge with their final rank
+          const finalUserChallenge = await this.userChallengeRepository.findOne({
+            where: { userId, challengeId },
+          });
+          if (finalUserChallenge && finalUserChallenge.rank) {
+            // Recalculate rewards with the final rank
+            const finalRewards = await this.calculateChallengeRewards(finalUserChallenge);
+            finalUserChallenge.rewards = finalRewards;
+            await this.userChallengeRepository.save(finalUserChallenge);
+            
+            this.logger.log(`Final rewards calculated with rank ${finalUserChallenge.rank}: ${JSON.stringify(finalRewards)}`);
+          }
+        } catch (rankingError) {
+          this.logger.error(`Failed to calculate rankings: ${rankingError.message}`);
+          // Don't fail the entire operation if ranking calculation fails
+        }
+      }
 
       return this.transformUserChallengeToResponse(updatedUserChallenge);
     } catch (error) {
@@ -539,25 +568,382 @@ export class ChallengeService {
   }
 
   /**
-   * Calculate challenge rewards
+   * Calculate challenge rewards including leaderboard rewards
    */
   private async calculateChallengeRewards(
     userChallenge: UserChallenge
   ): Promise<any> {
-    const { challenge } = userChallenge;
-    console.log(
-      "🚀 ~ ChallengeService ~ calculateChallengeRewards ~ challenge:",
-      challenge
-    );
-    const rewards = { ...challenge.rewards };
+    const { challenge, progress, rank } = userChallenge;
 
-    // Add leaderboard rewards if applicable
-    if (challenge.leaderboardRewards) {
-      // This would need to be calculated based on final rankings
-      // For now, just return the base rewards
+    this.logger.log(
+      `Calculating rewards for challenge: ${challenge.name}, User: ${userChallenge.userId}, Rank: ${rank}`
+    );
+
+    // Start with base rewards and extend with leaderboard properties
+    const rewards: any = { ...challenge.rewards };
+
+    // Calculate completion bonus based on progress
+    const completionBonus = this.calculateCompletionBonus(challenge, progress);
+    if (completionBonus.b3trTokens > 0) {
+      rewards.b3trTokens =
+        (rewards.b3trTokens || 0) + completionBonus.b3trTokens;
+    }
+    if (completionBonus.points > 0) {
+      rewards.points = (rewards.points || 0) + completionBonus.points;
+    }
+    if (completionBonus.experience > 0) {
+      rewards.experience =
+        (rewards.experience || 0) + completionBonus.experience;
     }
 
+    // Calculate leaderboard rewards if user has a rank
+    if (rank && challenge.leaderboardRewards) {
+      const leaderboardReward = this.calculateLeaderboardReward(
+        challenge,
+        rank
+      );
+      if (leaderboardReward.b3trTokens > 0) {
+        rewards.b3trTokens =
+          (rewards.b3trTokens || 0) + leaderboardReward.b3trTokens;
+      }
+      if (leaderboardReward.points > 0) {
+        rewards.points = (rewards.points || 0) + leaderboardReward.points;
+      }
+      if (leaderboardReward.experience > 0) {
+        rewards.experience =
+          (rewards.experience || 0) + leaderboardReward.experience;
+      }
+
+      // Store leaderboard reward details
+      rewards.leaderboardRank = rank;
+      rewards.leaderboardReward = leaderboardReward;
+    }
+
+    // Calculate difficulty multiplier
+    const difficultyMultiplier = this.getDifficultyMultiplier(
+      challenge.difficulty
+    );
+    if (difficultyMultiplier > 1) {
+      rewards.b3trTokens = Math.floor(
+        (rewards.b3trTokens || 0) * difficultyMultiplier
+      );
+      rewards.points = Math.floor((rewards.points || 0) * difficultyMultiplier);
+      rewards.experience = Math.floor(
+        (rewards.experience || 0) * difficultyMultiplier
+      );
+    }
+
+    // Calculate time-based bonus (early completion)
+    const timeBonus = this.calculateTimeBonus(challenge, userChallenge);
+    if (timeBonus.b3trTokens > 0) {
+      rewards.b3trTokens = (rewards.b3trTokens || 0) + timeBonus.b3trTokens;
+    }
+    if (timeBonus.points > 0) {
+      rewards.points = (rewards.points || 0) + timeBonus.points;
+    }
+
+    this.logger.log(`Final rewards calculated: ${JSON.stringify(rewards)}`);
     return rewards;
+  }
+
+  /**
+   * Calculate completion bonus based on progress
+   */
+  private calculateCompletionBonus(challenge: Challenge, progress: any): any {
+    const bonus = { b3trTokens: 0, points: 0, experience: 0 };
+
+    if (!progress || !challenge.objectives) return bonus;
+
+    // Calculate completion percentage
+    let completionPercentage = 0;
+    let totalObjectives = 0;
+    let completedObjectives = 0;
+
+    // Check each objective type
+    if (challenge.objectives.mileage && progress.mileage) {
+      totalObjectives++;
+      if (progress.mileage >= challenge.objectives.mileage) {
+        completedObjectives++;
+      }
+    }
+
+    if (challenge.objectives.carbonSaved && progress.carbonSaved) {
+      totalObjectives++;
+      if (progress.carbonSaved >= challenge.objectives.carbonSaved) {
+        completedObjectives++;
+      }
+    }
+
+    if (challenge.objectives.uploadStreak && progress.uploadStreak) {
+      totalObjectives++;
+      if (progress.uploadStreak >= challenge.objectives.uploadStreak) {
+        completedObjectives++;
+      }
+    }
+
+    if (challenge.objectives.vehicleCount && progress.vehicleCount) {
+      totalObjectives++;
+      if (progress.vehicleCount >= challenge.objectives.vehicleCount) {
+        completedObjectives++;
+      }
+    }
+
+    if (challenge.objectives.rewardsEarned && progress.rewardsEarned) {
+      totalObjectives++;
+      if (progress.rewardsEarned >= challenge.objectives.rewardsEarned) {
+        completedObjectives++;
+      }
+    }
+
+    if (challenge.objectives.uploadCount && progress.uploadCount) {
+      totalObjectives++;
+      if (progress.uploadCount >= challenge.objectives.uploadCount) {
+        completedObjectives++;
+      }
+    }
+
+    if (totalObjectives > 0) {
+      completionPercentage = (completedObjectives / totalObjectives) * 100;
+    }
+
+    // Award bonus based on completion percentage
+    if (completionPercentage >= 100) {
+      // Perfect completion
+      bonus.b3trTokens = Math.floor((challenge.rewards?.b3trTokens || 0) * 0.5);
+      bonus.points = Math.floor((challenge.rewards?.points || 0) * 0.5);
+      bonus.experience = Math.floor((challenge.rewards?.experience || 0) * 0.5);
+    } else if (completionPercentage >= 80) {
+      // Excellent completion
+      bonus.b3trTokens = Math.floor((challenge.rewards?.b3trTokens || 0) * 0.3);
+      bonus.points = Math.floor((challenge.rewards?.points || 0) * 0.3);
+      bonus.experience = Math.floor((challenge.rewards?.experience || 0) * 0.3);
+    } else if (completionPercentage >= 60) {
+      // Good completion
+      bonus.b3trTokens = Math.floor((challenge.rewards?.b3trTokens || 0) * 0.2);
+      bonus.points = Math.floor((challenge.rewards?.points || 0) * 0.2);
+      bonus.experience = Math.floor((challenge.rewards?.experience || 0) * 0.2);
+    }
+
+    return bonus;
+  }
+
+  /**
+   * Calculate leaderboard rewards based on rank
+   */
+  private calculateLeaderboardReward(challenge: Challenge, rank: number): any {
+    const reward = { b3trTokens: 0, points: 0, experience: 0 };
+
+    if (!challenge.leaderboardRewards) return reward;
+
+    if (rank === 1 && challenge.leaderboardRewards.first) {
+      reward.b3trTokens = challenge.leaderboardRewards.first.b3trTokens || 0;
+      reward.points = challenge.leaderboardRewards.first.points || 0;
+      reward.experience = challenge.leaderboardRewards.first.experience || 0;
+    } else if (rank === 2 && challenge.leaderboardRewards.second) {
+      reward.b3trTokens = challenge.leaderboardRewards.second.b3trTokens || 0;
+      reward.points = challenge.leaderboardRewards.second.points || 0;
+      reward.experience = challenge.leaderboardRewards.second.experience || 0;
+    } else if (rank === 3 && challenge.leaderboardRewards.third) {
+      reward.b3trTokens = challenge.leaderboardRewards.third.b3trTokens || 0;
+      reward.points = challenge.leaderboardRewards.third.points || 0;
+      reward.experience = challenge.leaderboardRewards.third.experience || 0;
+    } else if (rank <= 10 && challenge.leaderboardRewards.top10) {
+      reward.b3trTokens = challenge.leaderboardRewards.top10.b3trTokens || 0;
+      reward.points = challenge.leaderboardRewards.top10.points || 0;
+      reward.experience = challenge.leaderboardRewards.top10.experience || 0;
+    } else if (rank <= 50 && challenge.leaderboardRewards.top50) {
+      reward.b3trTokens = challenge.leaderboardRewards.top50.b3trTokens || 0;
+      reward.points = challenge.leaderboardRewards.top50.points || 0;
+      reward.experience = challenge.leaderboardRewards.top50.experience || 0;
+    }
+
+    return reward;
+  }
+
+  /**
+   * Get difficulty multiplier for rewards
+   */
+  private getDifficultyMultiplier(difficulty: string): number {
+    switch (difficulty?.toLowerCase()) {
+      case "easy":
+        return 0.8;
+      case "medium":
+        return 1.0;
+      case "hard":
+        return 1.3;
+      case "expert":
+        return 1.6;
+      default:
+        return 1.0;
+    }
+  }
+
+  /**
+   * Calculate time-based bonus for early completion
+   */
+  private calculateTimeBonus(
+    challenge: Challenge,
+    userChallenge: UserChallenge
+  ): any {
+    const bonus = { b3trTokens: 0, points: 0, experience: 0 };
+
+    if (
+      !userChallenge.completedAt ||
+      !challenge.startDate ||
+      !challenge.endDate
+    ) {
+      return bonus;
+    }
+
+    const challengeDuration =
+      challenge.endDate.getTime() - challenge.startDate.getTime();
+    const timeToComplete =
+      userChallenge.completedAt.getTime() - challenge.startDate.getTime();
+    const completionPercentage = (timeToComplete / challengeDuration) * 100;
+
+    // Award bonus for early completion
+    if (completionPercentage <= 25) {
+      // Completed in first 25% of challenge duration
+      bonus.b3trTokens = Math.floor((challenge.rewards?.b3trTokens || 0) * 0.3);
+      bonus.points = Math.floor((challenge.rewards?.points || 0) * 0.3);
+      bonus.experience = Math.floor((challenge.rewards?.experience || 0) * 0.3);
+    } else if (completionPercentage <= 50) {
+      // Completed in first 50% of challenge duration
+      bonus.b3trTokens = Math.floor((challenge.rewards?.b3trTokens || 0) * 0.2);
+      bonus.points = Math.floor((challenge.rewards?.points || 0) * 0.2);
+      bonus.experience = Math.floor((challenge.rewards?.experience || 0) * 0.2);
+    } else if (completionPercentage <= 75) {
+      // Completed in first 75% of challenge duration
+      bonus.b3trTokens = Math.floor((challenge.rewards?.b3trTokens || 0) * 0.1);
+      bonus.points = Math.floor((challenge.rewards?.points || 0) * 0.1);
+      bonus.experience = Math.floor((challenge.rewards?.experience || 0) * 0.1);
+    }
+
+    return bonus;
+  }
+
+  /**
+   * Calculate and update rankings for a challenge
+   */
+  async calculateChallengeRankings(challengeId: string): Promise<void> {
+    try {
+      const challenge = await this.challengeRepository.findOne({
+        where: { id: challengeId },
+        relations: ["userChallenges", "userChallenges.user"],
+      });
+
+      if (!challenge) {
+        throw new NotFoundException("Challenge not found");
+      }
+
+      // Get all completed user challenges for this challenge
+      const completedUserChallenges = challenge.userChallenges.filter(
+        (uc) => uc.status === UserChallengeStatus.COMPLETED
+      );
+
+      if (completedUserChallenges.length === 0) {
+        this.logger.log(
+          `No completed challenges found for challenge: ${challengeId}`
+        );
+        return;
+      }
+
+      // Sort by completion time (earliest first) and then by progress
+      const sortedUserChallenges = completedUserChallenges.sort((a, b) => {
+        // First sort by completion time
+        if (a.completedAt && b.completedAt) {
+          const timeDiff = a.completedAt.getTime() - b.completedAt.getTime();
+          if (timeDiff !== 0) return timeDiff;
+        }
+
+        // Then sort by progress (higher progress first)
+        const aProgress = this.calculateTotalProgress(
+          a.progress,
+          challenge.objectives
+        );
+        const bProgress = this.calculateTotalProgress(
+          b.progress,
+          challenge.objectives
+        );
+        return bProgress - aProgress;
+      });
+
+      // Update rankings
+      for (let i = 0; i < sortedUserChallenges.length; i++) {
+        const userChallenge = sortedUserChallenges[i];
+        userChallenge.rank = i + 1;
+        await this.userChallengeRepository.save(userChallenge);
+      }
+
+      this.logger.log(
+        `Updated rankings for challenge ${challengeId}: ${sortedUserChallenges.length} participants ranked`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to calculate challenge rankings: ${error.message}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate total progress percentage for ranking
+   */
+  private calculateTotalProgress(progress: any, objectives: any): number {
+    if (!progress || !objectives) return 0;
+
+    let totalProgress = 0;
+    let totalObjectives = 0;
+
+    if (objectives.mileage && progress.mileage) {
+      totalProgress += Math.min(
+        (progress.mileage / objectives.mileage) * 100,
+        100
+      );
+      totalObjectives++;
+    }
+
+    if (objectives.carbonSaved && progress.carbonSaved) {
+      totalProgress += Math.min(
+        (progress.carbonSaved / objectives.carbonSaved) * 100,
+        100
+      );
+      totalObjectives++;
+    }
+
+    if (objectives.uploadStreak && progress.uploadStreak) {
+      totalProgress += Math.min(
+        (progress.uploadStreak / objectives.uploadStreak) * 100,
+        100
+      );
+      totalObjectives++;
+    }
+
+    if (objectives.vehicleCount && progress.vehicleCount) {
+      totalProgress += Math.min(
+        (progress.vehicleCount / objectives.vehicleCount) * 100,
+        100
+      );
+      totalObjectives++;
+    }
+
+    if (objectives.rewardsEarned && progress.rewardsEarned) {
+      totalProgress += Math.min(
+        (progress.rewardsEarned / objectives.rewardsEarned) * 100,
+        100
+      );
+      totalObjectives++;
+    }
+
+    if (objectives.uploadCount && progress.uploadCount) {
+      totalProgress += Math.min(
+        (progress.uploadCount / objectives.uploadCount) * 100,
+        100
+      );
+      totalObjectives++;
+    }
+
+    return totalObjectives > 0 ? totalProgress / totalObjectives : 0;
   }
 
   /**

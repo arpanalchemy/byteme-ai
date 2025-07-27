@@ -18,9 +18,6 @@ export enum VehicleType {
 }
 
 export class UploadOdometerDto {
-  @IsString()
-  imageUrl: string;
-
   @IsOptional()
   @IsString()
   vehicleId?: string;
