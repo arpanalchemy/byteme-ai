@@ -14,6 +14,8 @@ import { UserWalletService } from "./services/user-wallet.service";
 import { EncryptionService } from "../../common/encryption/encryption.service";
 import { RefreshTokenService } from "../auth/services/refresh-token.service";
 import { RedisService } from "../../common/cache/redis.service";
+import { SupportController } from "./controllers/support.controller";
+import { SupportService } from "./services/support.service";
 
 @Module({
   imports: [
@@ -33,7 +35,7 @@ import { RedisService } from "../../common/cache/redis.service";
       inject: [ConfigService],
     }),
   ],
-  controllers: [UserController],
+  controllers: [UserController, SupportController],
   providers: [
     UserService,
     VeChainSignatureHelper,
@@ -42,7 +44,8 @@ import { RedisService } from "../../common/cache/redis.service";
     EncryptionService,
     RefreshTokenService,
     RedisService,
+    SupportService,
   ],
-  exports: [UserService],
+  exports: [UserService, UserWalletService],
 })
 export class UsersModule {}

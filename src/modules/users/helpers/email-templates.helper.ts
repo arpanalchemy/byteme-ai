@@ -5,7 +5,7 @@ interface EmailTemplateProps {
 }
 
 export class EmailTemplates {
-  private static getBaseTemplate() {
+  public static getBaseTemplate() {
     return `
       <!DOCTYPE html>
       <html>
@@ -293,6 +293,43 @@ export class EmailTemplates {
       <div class="footer">
         <p>This is an automated message, please do not reply.</p>
         <p>For any questions or support, please contact our team.</p>
+        <p>&copy; ${new Date().getFullYear()} B3TR - Powered by VeChain</p>
+      </div>
+    `;
+
+    return EmailTemplates.getBaseTemplate().replace('{{content}}', content);
+  }
+
+  public static getSupportEmailTemplate(
+    category: string,
+    fullName: string,
+    emailAddress: string,
+    subject: string,
+    message: string,
+  ) {
+    const content = `
+      <div class="header">
+        <h1 class="header-title">New Support Request</h1>
+      </div>
+      
+      <div class="content">
+        <h2 class="title">Support Ticket Details</h2>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 10px 0;"><strong>Category:</strong> ${category}</p>
+          <p style="margin: 10px 0;"><strong>From:</strong> ${fullName}</p>
+          <p style="margin: 10px 0;"><strong>Email:</strong> ${emailAddress}</p>
+          <p style="margin: 10px 0;"><strong>Subject:</strong> ${subject}</p>
+        </div>
+
+        <div style="background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0;">
+          <h3 style="margin-top: 0;">Message:</h3>
+          <p style="white-space: pre-wrap;">${message}</p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>This support request was sent from the B3TR EV Rewards platform.</p>
         <p>&copy; ${new Date().getFullYear()} B3TR - Powered by VeChain</p>
       </div>
     `;
