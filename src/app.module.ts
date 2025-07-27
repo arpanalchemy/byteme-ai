@@ -23,6 +23,7 @@ import { RewardsModule } from "./modules/rewards/rewards.module";
 import { HealthcheckModule } from "./modules/healthcheck/healthcheck.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { BlockchainModule } from "./modules/blockchain/blockchain.module";
+import { DocsModule } from "./modules/docs/docs.module";
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { BlockchainModule } from "./modules/blockchain/blockchain.module";
     HealthcheckModule,
     AnalyticsModule,
     BlockchainModule,
+    DocsModule,
   ],
   controllers: [AppController],
   providers: [

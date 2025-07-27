@@ -59,6 +59,7 @@ async function bootstrap() {
       `📄 API Documentation (JSON): http://localhost:${port}/api-json`
     );
     console.log(`🏥 Health Check: http://localhost:${port}/healthcheck`);
+    console.log(`🏥 Health Check: http://localhost:${port}/docs`);
     console.log(`🎉 Application startup completed successfully!`);
   } catch (error) {
     console.error("❌ Failed to start application:", error);
