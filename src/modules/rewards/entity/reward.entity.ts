@@ -123,7 +123,12 @@ export class Reward {
   @Column({ name: "blockchain_data", type: "json", nullable: true })
   blockchainData: {
     // Blockchain transaction data
-    txHash?: string;
+    txHash?: {
+      txid: string;
+      totalDistributed: number;
+      batchCount: number;
+      totalUsers: number;
+    };
     blockNumber?: number;
     gasUsed?: number;
     gasPrice?: string;

@@ -124,7 +124,7 @@ export class VeChainService {
    */
   private mnemonicToPrivateKey(
     mnemonic: string,
-    derivationPath: string = "m/44'/818'/0'/0/0",
+    derivationPath: string = "m/44'/818'/0'/0/0"
   ): Buffer {
     try {
       // Validate mnemonic
@@ -170,7 +170,7 @@ export class VeChainService {
       this.mnemonic = this.configService.get<string>("VECHAIN_MNEMONIC");
       if (!this.mnemonic) {
         this.logger.warn(
-          "VECHAIN_MNEMONIC not provided - blockchain features will be disabled",
+          "VECHAIN_MNEMONIC not provided - blockchain features will be disabled"
         );
         return;
       }
@@ -179,12 +179,12 @@ export class VeChainService {
       this.privateKey = this.mnemonicToPrivateKey(this.mnemonic);
 
       this.contractAddress = this.configService.get<string>(
-        "VECHAIN_CONTRACT_ADDRESS",
+        "VECHAIN_CONTRACT_ADDRESS"
       );
 
       if (!this.contractAddress) {
         this.logger.warn(
-          "VECHAIN_CONTRACT_ADDRESS not provided - blockchain features will be disabled",
+          "VECHAIN_CONTRACT_ADDRESS not provided - blockchain features will be disabled"
         );
         return;
       }
@@ -195,12 +195,12 @@ export class VeChainService {
         EVDRIVEV2_ABI,
         new VeChainPrivateKeySigner(
           this.privateKey,
-          new VeChainProvider(this.thor),
-        ),
+          new VeChainProvider(this.thor)
+        )
       );
 
       this.logger.log(
-        `VeChain service initialized successfully on ${this.network}`,
+        `VeChain service initialized successfully on ${this.network}`
       );
       this.logger.log(`Admin address: ${this.getAdminAddress()}`);
       this.logger.log(`EVDriveV2 Contract: ${this.contractAddress}`);
@@ -246,7 +246,7 @@ export class VeChainService {
       const result = await this.evDriveContract.read.getCycleInfo(cycleId);
       this.logger.log(
         `Cycle info from EVDriveV2 for cycle ${cycleId}:`,
-        result,
+        result
       );
 
       return {
@@ -257,7 +257,7 @@ export class VeChainService {
     } catch (error) {
       this.logger.error(
         `Failed to get cycle info for cycle ${cycleId}:`,
-        error,
+        error
       );
       throw error;
     }
@@ -351,7 +351,7 @@ export class VeChainService {
       }
 
       this.logger.log(
-        `Setting reward for cycle: ${rewardAmount} via EVDriveV2 contract`,
+        `Setting reward for cycle: ${rewardAmount} via EVDriveV2 contract`
       );
 
       const result =
@@ -363,7 +363,7 @@ export class VeChainService {
 
       if (result.txid) {
         this.logger.log(
-          `✅ Transaction submitted successfully: ${result.txid}`,
+          `✅ Transaction submitted successfully: ${result.txid}`
         );
         return result.txid;
       } else {
@@ -372,14 +372,228 @@ export class VeChainService {
     } catch (error) {
       this.logger.error(
         `Failed to set reward for cycle ${rewardAmount}:`,
-        error,
+        error
       );
       throw error;
     }
   }
 
   /**
-   * Distribute rewards in batch using EVDriveV2 contract
+   * Set reward for cycle based on active challenge
+   */
+  async setRewardForActiveChallenge(challengeService: any): Promise<{
+    txid: string;
+    challengeId: string;
+    rewardAmount: number;
+    message: string;
+  }> {
+    try {
+      if (!this.evDriveContract) {
+        throw new Error("VeChain service not initialized");
+      }
+
+      // Get active challenge
+      const activeChallenge = await this.getActiveChallenge(challengeService);
+      if (!activeChallenge) {
+        throw new Error("No active challenge found");
+      }
+
+      // Calculate reward amount based on challenge
+      const rewardAmount = this.calculateChallengeRewardAmount(activeChallenge);
+
+      this.logger.log(
+        `🎯 Setting reward for active challenge "${activeChallenge.name}": ${rewardAmount} B3TR`
+      );
+
+      const txid = await this.setRewardForCycle(rewardAmount);
+
+      return {
+        txid,
+        challengeId: activeChallenge.id,
+        rewardAmount,
+        message: `Reward set for challenge "${activeChallenge.name}"`,
+      };
+    } catch (error) {
+      this.logger.error("Failed to set reward for active challenge:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get the currently active challenge
+   */
+  private async getActiveChallenge(challengeService: any): Promise<any> {
+    try {
+      // Get all active challenges
+      const activeChallenges = await challengeService.getChallenges(
+        1, // page
+        100, // limit
+        undefined, // type
+        "active", // status
+        undefined, // visibility
+        undefined // search
+      );
+
+      // Filter for currently active challenges (within date range)
+      const now = new Date();
+      const currentlyActive = activeChallenges.challenges.filter(
+        (challenge) => {
+          const startDate = new Date(challenge.startDate);
+          const endDate = new Date(challenge.endDate);
+          return now >= startDate && now <= endDate;
+        }
+      );
+
+      if (currentlyActive.length === 0) {
+        this.logger.warn("No currently active challenges found");
+        return null;
+      }
+
+      if (currentlyActive.length > 1) {
+        this.logger.warn(
+          `Multiple active challenges found (${currentlyActive.length}). Using the first one.`
+        );
+      }
+
+      const activeChallenge = currentlyActive[0];
+      this.logger.log(
+        `📅 Active challenge: "${activeChallenge.name}" (${activeChallenge.startDate} to ${activeChallenge.endDate})`
+      );
+
+      return activeChallenge;
+    } catch (error) {
+      this.logger.error("Failed to get active challenge:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate reward amount for a challenge
+   */
+  private calculateChallengeRewardAmount(challenge: any): number {
+    try {
+      // Base reward calculation
+      let baseReward = 0;
+
+      // Check if challenge has specific reward amount
+      if (challenge.rewards?.b3trTokens) {
+        baseReward = challenge.rewards.b3trTokens;
+      } else {
+        // Calculate based on challenge type and difficulty
+        const difficultyMultiplier = this.getDifficultyMultiplier(
+          challenge.difficulty
+        );
+        const typeMultiplier = this.getTypeMultiplier(challenge.type);
+
+        // Base reward per participant
+        const basePerParticipant = 10; // 10 B3TR per participant
+        const estimatedParticipants = challenge.maxParticipants || 100;
+
+        baseReward =
+          basePerParticipant *
+          estimatedParticipants *
+          difficultyMultiplier *
+          typeMultiplier;
+      }
+
+      // Add leaderboard rewards if available
+      if (challenge.leaderboardRewards) {
+        const leaderboardReward = this.calculateLeaderboardReward(
+          challenge.leaderboardRewards
+        );
+        baseReward += leaderboardReward;
+      }
+
+      // Ensure minimum reward
+      const minReward = 100; // Minimum 100 B3TR
+      const finalReward = Math.max(baseReward, minReward);
+
+      this.logger.log(
+        `💰 Calculated reward for challenge "${challenge.name}": ${finalReward} B3TR`
+      );
+
+      return finalReward;
+    } catch (error) {
+      this.logger.error("Failed to calculate challenge reward amount:", error);
+      // Return default reward
+      return 1000;
+    }
+  }
+
+  /**
+   * Get difficulty multiplier for reward calculation
+   */
+  private getDifficultyMultiplier(difficulty: string): number {
+    switch (difficulty?.toLowerCase()) {
+      case "easy":
+        return 0.5;
+      case "medium":
+        return 1.0;
+      case "hard":
+        return 1.5;
+      case "expert":
+        return 2.0;
+      default:
+        return 1.0;
+    }
+  }
+
+  /**
+   * Get type multiplier for reward calculation
+   */
+  private getTypeMultiplier(type: string): number {
+    switch (type?.toLowerCase()) {
+      case "mileage":
+        return 1.0;
+      case "carbon_saved":
+        return 1.2;
+      case "upload_streak":
+        return 0.8;
+      case "vehicle_count":
+        return 0.6;
+      case "rewards_earned":
+        return 1.1;
+      case "community":
+        return 1.3;
+      case "special_event":
+        return 1.5;
+      default:
+        return 1.0;
+    }
+  }
+
+  /**
+   * Calculate leaderboard reward amount
+   */
+  private calculateLeaderboardReward(leaderboardRewards: any): number {
+    try {
+      let totalReward = 0;
+
+      if (leaderboardRewards.first?.b3trTokens) {
+        totalReward += leaderboardRewards.first.b3trTokens;
+      }
+      if (leaderboardRewards.second?.b3trTokens) {
+        totalReward += leaderboardRewards.second.b3trTokens;
+      }
+      if (leaderboardRewards.third?.b3trTokens) {
+        totalReward += leaderboardRewards.third.b3trTokens;
+      }
+      if (leaderboardRewards.top10?.b3trTokens) {
+        totalReward += leaderboardRewards.top10.b3trTokens * 7; // 7 more positions
+      }
+      if (leaderboardRewards.top50?.b3trTokens) {
+        totalReward += leaderboardRewards.top50.b3trTokens * 40; // 40 more positions
+      }
+
+      return totalReward;
+    } catch (error) {
+      this.logger.error("Failed to calculate leaderboard reward:", error);
+      return 0;
+    }
+  }
+
+  /**
+   * Distribute rewards in batch using EVDriveV2 contract with batch processing and fund validation
    */
   async distributeRewards(
     batchData: Array<{
@@ -391,52 +605,122 @@ export class VeChainService {
       impactCodes: string[];
       impactValues: number[];
       description: string;
-    }>,
-  ): Promise<string> {
+    }>
+  ): Promise<{
+    txid: string;
+    totalDistributed: number;
+    batchCount: number;
+    totalUsers: number;
+  }> {
     try {
       if (!this.evDriveContract) {
         throw new Error("VeChain service not initialized");
       }
 
       this.logger.log(
-        `🚀 Distributing rewards to ${batchData.length} users via EVDriveV2 contract...`,
+        `🚀 Starting batch reward distribution for ${batchData.length} users...`
       );
 
-      // Log the batch data for debugging
-      batchData.forEach((data, index) => {
-        this.logger.log(
-          `📦 Batch ${index + 1}: User ${data.user}, Amount ${data.amount} B3TR, Miles ${data.miles}`,
+      // Calculate total amount to be distributed
+      const totalAmount = batchData.reduce((sum, data) => sum + data.amount, 0);
+      this.logger.log(`💰 Total amount to distribute: ${totalAmount} B3TR`);
+
+      // Check available funds before distribution
+      const availableFunds = await this.getAvailableFunds();
+      if (availableFunds < totalAmount) {
+        throw new Error(
+          `Insufficient funds. Available: ${availableFunds} B3TR, Required: ${totalAmount} B3TR`
         );
-      });
-
-      // Prepare batch data for EVDriveV2.distributeRewards()
-      const batchInput = batchData.map((data) => ({
-        user: data.user,
-        miles: Math.floor(data.miles * 100) / 100, // Round to 2 decimal places
-        amount: Math.floor(data.amount * 100000000) / 100000000, // Round to 8 decimal places
-        proofTypes: data.proofTypes,
-        proofValues: data.proofValues,
-        impactCodes: data.impactCodes,
-        impactValues: data.impactValues.map((v) => Math.floor(v * 100) / 100), // Round to 2 decimal places
-        description: data.description,
-      }));
-
-      const result =
-        await this.evDriveContract.write.distributeRewards(batchInput);
-
-      this.logger.log(`📝 Contract: ${this.contractAddress}`);
-      this.logger.log(`🌐 Network: ${this.network}`);
-      this.logger.log(`🔑 Admin Address: ${this.getAdminAddress()}`);
-      this.logger.log(`📊 Batch Size: ${batchData.length} users`);
-
-      if (result.txid) {
-        this.logger.log(
-          `✅ Transaction submitted successfully: ${result.txid}`,
-        );
-        return result.txid;
-      } else {
-        throw new Error("Failed to get transaction ID from result");
       }
+
+      this.logger.log(`✅ Available funds sufficient: ${availableFunds} B3TR`);
+
+      // Process in batches of 100
+      const BATCH_SIZE = 100;
+      const batches = [];
+      for (let i = 0; i < batchData.length; i += BATCH_SIZE) {
+        batches.push(batchData.slice(i, i + BATCH_SIZE));
+      }
+
+      this.logger.log(
+        `📦 Processing ${batches.length} batches of max ${BATCH_SIZE} users each`
+      );
+
+      let totalDistributed = 0;
+      let batchCount = 0;
+      let lastTxid = "";
+
+      // Process each batch
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        batchCount++;
+
+        this.logger.log(
+          `📦 Processing batch ${batchCount}/${batches.length} with ${batch.length} users...`
+        );
+
+        // Log batch data for debugging
+        batch.forEach((data, index) => {
+          this.logger.log(
+            `  User ${index + 1}: ${data.user}, Amount ${data.amount} B3TR, Miles ${data.miles}`
+          );
+        });
+
+        // Prepare batch data for EVDriveV2.distributeRewards()
+        const batchInput = batch.map((data) => ({
+          user: data.user,
+          miles: Math.floor(data.miles * 100) / 100, // Round to 2 decimal places
+          amount: Math.floor(data.amount * 100000000) / 100000000, // Round to 8 decimal places
+          proofTypes: data.proofTypes,
+          proofValues: data.proofValues,
+          impactCodes: data.impactCodes,
+          impactValues: data.impactValues.map((v) => Math.floor(v * 100) / 100), // Round to 2 decimal places
+          description: data.description,
+        }));
+
+        const batchAmount = batch.reduce((sum, data) => sum + data.amount, 0);
+        totalDistributed += batchAmount;
+
+        this.logger.log(`💰 Batch ${batchCount} amount: ${batchAmount} B3TR`);
+
+        const result =
+          await this.evDriveContract.write.distributeRewards(batchInput);
+
+        this.logger.log(`📝 Contract: ${this.contractAddress}`);
+        this.logger.log(`🌐 Network: ${this.network}`);
+        this.logger.log(`🔑 Admin Address: ${this.getAdminAddress()}`);
+        this.logger.log(`📊 Batch ${batchCount} Size: ${batch.length} users`);
+
+        if (result.txid) {
+          lastTxid = result.txid;
+          this.logger.log(
+            `✅ Batch ${batchCount} transaction submitted successfully: ${result.txid}`
+          );
+        } else {
+          throw new Error(
+            `Failed to get transaction ID from batch ${batchCount} result`
+          );
+        }
+
+        // Add a small delay between batches to avoid overwhelming the network
+        if (i < batches.length - 1) {
+          this.logger.log(`⏳ Waiting 2 seconds before next batch...`);
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+      }
+
+      this.logger.log(`🎉 All batches processed successfully!`);
+      this.logger.log(`📊 Total batches: ${batchCount}`);
+      this.logger.log(`👥 Total users: ${batchData.length}`);
+      this.logger.log(`💰 Total distributed: ${totalDistributed} B3TR`);
+      this.logger.log(`🔗 Last transaction: ${lastTxid}`);
+
+      return {
+        txid: lastTxid,
+        totalDistributed,
+        batchCount,
+        totalUsers: batchData.length,
+      };
     } catch (error) {
       this.logger.error("Failed to distribute rewards:", error);
       throw error;
@@ -454,7 +738,7 @@ export class VeChainService {
 
       // Mock implementation for now
       this.logger.log(
-        `Getting transaction receipt for ${txid} (mock implementation)`,
+        `Getting transaction receipt for ${txid} (mock implementation)`
       );
       return {
         txid,
@@ -465,7 +749,7 @@ export class VeChainService {
     } catch (error) {
       this.logger.error(
         `Failed to get transaction receipt for ${txid}:`,
-        error,
+        error
       );
       throw error;
     }
@@ -482,13 +766,13 @@ export class VeChainService {
 
       // Mock implementation for now
       this.logger.log(
-        `Checking transaction confirmation for ${txid} (mock implementation)`,
+        `Checking transaction confirmation for ${txid} (mock implementation)`
       );
       return true;
     } catch (error) {
       this.logger.error(
         `Failed to check transaction confirmation for ${txid}:`,
-        error,
+        error
       );
       return false;
     }
@@ -527,11 +811,11 @@ export class VeChainService {
   async transferTokens(
     fromAddress: string,
     toAddress: string,
-    amount: number,
+    amount: number
   ): Promise<any> {
     try {
       this.logger.log(
-        `Transferring ${amount} tokens from ${fromAddress} to ${toAddress} (mock)`,
+        `Transferring ${amount} tokens from ${fromAddress} to ${toAddress} (mock)`
       );
       return {
         txid: "0x" + Math.random().toString(16).slice(2, 66),

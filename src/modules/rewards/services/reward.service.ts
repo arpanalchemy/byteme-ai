@@ -512,7 +512,7 @@ export class RewardService {
       for (const reward of sentRewards) {
         if (reward.blockchainData?.txHash) {
           const isConfirmed = await this.vechainService.isTransactionConfirmed(
-            reward.blockchainData.txHash,
+            reward.blockchainData.txHash.txid
           );
 
           if (isConfirmed) {
