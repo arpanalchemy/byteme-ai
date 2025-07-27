@@ -1,11 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
-  HttpClient,
+  SimpleHttpClient,
   ThorClient,
   VeChainPrivateKeySigner,
   VeChainProvider,
 } from "@vechain/sdk-network";
+import { parseUnits, formatUnits } from "ethers";
 import { secp256k1 } from "thor-devkit";
 import * as bip39 from "bip39";
 import * as hdkey from "hdkey";
@@ -153,7 +154,7 @@ export class VeChainService {
       // Initialize configuration
       this.nodeUrl =
         this.configService.get<string>("VECHAIN_NODE_URL") ||
-        "https://testnet.veblocks.net";
+        "https://testnet.vechain.org";
 
       this.network =
         (this.configService.get<string>("VECHAIN_NETWORK") as
@@ -161,8 +162,7 @@ export class VeChainService {
           | "testnet") || "testnet";
 
       // Initialize ThorClient
-      // TODO: Fix HttpClient import issue - need to check correct VeChain SDK v2.0.2 usage
-      this.thor = new ThorClient(this.nodeUrl as any, {
+      this.thor = new ThorClient(new SimpleHttpClient(this.nodeUrl), {
         isPollingEnabled: false,
       });
 
@@ -222,8 +222,11 @@ export class VeChainService {
       }
 
       const result = await this.evDriveContract.read.getCurrentCycle();
-      this.logger.log(`Current cycle from EVDriveV2: ${result}`);
-      return parseInt(result.toString());
+      // Extract the value from the result array if it's an array
+      const cycleValue = Array.isArray(result) ? result[0] : result;
+      const cycleNumber = Number(cycleValue);
+      this.logger.log(`Current cycle from EVDriveV2: ${cycleNumber}`);
+      return cycleNumber;
     } catch (error) {
       this.logger.error("Failed to get current cycle:", error);
       throw error;
@@ -249,10 +252,15 @@ export class VeChainService {
         result
       );
 
+      // Extract values from the result array
+      const allocation = Array.isArray(result[0]) ? result[0][0] : result[0];
+      const distributed = Array.isArray(result[1]) ? result[1][0] : result[1];
+      const remaining = Array.isArray(result[2]) ? result[2][0] : result[2];
+
       return {
-        allocation: parseInt(result[0].toString()),
-        distributed: parseInt(result[1].toString()),
-        remaining: parseInt(result[2].toString()),
+        allocation: Number(allocation),
+        distributed: Number(distributed),
+        remaining: Number(remaining),
       };
     } catch (error) {
       this.logger.error(
@@ -273,8 +281,16 @@ export class VeChainService {
       }
 
       const result = await this.evDriveContract.read.getAvailableFunds();
-      this.logger.log(`Available funds from EVDriveV2: ${result}`);
-      return parseInt(result.toString());
+      // Extract the BigInt value from the result array
+      const fundsInWei = Array.isArray(result) ? result[0] : result;
+      // Convert from wei to B3TR (assuming 18 decimals like ETH)
+      const fundsInB3TR = formatUnits(fundsInWei, 18);
+      const fundsNumber = parseFloat(fundsInB3TR);
+
+      this.logger.log(
+        `Available funds from EVDriveV2: ${fundsInWei} wei (${fundsNumber} B3TR)`
+      );
+      return fundsNumber;
     } catch (error) {
       this.logger.error("Failed to get available funds:", error);
       throw error;
@@ -298,10 +314,19 @@ export class VeChainService {
       const result = await this.evDriveContract.read.getUserData(userAddress);
       this.logger.log(`User data from EVDriveV2 for ${userAddress}:`, result);
 
+      // Extract values from the result array
+      const lastMiles = Array.isArray(result[0]) ? result[0][0] : result[0];
+      const lastSubmissionDate = Array.isArray(result[1])
+        ? result[1][0]
+        : result[1];
+      const carbonFootprint = Array.isArray(result[2])
+        ? result[2][0]
+        : result[2];
+
       return {
-        lastMiles: parseInt(result[0].toString()),
-        lastSubmissionDate: parseInt(result[1].toString()),
-        carbonFootprint: parseInt(result[2].toString()),
+        lastMiles: Number(lastMiles),
+        lastSubmissionDate: Number(lastSubmissionDate),
+        carbonFootprint: Number(carbonFootprint),
         exists: result[3],
       };
     } catch (error) {
@@ -328,12 +353,23 @@ export class VeChainService {
       const result = await this.evDriveContract.read.getGlobalStats();
       this.logger.log(`Global stats from EVDriveV2:`, result);
 
+      // Extract values from the result array
+      const totalCarbon = Array.isArray(result[0]) ? result[0][0] : result[0];
+      const totalMilesDriven = Array.isArray(result[1])
+        ? result[1][0]
+        : result[1];
+      const usersJoined = Array.isArray(result[2]) ? result[2][0] : result[2];
+      const totalRewardDistributed = Array.isArray(result[3])
+        ? result[3][0]
+        : result[3];
+      const currentCycle = Array.isArray(result[4]) ? result[4][0] : result[4];
+
       return {
-        totalCarbon: parseInt(result[0].toString()),
-        totalMilesDriven: parseInt(result[1].toString()),
-        usersJoined: parseInt(result[2].toString()),
-        totalRewardDistributed: parseInt(result[3].toString()),
-        currentCycle: parseInt(result[4].toString()),
+        totalCarbon: Number(totalCarbon),
+        totalMilesDriven: Number(totalMilesDriven),
+        usersJoined: Number(usersJoined),
+        totalRewardDistributed: Number(totalRewardDistributed),
+        currentCycle: Number(currentCycle),
       };
     } catch (error) {
       this.logger.error("Failed to get global stats:", error);
@@ -350,12 +386,15 @@ export class VeChainService {
         throw new Error("VeChain service not initialized");
       }
 
+      // Convert B3TR amount to wei for the contract
+      const rewardAmountInWei = parseUnits(rewardAmount.toString(), 18);
+
       this.logger.log(
-        `Setting reward for cycle: ${rewardAmount} via EVDriveV2 contract`
+        `Setting reward for cycle: ${rewardAmount} B3TR (${rewardAmountInWei} wei) via EVDriveV2 contract`
       );
 
       const result =
-        await this.evDriveContract.write.setRewardForCycle(rewardAmount);
+        await this.evDriveContract.write.setRewardForCycle(rewardAmountInWei);
 
       this.logger.log(`📝 Contract: ${this.contractAddress}`);
       this.logger.log(`🔑 Admin Address: ${this.getAdminAddress()}`);
@@ -670,7 +709,7 @@ export class VeChainService {
         const batchInput = batch.map((data) => ({
           user: data.user,
           miles: Math.floor(data.miles * 100) / 100, // Round to 2 decimal places
-          amount: Math.floor(data.amount * 100000000) / 100000000, // Round to 8 decimal places
+          amount: parseUnits(data.amount.toString(), 18), // Convert B3TR to wei
           proofTypes: data.proofTypes,
           proofValues: data.proofValues,
           impactCodes: data.impactCodes,
@@ -831,14 +870,18 @@ export class VeChainService {
    * Get balance (mock implementation)
    */
   async getBalance(walletAddress: string): Promise<number> {
-    return 1000; // Mock balance
+    // Mock balance in wei, convert to ETH
+    const balanceInWei = parseUnits("1000", 18);
+    return parseFloat(formatUnits(balanceInWei, 18));
   }
 
   /**
    * Get B3TR balance (mock implementation)
    */
   async getB3TRBalance(walletAddress: string): Promise<number> {
-    return 500; // Mock B3TR balance
+    // Mock B3TR balance in wei, convert to B3TR
+    const balanceInWei = parseUnits("500", 18);
+    return parseFloat(formatUnits(balanceInWei, 18));
   }
 
   /**

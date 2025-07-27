@@ -16,7 +16,7 @@ export class UserWalletService {
     @InjectRepository(UserWallet)
     private readonly userWalletRepository: Repository<UserWallet>,
     private readonly vechainWalletService: VeChainWalletService,
-    private readonly encryptionService: EncryptionService,
+    private readonly encryptionService: EncryptionService
   ) {}
 
   /**
@@ -35,43 +35,50 @@ export class UserWalletService {
       const existingWallet = await this.userWalletRepository.findOne({
         where: { userId },
       });
-
-      if (existingWallet) {
-        throw new Error("User already has a wallet");
-      }
-
-      // Generate new VeChain wallet
-      const wallet = this.vechainWalletService.generateWallet();
-
-      // Encrypt wallet data
-      const encryptedData = this.encryptionService.encryptWalletData({
-        mnemonic: wallet.mnemonic,
-        privateKey: wallet.privateKey,
-        publicKey: wallet.publicKey,
-      });
-
-      // Store encrypted wallet in database
-      const userWallet = this.userWalletRepository.create({
-        userId,
-        encryptedMnemonic: encryptedData.encryptedMnemonic,
-        encryptedPrivateKey: encryptedData.encryptedPrivateKey,
-        encryptedPublicKey: encryptedData.encryptedPublicKey,
-        walletAddress: wallet.address,
-        walletType: "sync2",
-        mnemonicIv: encryptedData.mnemonicIv,
-        mnemonicSalt: encryptedData.mnemonicSalt,
-        privateKeyIv: encryptedData.privateKeyIv,
-        privateKeySalt: encryptedData.privateKeySalt,
-        publicKeyIv: encryptedData.publicKeyIv,
-        publicKeySalt: encryptedData.publicKeySalt,
-        isBackedUp: false,
-      });
-
-      await this.userWalletRepository.save(userWallet);
-
-      this.logger.log(
-        `Created encrypted wallet for user ${userId}: ${wallet.address}`,
+      console.log(
+        "🚀 ~ UserWalletService ~ createUserWallet ~ existingWallet:",
+        existingWallet
       );
+
+      let wallet = null;
+
+      if (!existingWallet) {
+        wallet = this.vechainWalletService.generateWallet();
+        const encryptedData = this.encryptionService.encryptWalletData({
+          mnemonic: wallet.mnemonic,
+          privateKey: wallet.privateKey,
+          publicKey: wallet.publicKey,
+        });
+        console.log(
+          "🚀 ~ UserWalletService ~ createUserWallet ~ encryptedData:",
+          encryptedData
+        );
+
+        // Store encrypted wallet in database
+        const userWallet = this.userWalletRepository.create({
+          userId,
+          encryptedMnemonic: encryptedData.encryptedMnemonic,
+          encryptedPrivateKey: encryptedData.encryptedPrivateKey,
+          encryptedPublicKey: encryptedData.encryptedPublicKey,
+          walletAddress: wallet.address,
+          walletType: "sync2",
+          mnemonicIv: encryptedData.mnemonicIv,
+          mnemonicSalt: encryptedData.mnemonicSalt,
+          privateKeyIv: encryptedData.privateKeyIv,
+          privateKeySalt: encryptedData.privateKeySalt,
+          publicKeyIv: encryptedData.publicKeyIv,
+          publicKeySalt: encryptedData.publicKeySalt,
+          isBackedUp: false,
+        });
+
+        await this.userWalletRepository.save(userWallet);
+
+        this.logger.log(
+          `Created encrypted wallet for user ${userId}: ${wallet.address}`
+        );
+      } else {
+        wallet = existingWallet;
+      }
 
       return {
         walletAddress: wallet.address,
@@ -106,7 +113,7 @@ export class UserWalletService {
    */
   async getDecryptedWallet(
     userId: string,
-    masterKey?: string,
+    masterKey?: string
   ): Promise<{
     mnemonic: string;
     privateKey: string;
@@ -152,14 +159,14 @@ export class UserWalletService {
         {
           isBackedUp: true,
           backedUpAt: new Date(),
-        },
+        }
       );
 
       this.logger.log(`Marked wallet as backed up for user ${userId}`);
     } catch (error) {
       this.logger.error(
         `Failed to mark wallet as backed up for user ${userId}:`,
-        error,
+        error
       );
       throw error;
     }
@@ -170,7 +177,7 @@ export class UserWalletService {
    */
   async updateWalletBackupStatus(
     userId: string,
-    isBackedUp: boolean,
+    isBackedUp: boolean
   ): Promise<void> {
     try {
       const updateData: any = { isBackedUp };
@@ -184,12 +191,12 @@ export class UserWalletService {
       await this.userWalletRepository.update({ userId }, updateData);
 
       this.logger.log(
-        `Updated wallet backup status for user ${userId}: ${isBackedUp}`,
+        `Updated wallet backup status for user ${userId}: ${isBackedUp}`
       );
     } catch (error) {
       this.logger.error(
         `Failed to update wallet backup status for user ${userId}:`,
-        error,
+        error
       );
       throw error;
     }
@@ -245,7 +252,7 @@ export class UserWalletService {
    */
   async signMessage(
     userId: string,
-    message: string,
+    message: string
   ): Promise<{
     signature: string;
     address: string;
@@ -259,7 +266,7 @@ export class UserWalletService {
 
       const signature = this.vechainWalletService.signMessage(
         message,
-        decryptedWallet.privateKey,
+        decryptedWallet.privateKey
       );
 
       return {
@@ -278,12 +285,12 @@ export class UserWalletService {
   verifySignature(
     message: string,
     signature: string,
-    address: string,
+    address: string
   ): boolean {
     return this.vechainWalletService.verifySignature(
       message,
       signature,
-      address,
+      address
     );
   }
 }

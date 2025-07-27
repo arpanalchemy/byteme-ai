@@ -30,7 +30,7 @@ Get the current status and configuration of the VeChain service.
   "adminAddress": "0x1234567890abcdef",
   "contractAddress": "0xabcdef1234567890",
   "network": "testnet",
-  "nodeUrl": "https://testnet.veblocks.net"
+  "nodeUrl": "https://testnet.vechain.org"
 }
 ```
 

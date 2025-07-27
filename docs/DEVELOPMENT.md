@@ -21,7 +21,7 @@ REDIS_URL=redis://localhost:6379
 
 # VeChain Blockchain Configuration
 VECHAIN_NETWORK=testnet
-VECHAIN_RPC_URL=https://testnet.veblocks.net
+VECHAIN_RPC_URL=https://testnet.vechain.org
 VECHAIN_PRIVATE_KEY=your_private_key_here
 VECHAIN_CONTRACT_ADDRESS=your_contract_address
 VECHAIN_TOKEN_ADDRESS=your_token_address
@@ -120,7 +120,7 @@ export const blockchainConfig = {
   // Testnet Configuration
   testnet: {
     networkId: 39,
-    rpcUrl: "https://testnet.veblocks.net",
+    rpcUrl: "https://testnet.vechain.org",
     explorer: "https://explore-testnet.vechain.org",
     chainTag: 0x27,
   },

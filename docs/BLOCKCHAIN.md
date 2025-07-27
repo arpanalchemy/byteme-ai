@@ -19,7 +19,7 @@ The EV Odometer Rewards system integrates with the VeChain blockchain for secure
 **Testnet:**
 
 - **Network ID**: 39
-- **RPC URL**: `https://testnet.veblocks.net`
+- **RPC URL**: `https://testnet.vechain.org`
 - **Explorer**: `https://explore-testnet.vechain.org`
 - **Token Symbol**: B3TR-TEST
 - **Contract Address**: `0xabcdef1234567890...`
@@ -30,7 +30,7 @@ The EV Odometer Rewards system integrates with the VeChain blockchain for secure
 // blockchain.config.ts
 export const blockchainConfig = {
   network: process.env.VECHAIN_NETWORK || "testnet",
-  rpcUrl: process.env.VECHAIN_RPC_URL || "https://testnet.veblocks.net",
+  rpcUrl: process.env.VECHAIN_RPC_URL || "https://testnet.vechain.org",
   contractAddress: process.env.VECHAIN_CONTRACT_ADDRESS,
   privateKey: process.env.VECHAIN_PRIVATE_KEY,
   gasLimit: 500000,
@@ -367,7 +367,7 @@ export class WalletAuthService {
   ): Promise<boolean> {
     try {
       const connex = new Connex({
-        node: "https://testnet.veblocks.net",
+        node: "https://testnet.vechain.org",
         network: "test",
       });
 
@@ -580,7 +580,7 @@ class BlockchainService {
   }
 
   void _initializeClient() {
-    final rpcUrl = 'https://testnet.veblocks.net';
+    final rpcUrl = 'https://testnet.vechain.org';
     final httpClient = http.Client();
     _client = Web3Client(rpcUrl, httpClient);
 
@@ -840,7 +840,7 @@ describe("BlockchainService", () => {
             get: jest.fn((key: string) => {
               const config = {
                 VECHAIN_NETWORK: "testnet",
-                VECHAIN_RPC_URL: "https://testnet.veblocks.net",
+                VECHAIN_RPC_URL: "https://testnet.vechain.org",
                 VECHAIN_CONTRACT_ADDRESS: "0x1234567890abcdef...",
                 VECHAIN_PRIVATE_KEY: "test_private_key",
               };

@@ -440,11 +440,11 @@ export class RewardService {
         user: user.walletAddress,
         miles: reward.milesDriven,
         amount: reward.amount,
-        proofTypes: reward.proofData?.proofTypes || ["image"],
+        proofTypes: ["image"],
         proofValues: reward.proofData?.proofValues || [
           reward.proofData?.imageHash || "",
         ],
-        impactCodes: reward.proofData?.impactCodes || ["carbon"],
+        impactCodes: ["carbon"],
         impactValues: reward.proofData?.impactValues || [reward.carbonSaved],
         description: reward.description || `Reward for ${reward.type}`,
       }));
