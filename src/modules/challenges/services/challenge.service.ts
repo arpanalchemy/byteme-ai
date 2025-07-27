@@ -545,6 +545,10 @@ export class ChallengeService {
     userChallenge: UserChallenge
   ): Promise<any> {
     const { challenge } = userChallenge;
+    console.log(
+      "🚀 ~ ChallengeService ~ calculateChallengeRewards ~ challenge:",
+      challenge
+    );
     const rewards = { ...challenge.rewards };
 
     // Add leaderboard rewards if applicable
