@@ -16,6 +16,10 @@ export enum VehicleType {
   MOTORCYCLE = "motorcycle",
   SCOOTER = "scooter",
   TRUCK = "truck",
+  ELECTRIC = "electric",
+  HYBRID = "hybrid",
+  PLUGIN_HYBRID = "plugin_hybrid",
+  FUEL_CELL = "fuel_cell",
   VAN = "van",
   OTHER = "other",
 }

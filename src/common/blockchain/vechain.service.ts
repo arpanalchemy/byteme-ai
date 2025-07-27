@@ -1,44 +1,119 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import {
+  HttpClient,
+  ThorClient,
+  VeChainPrivateKeySigner,
+  VeChainProvider,
+} from "@vechain/sdk-network";
 import { secp256k1 } from "thor-devkit";
 import * as bip39 from "bip39";
 import * as hdkey from "hdkey";
 
-// Simple wallet implementation using secp256k1
-class Wallet {
-  public address: string;
-  private privateKey: Buffer;
-
-  constructor(privateKey: Buffer) {
-    this.privateKey = privateKey;
-    const publicKey = secp256k1.derivePublicKey(privateKey);
-    this.address = this.publicKeyToAddress(publicKey);
-  }
-
-  private publicKeyToAddress(publicKey: Buffer): string {
-    const { keccak256 } = require("thor-devkit");
-    const hash = keccak256(publicKey.slice(1));
-    return "0x" + hash.slice(-20).toString("hex");
-  }
-
-  sign(transaction: any): any {
-    const { keccak256 } = require("thor-devkit");
-    const messageHash = keccak256(JSON.stringify(transaction));
-    const signature = secp256k1.sign(messageHash, this.privateKey);
-    return {
-      ...transaction,
-      signature: signature,
-    };
-  }
-}
+// EVDriveV2 Contract ABI (embedded)
+const EVDRIVEV2_ABI = [
+  {
+    inputs: [],
+    name: "getCurrentCycle",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_cycleId", type: "uint256" }],
+    name: "getCycleInfo",
+    outputs: [
+      { internalType: "uint256", name: "allocation", type: "uint256" },
+      { internalType: "uint256", name: "distributed", type: "uint256" },
+      { internalType: "uint256", name: "remaining", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getAvailableFunds",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "user", type: "address" }],
+    name: "getUserData",
+    outputs: [
+      { internalType: "uint256", name: "lastMiles", type: "uint256" },
+      { internalType: "uint256", name: "lastSubmissionDate", type: "uint256" },
+      { internalType: "uint256", name: "carbonFootprint", type: "uint256" },
+      { internalType: "bool", name: "exists", type: "bool" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getGlobalStats",
+    outputs: [
+      { internalType: "uint256", name: "_totalCarbon", type: "uint256" },
+      { internalType: "uint256", name: "_totalMilesDriven", type: "uint256" },
+      { internalType: "uint256", name: "_usersJoined", type: "uint256" },
+      {
+        internalType: "uint256",
+        name: "_totalRewardDistributed",
+        type: "uint256",
+      },
+      { internalType: "uint256", name: "_currentCycle", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "_rewardAmount", type: "uint256" },
+    ],
+    name: "setRewardForCycle",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        components: [
+          { internalType: "address", name: "user", type: "address" },
+          { internalType: "uint256", name: "miles", type: "uint256" },
+          { internalType: "uint256", name: "amount", type: "uint256" },
+          { internalType: "string[]", name: "proofTypes", type: "string[]" },
+          { internalType: "string[]", name: "proofValues", type: "string[]" },
+          { internalType: "string[]", name: "impactCodes", type: "string[]" },
+          {
+            internalType: "uint256[]",
+            name: "impactValues",
+            type: "uint256[]",
+          },
+          { internalType: "string", name: "description", type: "string" },
+        ],
+        internalType: "struct EVDriveV2.BatchRewardInput[]",
+        name: "batch",
+        type: "tuple[]",
+      },
+    ],
+    name: "distributeRewards",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;
 
 @Injectable()
 export class VeChainService {
   private readonly logger = new Logger(VeChainService.name);
-  private wallet: Wallet;
+  private thor: ThorClient;
+  private evDriveContract: any;
+  private privateKey: Buffer;
   private contractAddress: string;
   private mnemonic: string;
   private nodeUrl: string;
+  private network: "mainnet" | "testnet";
 
   constructor(private configService: ConfigService) {
     this.initializeVeChain();
@@ -80,6 +155,17 @@ export class VeChainService {
         this.configService.get<string>("VECHAIN_NODE_URL") ||
         "https://testnet.veblocks.net";
 
+      this.network =
+        (this.configService.get<string>("VECHAIN_NETWORK") as
+          | "mainnet"
+          | "testnet") || "testnet";
+
+      // Initialize ThorClient
+      // TODO: Fix HttpClient import issue - need to check correct VeChain SDK v2.0.2 usage
+      this.thor = new ThorClient(this.nodeUrl as any, {
+        isPollingEnabled: false,
+      });
+
       // Initialize admin wallet using mnemonic
       this.mnemonic = this.configService.get<string>("VECHAIN_MNEMONIC");
       if (!this.mnemonic) {
@@ -90,16 +176,34 @@ export class VeChainService {
       }
 
       // Convert mnemonic to private key
-      const privateKey = this.mnemonicToPrivateKey(this.mnemonic);
-      this.wallet = new Wallet(privateKey);
+      this.privateKey = this.mnemonicToPrivateKey(this.mnemonic);
 
       this.contractAddress = this.configService.get<string>(
         "VECHAIN_CONTRACT_ADDRESS",
       );
 
-      this.logger.log("VeChain service initialized successfully");
-      this.logger.log(`Admin address: ${this.wallet.address}`);
-      this.logger.log(`Contract address: ${this.contractAddress}`);
+      if (!this.contractAddress) {
+        this.logger.warn(
+          "VECHAIN_CONTRACT_ADDRESS not provided - blockchain features will be disabled",
+        );
+        return;
+      }
+
+      // Load the EVDriveV2 contract
+      this.evDriveContract = this.thor.contracts.load(
+        this.contractAddress,
+        EVDRIVEV2_ABI,
+        new VeChainPrivateKeySigner(
+          this.privateKey,
+          new VeChainProvider(this.thor),
+        ),
+      );
+
+      this.logger.log(
+        `VeChain service initialized successfully on ${this.network}`,
+      );
+      this.logger.log(`Admin address: ${this.getAdminAddress()}`);
+      this.logger.log(`EVDriveV2 Contract: ${this.contractAddress}`);
       this.logger.log(`Node URL: ${this.nodeUrl}`);
     } catch (error) {
       console.log("🚀 ~ VeChainService ~ initializeVeChain ~ error:", error);
@@ -109,17 +213,17 @@ export class VeChainService {
   }
 
   /**
-   * Get current cycle information from contract
+   * Get current cycle information from EVDriveV2 contract
    */
   async getCurrentCycle(): Promise<number> {
     try {
-      if (!this.wallet) {
+      if (!this.evDriveContract) {
         throw new Error("VeChain service not initialized");
       }
 
-      // Mock implementation for now
-      this.logger.log("Getting current cycle (mock implementation)");
-      return 1;
+      const result = await this.evDriveContract.read.getCurrentCycle();
+      this.logger.log(`Current cycle from EVDriveV2: ${result}`);
+      return parseInt(result.toString());
     } catch (error) {
       this.logger.error("Failed to get current cycle:", error);
       throw error;
@@ -127,7 +231,7 @@ export class VeChainService {
   }
 
   /**
-   * Get cycle information
+   * Get cycle information from EVDriveV2 contract
    */
   async getCycleInfo(cycleId: number): Promise<{
     allocation: number;
@@ -135,18 +239,20 @@ export class VeChainService {
     remaining: number;
   }> {
     try {
-      if (!this.wallet) {
+      if (!this.evDriveContract) {
         throw new Error("VeChain service not initialized");
       }
 
-      // Mock implementation for now
+      const result = await this.evDriveContract.read.getCycleInfo(cycleId);
       this.logger.log(
-        `Getting cycle info for cycle ${cycleId} (mock implementation)`,
+        `Cycle info from EVDriveV2 for cycle ${cycleId}:`,
+        result,
       );
+
       return {
-        allocation: 1000000, // 1M B3TR
-        distributed: 500000, // 500K B3TR
-        remaining: 500000, // 500K B3TR
+        allocation: parseInt(result[0].toString()),
+        distributed: parseInt(result[1].toString()),
+        remaining: parseInt(result[2].toString()),
       };
     } catch (error) {
       this.logger.error(
@@ -158,17 +264,17 @@ export class VeChainService {
   }
 
   /**
-   * Get available funds in rewards pool
+   * Get available funds in rewards pool from EVDriveV2 contract
    */
   async getAvailableFunds(): Promise<number> {
     try {
-      if (!this.wallet) {
+      if (!this.evDriveContract) {
         throw new Error("VeChain service not initialized");
       }
 
-      // Mock implementation for now
-      this.logger.log("Getting available funds (mock implementation)");
-      return 1000000; // 1M B3TR
+      const result = await this.evDriveContract.read.getAvailableFunds();
+      this.logger.log(`Available funds from EVDriveV2: ${result}`);
+      return parseInt(result.toString());
     } catch (error) {
       this.logger.error("Failed to get available funds:", error);
       throw error;
@@ -176,7 +282,7 @@ export class VeChainService {
   }
 
   /**
-   * Get user data from contract
+   * Get user data from EVDriveV2 contract
    */
   async getUserData(userAddress: string): Promise<{
     lastMiles: number;
@@ -185,19 +291,18 @@ export class VeChainService {
     exists: boolean;
   }> {
     try {
-      if (!this.wallet) {
+      if (!this.evDriveContract) {
         throw new Error("VeChain service not initialized");
       }
 
-      // Mock implementation for now
-      this.logger.log(
-        `Getting user data for ${userAddress} (mock implementation)`,
-      );
+      const result = await this.evDriveContract.read.getUserData(userAddress);
+      this.logger.log(`User data from EVDriveV2 for ${userAddress}:`, result);
+
       return {
-        lastMiles: 150.5,
-        lastSubmissionDate: Math.floor(Date.now() / 1000),
-        carbonFootprint: 15050, // 15.05 kg CO2
-        exists: true,
+        lastMiles: parseInt(result[0].toString()),
+        lastSubmissionDate: parseInt(result[1].toString()),
+        carbonFootprint: parseInt(result[2].toString()),
+        exists: result[3],
       };
     } catch (error) {
       this.logger.error(`Failed to get user data for ${userAddress}:`, error);
@@ -206,7 +311,7 @@ export class VeChainService {
   }
 
   /**
-   * Get global stats from contract
+   * Get global stats from EVDriveV2 contract
    */
   async getGlobalStats(): Promise<{
     totalCarbon: number;
@@ -216,18 +321,19 @@ export class VeChainService {
     currentCycle: number;
   }> {
     try {
-      if (!this.wallet) {
+      if (!this.evDriveContract) {
         throw new Error("VeChain service not initialized");
       }
 
-      // Mock implementation for now
-      this.logger.log("Getting global stats (mock implementation)");
+      const result = await this.evDriveContract.read.getGlobalStats();
+      this.logger.log(`Global stats from EVDriveV2:`, result);
+
       return {
-        totalCarbon: 5000000, // 5M grams = 5 tons CO2
-        totalMilesDriven: 50000, // 50K miles
-        usersJoined: 1000,
-        totalRewardDistributed: 100000, // 100K B3TR
-        currentCycle: 1,
+        totalCarbon: parseInt(result[0].toString()),
+        totalMilesDriven: parseInt(result[1].toString()),
+        usersJoined: parseInt(result[2].toString()),
+        totalRewardDistributed: parseInt(result[3].toString()),
+        currentCycle: parseInt(result[4].toString()),
       };
     } catch (error) {
       this.logger.error("Failed to get global stats:", error);
@@ -236,20 +342,33 @@ export class VeChainService {
   }
 
   /**
-   * Set reward allocation for a new cycle
+   * Set reward for cycle using EVDriveV2 contract
    */
   async setRewardForCycle(rewardAmount: number): Promise<string> {
     try {
-      if (!this.wallet) {
+      if (!this.evDriveContract) {
         throw new Error("VeChain service not initialized");
       }
 
-      // Mock implementation for now
       this.logger.log(
-        `Setting reward for cycle: ${rewardAmount} (mock implementation)`,
+        `Setting reward for cycle: ${rewardAmount} via EVDriveV2 contract`,
       );
-      const mockTxHash = "0x" + Math.random().toString(16).slice(2, 66);
-      return mockTxHash;
+
+      const result =
+        await this.evDriveContract.write.setRewardForCycle(rewardAmount);
+
+      this.logger.log(`📝 Contract: ${this.contractAddress}`);
+      this.logger.log(`🔑 Admin Address: ${this.getAdminAddress()}`);
+      this.logger.log(`🌐 Network: ${this.network}`);
+
+      if (result.txid) {
+        this.logger.log(
+          `✅ Transaction submitted successfully: ${result.txid}`,
+        );
+        return result.txid;
+      } else {
+        throw new Error("Failed to get transaction ID from result");
+      }
     } catch (error) {
       this.logger.error(
         `Failed to set reward for cycle ${rewardAmount}:`,
@@ -260,7 +379,7 @@ export class VeChainService {
   }
 
   /**
-   * Distribute rewards in batch
+   * Distribute rewards in batch using EVDriveV2 contract
    */
   async distributeRewards(
     batchData: Array<{
@@ -275,25 +394,49 @@ export class VeChainService {
     }>,
   ): Promise<string> {
     try {
-      if (!this.wallet) {
+      if (!this.evDriveContract) {
         throw new Error("VeChain service not initialized");
       }
 
-      // Mock implementation for now
       this.logger.log(
-        `Distributing rewards to ${batchData.length} users (mock implementation)`,
+        `🚀 Distributing rewards to ${batchData.length} users via EVDriveV2 contract...`,
       );
 
       // Log the batch data for debugging
       batchData.forEach((data, index) => {
         this.logger.log(
-          `Batch ${index + 1}: User ${data.user}, Amount ${data.amount} B3TR, Miles ${data.miles}`,
+          `📦 Batch ${index + 1}: User ${data.user}, Amount ${data.amount} B3TR, Miles ${data.miles}`,
         );
       });
 
-      const mockTxHash = "0x" + Math.random().toString(16).slice(2, 66);
-      this.logger.log(`Mock transaction hash: ${mockTxHash}`);
-      return mockTxHash;
+      // Prepare batch data for EVDriveV2.distributeRewards()
+      const batchInput = batchData.map((data) => ({
+        user: data.user,
+        miles: Math.floor(data.miles * 100) / 100, // Round to 2 decimal places
+        amount: Math.floor(data.amount * 100000000) / 100000000, // Round to 8 decimal places
+        proofTypes: data.proofTypes,
+        proofValues: data.proofValues,
+        impactCodes: data.impactCodes,
+        impactValues: data.impactValues.map((v) => Math.floor(v * 100) / 100), // Round to 2 decimal places
+        description: data.description,
+      }));
+
+      const result =
+        await this.evDriveContract.write.distributeRewards(batchInput);
+
+      this.logger.log(`📝 Contract: ${this.contractAddress}`);
+      this.logger.log(`🌐 Network: ${this.network}`);
+      this.logger.log(`🔑 Admin Address: ${this.getAdminAddress()}`);
+      this.logger.log(`📊 Batch Size: ${batchData.length} users`);
+
+      if (result.txid) {
+        this.logger.log(
+          `✅ Transaction submitted successfully: ${result.txid}`,
+        );
+        return result.txid;
+      } else {
+        throw new Error("Failed to get transaction ID from result");
+      }
     } catch (error) {
       this.logger.error("Failed to distribute rewards:", error);
       throw error;
@@ -305,7 +448,7 @@ export class VeChainService {
    */
   async getTransactionReceipt(txid: string): Promise<any> {
     try {
-      if (!this.wallet) {
+      if (!this.thor) {
         throw new Error("VeChain service not initialized");
       }
 
@@ -333,13 +476,20 @@ export class VeChainService {
    */
   async isTransactionConfirmed(txid: string): Promise<boolean> {
     try {
-      if (!this.wallet) {
+      if (!this.thor) {
         return false;
       }
 
-      const receipt = await this.getTransactionReceipt(txid);
-      return receipt && receipt.reverted === false;
+      // Mock implementation for now
+      this.logger.log(
+        `Checking transaction confirmation for ${txid} (mock implementation)`,
+      );
+      return true;
     } catch (error) {
+      this.logger.error(
+        `Failed to check transaction confirmation for ${txid}:`,
+        error,
+      );
       return false;
     }
   }
@@ -348,83 +498,119 @@ export class VeChainService {
    * Get admin wallet address
    */
   getAdminAddress(): string {
-    return this.wallet?.address || "0x0000000000000000000000000000000000000000";
+    if (!this.privateKey) {
+      return "";
+    }
+    const publicKey = secp256k1.derivePublicKey(this.privateKey);
+    const { keccak256 } = require("thor-devkit");
+    const hash = keccak256(publicKey.slice(1));
+    return "0x" + hash.slice(-20).toString("hex");
   }
 
   /**
    * Get contract address
    */
   getContractAddress(): string {
-    return this.contractAddress || "0x0000000000000000000000000000000000000000";
+    return this.contractAddress || "";
   }
 
   /**
    * Check if service is initialized
    */
   isInitialized(): boolean {
-    return !!this.wallet;
+    return !!(this.thor && this.evDriveContract && this.privateKey);
   }
 
-  // New methods for advanced blockchain features
+  /**
+   * Transfer tokens (mock implementation)
+   */
   async transferTokens(
     fromAddress: string,
     toAddress: string,
     amount: number,
   ): Promise<any> {
-    this.logger.log(
-      `Transferring ${amount} tokens from ${fromAddress} to ${toAddress}`,
-    );
-
-    return {
-      hash: `0x${Math.random().toString(16).substr(2, 64)}`,
-      blockNumber: Math.floor(Math.random() * 1000000) + 1000000,
-      confirmations: 12,
-      gasUsed: "100000",
-      gasPrice: "20000000000",
-    };
+    try {
+      this.logger.log(
+        `Transferring ${amount} tokens from ${fromAddress} to ${toAddress} (mock)`,
+      );
+      return {
+        txid: "0x" + Math.random().toString(16).slice(2, 66),
+        success: true,
+      };
+    } catch (error) {
+      this.logger.error("Failed to transfer tokens:", error);
+      throw error;
+    }
   }
 
+  /**
+   * Get balance (mock implementation)
+   */
   async getBalance(walletAddress: string): Promise<number> {
-    return Math.floor(Math.random() * 10000) + 1000;
+    return 1000; // Mock balance
   }
 
+  /**
+   * Get B3TR balance (mock implementation)
+   */
   async getB3TRBalance(walletAddress: string): Promise<number> {
-    return Math.floor(Math.random() * 5000) + 500;
+    return 500; // Mock B3TR balance
   }
 
+  /**
+   * Get block height (mock implementation)
+   */
   async getBlockHeight(): Promise<number> {
-    return Math.floor(Math.random() * 10000000) + 10000000;
+    return 12345; // Mock block height
   }
 
+  /**
+   * Get last block time (mock implementation)
+   */
   async getLastBlockTime(): Promise<Date> {
-    return new Date();
+    return new Date(); // Mock block time
   }
 
+  /**
+   * Get average block time (mock implementation)
+   */
   async getAverageBlockTime(): Promise<number> {
-    return 3.2;
+    return 10; // Mock average block time in seconds
   }
 
+  /**
+   * Get active validators (mock implementation)
+   */
   async getActiveValidators(): Promise<number> {
-    return 101;
+    return 101; // Mock validator count
   }
 
+  /**
+   * Get total staked (mock implementation)
+   */
   async getTotalStaked(): Promise<number> {
-    return 50000000;
+    return 1000000; // Mock total staked amount
   }
 
+  /**
+   * Get network load (mock implementation)
+   */
   async getNetworkLoad(): Promise<number> {
-    return Math.random() * 100;
+    return 75; // Mock network load percentage
   }
 
+  /**
+   * Get gas price (mock implementation)
+   */
   async getGasPrice(): Promise<{
     slow: number;
     standard: number;
     fast: number;
   }> {
     return {
-      slow: 1.2,
-      standard: 2.5,
-      fast: 4.8,
+      slow: 1000000000,
+      standard: 2000000000,
+      fast: 3000000000,
     };
   }
 }

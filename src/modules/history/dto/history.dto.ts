@@ -1,652 +1,191 @@
-import { ApiProperty } from "@nestjs/swagger";
 import {
   IsString,
-  IsOptional,
   IsNumber,
+  IsOptional,
+  IsDateString,
   IsEnum,
-  IsArray,
-  IsBoolean,
-  IsNotEmpty,
+  IsUUID,
   Min,
   Max,
-  IsUUID,
 } from "class-validator";
-import { HistoryType, HistoryCategory } from "../entity/history.entity";
+
+export enum HistoryType {
+  VEHICLE_UPLOAD = "vehicle_upload",
+  REWARD_EARNED = "reward_earned",
+  REWARD_SPENT = "reward_spent",
+  BADGE_EARNED = "badge_earned",
+  CHALLENGE_JOINED = "challenge_joined",
+  CHALLENGE_COMPLETED = "challenge_completed",
+  CHALLENGE_REWARDS = "challenge_rewards",
+  ORDER_PLACED = "order_placed",
+  ORDER_CANCELLED = "order_cancelled",
+  VEHICLE_ADDED = "vehicle_added",
+  VEHICLE_UPDATED = "vehicle_updated",
+  LEADERBOARD_RANK = "leaderboard_rank",
+  MILESTONE_REACHED = "milestone_reached",
+  STREAK_BROKEN = "streak_broken",
+  STREAK_MAINTAINED = "streak_maintained",
+  SYSTEM_EVENT = "system_event",
+}
+
+export enum HistoryCategory {
+  UPLOAD = "upload",
+  REWARDS = "rewards",
+  ACHIEVEMENTS = "achievements",
+  CHALLENGES = "challenges",
+  ORDERS = "orders",
+  VEHICLES = "vehicles",
+  LEADERBOARD = "leaderboard",
+  SYSTEM = "system",
+}
 
 export class CreateHistoryDto {
-  @ApiProperty({
-    description: "User ID",
-    example: "123e4567-e89b-12d3-a456-426614174000",
-  })
   @IsUUID()
-  @IsNotEmpty()
   userId: string;
 
-  @ApiProperty({
-    description: "History type",
-    enum: HistoryType,
-    example: HistoryType.VEHICLE_UPLOAD,
-  })
   @IsEnum(HistoryType)
-  @IsNotEmpty()
   type: HistoryType;
 
-  @ApiProperty({
-    description: "History category",
-    enum: HistoryCategory,
-    example: HistoryCategory.UPLOAD,
-  })
   @IsEnum(HistoryCategory)
-  @IsNotEmpty()
   category: HistoryCategory;
 
-  @ApiProperty({
-    description: "History title",
-    example: "Odometer Upload Successful",
-  })
   @IsString()
-  @IsNotEmpty()
   title: string;
 
-  @ApiProperty({
-    description: "History description",
-    example: "Uploaded 150 km for Tesla Model 3",
-  })
   @IsString()
-  @IsNotEmpty()
   description: string;
 
-  @ApiProperty({
-    description: "History data",
-    example: {
-      vehicleId: "123e4567-e89b-12d3-a456-426614174000",
-      vehicleName: "Tesla Model 3",
-      uploadId: "456e7890-e89b-12d3-a456-426614174000",
-      mileage: 150,
-      carbonSaved: 25.5,
-    },
-    required: false,
-  })
   @IsOptional()
-  data?: {
-    vehicleId?: string;
-    vehicleName?: string;
-    uploadId?: string;
-    mileage?: number;
-    carbonSaved?: number;
-    previousMileage?: number;
-    mileageDifference?: number;
-    rewardAmount?: number;
-    rewardType?: string;
-    previousBalance?: number;
-    newBalance?: number;
-    transactionType?: string;
-    badgeId?: string;
-    badgeName?: string;
-    badgeType?: string;
-    badgeRarity?: string;
-    challengeId?: string;
-    challengeName?: string;
-    challengeType?: string;
-    challengeDifficulty?: string;
-    progress?: number;
-    objectives?: any;
-    orderId?: string;
-    orderNumber?: string;
-    productId?: string;
-    productName?: string;
-    quantity?: number;
-    totalAmount?: number;
-    orderStatus?: string;
-    rank?: number;
-    previousRank?: number;
-    period?: string;
-    score?: number;
-    previousScore?: number;
-    milestone?: string;
-    milestoneType?: string;
-    milestoneValue?: number;
-    streakCount?: number;
-    previousStreakCount?: number;
-    streakType?: string;
-    eventType?: string;
-    systemMessage?: string;
-    metadata?: any;
-    actionUrl?: string;
-    imageUrl?: string;
-    deepLink?: string;
-    tags?: string[];
-  };
+  @IsString()
+  details?: string;
 
-  @ApiProperty({
-    description: "Numeric value for sorting/filtering",
-    example: 150.5,
-    required: false,
-  })
   @IsOptional()
   @IsNumber()
   value?: number;
 
-  @ApiProperty({
-    description: "Previous value for comparison",
-    example: 100.0,
-    required: false,
-  })
   @IsOptional()
   @IsNumber()
   previousValue?: number;
 
-  @ApiProperty({
-    description: "Whether the history entry is visible to user",
-    example: true,
-    required: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  isVisible?: boolean;
-
-  @ApiProperty({
-    description: "Admin notes",
-    example: "Automatic history entry",
-    required: false,
-  })
   @IsOptional()
   @IsString()
-  notes?: string;
+  metadata?: string;
+
+  @IsOptional()
+  @IsDateString()
+  timestamp?: string;
+
+  @IsOptional()
+  data?: any;
 }
 
 export class UpdateHistoryDto {
-  @ApiProperty({
-    description: "History title",
-    required: false,
-  })
   @IsOptional()
   @IsString()
   title?: string;
 
-  @ApiProperty({
-    description: "History description",
-    required: false,
-  })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty({
-    description: "History data",
-    required: false,
-  })
   @IsOptional()
-  data?: {
-    vehicleId?: string;
-    vehicleName?: string;
-    uploadId?: string;
-    mileage?: number;
-    carbonSaved?: number;
-    previousMileage?: number;
-    mileageDifference?: number;
-    rewardAmount?: number;
-    rewardType?: string;
-    previousBalance?: number;
-    newBalance?: number;
-    transactionType?: string;
-    badgeId?: string;
-    badgeName?: string;
-    badgeType?: string;
-    badgeRarity?: string;
-    challengeId?: string;
-    challengeName?: string;
-    challengeType?: string;
-    challengeDifficulty?: string;
-    progress?: number;
-    objectives?: any;
-    orderId?: string;
-    orderNumber?: string;
-    productId?: string;
-    productName?: string;
-    quantity?: number;
-    totalAmount?: number;
-    orderStatus?: string;
-    rank?: number;
-    previousRank?: number;
-    period?: string;
-    score?: number;
-    previousScore?: number;
-    milestone?: string;
-    milestoneType?: string;
-    milestoneValue?: number;
-    streakCount?: number;
-    previousStreakCount?: number;
-    streakType?: string;
-    eventType?: string;
-    systemMessage?: string;
-    metadata?: any;
-    actionUrl?: string;
-    imageUrl?: string;
-    deepLink?: string;
-    tags?: string[];
-  };
+  @IsString()
+  details?: string;
 
-  @ApiProperty({
-    description: "Numeric value for sorting/filtering",
-    required: false,
-  })
   @IsOptional()
   @IsNumber()
   value?: number;
 
-  @ApiProperty({
-    description: "Previous value for comparison",
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  previousValue?: number;
-
-  @ApiProperty({
-    description: "Whether the history entry is visible to user",
-    required: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  isVisible?: boolean;
-
-  @ApiProperty({
-    description: "Admin notes",
-    required: false,
-  })
   @IsOptional()
   @IsString()
-  notes?: string;
+  metadata?: string;
 }
 
 export class HistoryResponseDto {
-  @ApiProperty({
-    description: "History ID",
-    example: "123e4567-e89b-12d3-a456-426614174000",
-  })
   id: string;
-
-  @ApiProperty({
-    description: "User ID",
-    example: "123e4567-e89b-12d3-a456-426614174000",
-  })
   userId: string;
-
-  @ApiProperty({
-    description: "History type",
-    enum: HistoryType,
-    example: HistoryType.VEHICLE_UPLOAD,
-  })
   type: HistoryType;
-
-  @ApiProperty({
-    description: "History category",
-    enum: HistoryCategory,
-    example: HistoryCategory.UPLOAD,
-  })
   category: HistoryCategory;
-
-  @ApiProperty({
-    description: "History title",
-    example: "Odometer Upload Successful",
-  })
   title: string;
-
-  @ApiProperty({
-    description: "History description",
-    example: "Uploaded 150 km for Tesla Model 3",
-  })
   description: string;
-
-  @ApiProperty({
-    description: "History data",
-  })
-  data: {
-    vehicleId?: string;
-    vehicleName?: string;
-    uploadId?: string;
-    mileage?: number;
-    carbonSaved?: number;
-    previousMileage?: number;
-    mileageDifference?: number;
-    rewardAmount?: number;
-    rewardType?: string;
-    previousBalance?: number;
-    newBalance?: number;
-    transactionType?: string;
-    badgeId?: string;
-    badgeName?: string;
-    badgeType?: string;
-    badgeRarity?: string;
-    challengeId?: string;
-    challengeName?: string;
-    challengeType?: string;
-    challengeDifficulty?: string;
-    progress?: number;
-    objectives?: any;
-    orderId?: string;
-    orderNumber?: string;
-    productId?: string;
-    productName?: string;
-    quantity?: number;
-    totalAmount?: number;
-    orderStatus?: string;
-    rank?: number;
-    previousRank?: number;
-    period?: string;
-    score?: number;
-    previousScore?: number;
-    milestone?: string;
-    milestoneType?: string;
-    milestoneValue?: number;
-    streakCount?: number;
-    previousStreakCount?: number;
-    streakType?: string;
-    eventType?: string;
-    systemMessage?: string;
-    metadata?: any;
-    actionUrl?: string;
-    imageUrl?: string;
-    deepLink?: string;
-    tags?: string[];
-  };
-
-  @ApiProperty({
-    description: "Numeric value for sorting/filtering",
-    example: 150.5,
-  })
+  details?: string;
   value: number;
-
-  @ApiProperty({
-    description: "Previous value for comparison",
-    example: 100.0,
-  })
   previousValue: number;
-
-  @ApiProperty({
-    description: "Whether the history entry is visible to user",
-    example: true,
-  })
+  metadata?: string;
+  timestamp?: Date;
+  data?: any;
   isVisible: boolean;
-
-  @ApiProperty({
-    description: "Whether the history entry is deleted",
-    example: false,
-  })
   isDeleted: boolean;
-
-  @ApiProperty({
-    description: "When the history entry was deleted",
-    example: "2024-01-15T10:30:00Z",
-  })
-  deletedAt: Date;
-
-  @ApiProperty({
-    description: "Admin notes",
-    example: "Automatic history entry",
-  })
-  notes: string;
-
-  @ApiProperty({
-    description: "Creation date",
-    example: "2024-01-15T10:30:00Z",
-  })
-  createdAt: Date;
-
-  @ApiProperty({
-    description: "Last update date",
-    example: "2024-01-15T10:30:00Z",
-  })
-  updatedAt: Date;
-
-  @ApiProperty({
-    description: "Whether the history entry is recent (within 24 hours)",
-    example: true,
-  })
+  deletedAt?: Date;
+  notes?: string;
   isRecent: boolean;
-
-  @ApiProperty({
-    description: "Whether the history entry is from today",
-    example: true,
-  })
   isToday: boolean;
-
-  @ApiProperty({
-    description: "Whether the history entry is from this week",
-    example: true,
-  })
   isThisWeek: boolean;
-
-  @ApiProperty({
-    description: "Whether the history entry is from this month",
-    example: true,
-  })
   isThisMonth: boolean;
-
-  @ApiProperty({
-    description: "Formatted value",
-    example: "150.5 km",
-  })
   formattedValue: string;
-
-  @ApiProperty({
-    description: "Value change from previous",
-    example: 50.5,
-  })
   valueChange: number;
-
-  @ApiProperty({
-    description: "Formatted value change",
-    example: "+50.5 km",
-  })
   formattedValueChange: string;
-
-  @ApiProperty({
-    description: "Whether the change is positive",
-    example: true,
-  })
   isPositiveChange: boolean;
-
-  @ApiProperty({
-    description: "Category icon",
-    example: "📸",
-  })
   categoryIcon: string;
-
-  @ApiProperty({
-    description: "Type icon",
-    example: "📸",
-  })
   typeIcon: string;
-
-  @ApiProperty({
-    description: "Formatted creation time",
-    example: "2 hours ago",
-  })
   formattedCreatedAt: string;
-
-  @ApiProperty({
-    description: "Whether the history entry can be deleted",
-    example: true,
-  })
   canBeDeleted: boolean;
-
-  @ApiProperty({
-    description: "Action button text",
-    example: "View Upload",
-  })
   actionButtonText: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export class HistoryQueryDto {
-  @ApiProperty({
-    description: "Page number",
-    example: 1,
-    required: false,
-  })
   @IsOptional()
   @IsNumber()
   @Min(1)
   page?: number;
 
-  @ApiProperty({
-    description: "Items per page",
-    example: 20,
-    required: false,
-  })
   @IsOptional()
   @IsNumber()
   @Min(1)
   @Max(100)
   limit?: number;
 
-  @ApiProperty({
-    description: "History type filter",
-    enum: HistoryType,
-    required: false,
-  })
   @IsOptional()
   @IsEnum(HistoryType)
   type?: HistoryType;
 
-  @ApiProperty({
-    description: "History category filter",
-    enum: HistoryCategory,
-    required: false,
-  })
   @IsOptional()
   @IsEnum(HistoryCategory)
   category?: HistoryCategory;
 
-  @ApiProperty({
-    description: "Search term",
-    example: "Tesla",
-    required: false,
-  })
   @IsOptional()
   @IsString()
   search?: string;
 
-  @ApiProperty({
-    description: "Start date filter",
-    example: "2024-01-01",
-    required: false,
-  })
   @IsOptional()
   @IsString()
   startDate?: string;
 
-  @ApiProperty({
-    description: "End date filter",
-    example: "2024-01-31",
-    required: false,
-  })
   @IsOptional()
   @IsString()
   endDate?: string;
 
-  @ApiProperty({
-    description: "Sort by field",
-    example: "createdAt",
-    required: false,
-  })
   @IsOptional()
   @IsString()
   sortBy?: string;
 
-  @ApiProperty({
-    description: "Sort order",
-    example: "DESC",
-    required: false,
-  })
   @IsOptional()
   @IsEnum(["ASC", "DESC"])
   sortOrder?: "ASC" | "DESC";
 }
 
 export class HistoryStatsDto {
-  @ApiProperty({
-    description: "Total history entries",
-    example: 150,
-  })
   total: number;
-
-  @ApiProperty({
-    description: "History entries by category",
-    example: {
-      upload: 50,
-      rewards: 30,
-      achievements: 20,
-      challenges: 15,
-      orders: 10,
-      vehicles: 10,
-      leaderboard: 10,
-      system: 5,
-    },
-  })
   byCategory: Record<string, number>;
-
-  @ApiProperty({
-    description: "History entries by type",
-    example: {
-      vehicle_upload: 50,
-      reward_earned: 25,
-      badge_earned: 20,
-      challenge_completed: 15,
-      order_placed: 10,
-      vehicle_added: 10,
-      leaderboard_rank: 10,
-      milestone_reached: 10,
-    },
-  })
   byType: Record<string, number>;
-
-  @ApiProperty({
-    description: "Recent history entries (last 24 hours)",
-    example: 5,
-  })
   recent: number;
-
-  @ApiProperty({
-    description: "Today history entries",
-    example: 3,
-  })
   today: number;
-
-  @ApiProperty({
-    description: "This week history entries",
-    example: 15,
-  })
   thisWeek: number;
-
-  @ApiProperty({
-    description: "This month history entries",
-    example: 45,
-  })
   thisMonth: number;
-
-  @ApiProperty({
-    description: "Total value across all entries",
-    example: 5000.5,
-  })
   totalValue: number;
-
-  @ApiProperty({
-    description: "Average value per entry",
-    example: 33.3,
-  })
   averageValue: number;
-
-  @ApiProperty({
-    description: "Most active day",
-    example: "2024-01-15",
-  })
   mostActiveDay: string;
-
-  @ApiProperty({
-    description: "Most active day count",
-    example: 8,
-  })
   mostActiveDayCount: number;
 }

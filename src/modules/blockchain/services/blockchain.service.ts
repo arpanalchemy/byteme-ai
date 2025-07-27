@@ -94,7 +94,7 @@ export class BlockchainService {
     private readonly carbonCreditService: CarbonCreditService,
     private readonly smartContractService: SmartContractService,
     private readonly configService: ConfigService,
-    private readonly eventEmitter: EventEmitter2
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -103,7 +103,7 @@ export class BlockchainService {
   async tokenizeCarbonSavings(
     userId: string,
     carbonAmount: number,
-    metadata: any
+    metadata: any,
   ): Promise<CarbonCreditToken> {
     try {
       const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -132,7 +132,7 @@ export class BlockchainService {
       // Mint NFT on VeChain
       const mintResult = await this.carbonCreditService.mintCarbonCredit(
         userWallet.walletAddress,
-        tokenData
+        tokenData,
       );
 
       // Create token record
@@ -151,14 +151,14 @@ export class BlockchainService {
       this.eventEmitter.emit("carbon.credit.minted", carbonCreditToken);
 
       this.logger.log(
-        `Carbon credit tokenized for user ${userId}: ${carbonAmount} kg CO2`
+        `Carbon credit tokenized for user ${userId}: ${carbonAmount} kg CO2`,
       );
 
       return carbonCreditToken;
     } catch (error) {
       this.logger.error(
         `Failed to tokenize carbon savings for user ${userId}`,
-        error
+        error,
       );
       throw error;
     }
@@ -171,7 +171,7 @@ export class BlockchainService {
     fromUserId: string,
     toUserId: string,
     amount: number,
-    metadata?: any
+    metadata?: any,
   ): Promise<BlockchainTransaction> {
     try {
       const fromUser = await this.userRepository.findOne({
@@ -195,7 +195,7 @@ export class BlockchainService {
       const transferResult = await this.vechainService.transferTokens(
         fromWallet.walletAddress,
         toWallet.walletAddress,
-        amount
+        amount,
       );
 
       // Create transaction record
@@ -225,14 +225,14 @@ export class BlockchainService {
       this.eventEmitter.emit("b3tr.transferred", transaction);
 
       this.logger.log(
-        `B3TR tokens transferred: ${amount} from ${fromUserId} to ${toUserId}`
+        `B3TR tokens transferred: ${amount} from ${fromUserId} to ${toUserId}`,
       );
 
       return transaction;
     } catch (error) {
       this.logger.error(
         `Failed to transfer B3TR tokens from ${fromUserId} to ${toUserId}`,
-        error
+        error,
       );
       throw error;
     }
@@ -243,7 +243,7 @@ export class BlockchainService {
    */
   async claimRewards(
     userId: string,
-    rewardIds: string[]
+    rewardIds: string[],
   ): Promise<BlockchainTransaction[]> {
     try {
       const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -265,14 +265,14 @@ export class BlockchainService {
 
       const totalAmount = rewards.reduce(
         (sum, reward) => sum + Number(reward.amount),
-        0
+        0,
       );
 
       // Claim rewards on smart contract
       const claimResult = await this.smartContractService.claimRewards(
         userWallet.walletAddress,
         rewardIds,
-        totalAmount
+        totalAmount,
       );
 
       // Create transaction records
@@ -298,7 +298,7 @@ export class BlockchainService {
       // Update reward status
       await this.rewardRepository.update(
         { id: In(rewardIds) },
-        { blockchainStatus: "claimed" as any, confirmedAt: new Date() }
+        { blockchainStatus: "claimed" as any, confirmedAt: new Date() },
       );
 
       // Emit events
@@ -307,7 +307,7 @@ export class BlockchainService {
       });
 
       this.logger.log(
-        `Rewards claimed for user ${userId}: ${totalAmount} B3TR`
+        `Rewards claimed for user ${userId}: ${totalAmount} B3TR`,
       );
 
       return transactions;
@@ -394,28 +394,28 @@ export class BlockchainService {
       }
 
       const totalBalance = await this.vechainService.getBalance(
-        userWallet.walletAddress
+        userWallet.walletAddress,
       );
       const carbonCredits = await this.carbonCreditService.getUserCarbonCredits(
-        userWallet.walletAddress
+        userWallet.walletAddress,
       );
       const b3trTokens = await this.vechainService.getB3TRBalance(
-        userWallet.walletAddress
+        userWallet.walletAddress,
       );
       const transactionHistory = await this.getUserTransactionHistory(
-        userWallet.walletAddress
+        userWallet.walletAddress,
       );
       const portfolioValue = await this.calculatePortfolioValue(
-        userWallet.walletAddress
+        userWallet.walletAddress,
       );
       const portfolioChange24h = await this.calculatePortfolioChange24h(
-        userWallet.walletAddress
+        userWallet.walletAddress,
       );
       const stakingRewards = await this.getStakingRewards(
-        userWallet.walletAddress
+        userWallet.walletAddress,
       );
       const governanceVotes = await this.getGovernanceVotes(
-        userWallet.walletAddress
+        userWallet.walletAddress,
       );
 
       return {
@@ -433,7 +433,7 @@ export class BlockchainService {
     } catch (error) {
       this.logger.error(
         `Failed to get wallet analytics for user ${userId}`,
-        error
+        error,
       );
       throw error;
     }
@@ -444,7 +444,7 @@ export class BlockchainService {
    */
   async subscribeToSmartContractEvents(
     contractAddress: string,
-    eventName: string
+    eventName: string,
   ): Promise<void> {
     try {
       await this.smartContractService.subscribeToEvent(
@@ -463,14 +463,14 @@ export class BlockchainService {
 
           this.eventEmitter.emit("smart.contract.event", smartContractEvent);
           this.logger.log(
-            `Smart contract event received: ${eventName} from ${contractAddress}`
+            `Smart contract event received: ${eventName} from ${contractAddress}`,
           );
-        }
+        },
       );
     } catch (error) {
       this.logger.error(
         `Failed to subscribe to smart contract events for ${contractAddress}`,
-        error
+        error,
       );
       throw error;
     }
@@ -528,27 +528,27 @@ export class BlockchainService {
   private async updateUserBalances(
     fromUserId: string,
     toUserId: string,
-    amount: number
+    amount: number,
   ): Promise<void> {
     await this.userRepository.update(
       { id: fromUserId },
-      { b3trBalance: () => `b3tr_balance - ${amount}` }
+      { b3trBalance: () => `b3tr_balance - ${amount}` },
     );
     await this.userRepository.update(
       { id: toUserId },
-      { b3trBalance: () => `b3tr_balance + ${amount}` }
+      { b3trBalance: () => `b3tr_balance + ${amount}` },
     );
   }
 
   private async getPendingTransactions(
-    userId?: string
+    userId?: string,
   ): Promise<BlockchainTransaction[]> {
     // Implementation would query pending transactions from blockchain
     return [];
   }
 
   private async getRecentTransactions(
-    userId?: string
+    userId?: string,
   ): Promise<BlockchainTransaction[]> {
     // Implementation would query recent transactions from blockchain
     return [];
@@ -572,21 +572,21 @@ export class BlockchainService {
   }
 
   private async getUserTransactionHistory(
-    walletAddress: string
+    walletAddress: string,
   ): Promise<BlockchainTransaction[]> {
     // Implementation would query user's transaction history
     return [];
   }
 
   private async calculatePortfolioValue(
-    walletAddress: string
+    walletAddress: string,
   ): Promise<number> {
     // Implementation would calculate portfolio value
     return 0;
   }
 
   private async calculatePortfolioChange24h(
-    walletAddress: string
+    walletAddress: string,
   ): Promise<number> {
     // Implementation would calculate 24h portfolio change
     return 0;

@@ -50,11 +50,14 @@ export class HistoryService {
       }
 
       const history = this.historyRepository.create({
-        ...createDto,
+        userId: createDto.userId,
+        type: createDto.type,
+        category: createDto.category,
+        title: createDto.title,
+        description: createDto.description,
         value: createDto.value || 0,
-        previousValue: createDto.previousValue || 0,
-        isVisible:
-          createDto.isVisible !== undefined ? createDto.isVisible : true,
+        previousValue: 0,
+        isVisible: true,
       });
 
       const savedHistory = await this.historyRepository.save(history);

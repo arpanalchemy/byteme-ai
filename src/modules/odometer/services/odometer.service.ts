@@ -649,10 +649,9 @@ export class OdometerService {
         })),
         recentActivity: recentActivity.map((activity) => ({
           uploadId: activity.id,
-          status: activity.status,
           mileage: activity.finalMileage,
           carbonSaved: activity.carbonSaved,
-          createdAt: activity.createdAt,
+          date: activity.createdAt.toISOString().split("T")[0],
         })),
       };
     } catch (error) {

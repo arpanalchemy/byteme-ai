@@ -53,11 +53,14 @@ export class RewardService {
       }
 
       const reward = this.rewardRepository.create({
-        ...createDto,
-        milesDriven: createDto.milesDriven || 0,
-        carbonSaved: createDto.carbonSaved || 0,
-        cycleId: createDto.cycleId || null,
-        submissionId: null,
+        userId: createDto.userId,
+        type: createDto.type,
+        amount: createDto.amount,
+        description: createDto.description,
+        metadata: createDto.metadata,
+        processedAt: createDto.processedAt
+          ? new Date(createDto.processedAt)
+          : undefined,
       });
 
       const savedReward = await this.rewardRepository.save(reward);

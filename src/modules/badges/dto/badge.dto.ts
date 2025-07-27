@@ -4,11 +4,9 @@ import {
   IsOptional,
   IsNumber,
   IsEnum,
-  IsArray,
-  IsBoolean,
-  IsNotEmpty,
+  IsUUID,
   Min,
-  Max,
+  IsNotEmpty,
 } from "class-validator";
 import { BadgeType, BadgeRarity, BadgeStatus } from "../entity/badge.entity";
 

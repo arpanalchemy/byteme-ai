@@ -56,7 +56,12 @@ export class ChallengeService {
   ): Promise<ChallengeResponseDto> {
     try {
       const challenge = this.challengeRepository.create({
-        ...createDto,
+        name: createDto.name,
+        description: createDto.description,
+        type: createDto.type,
+        startDate: new Date(createDto.startDate),
+        endDate: new Date(createDto.endDate),
+        imageUrl: createDto.imageUrl,
         createdBy: adminId,
       });
 
@@ -611,17 +616,8 @@ export class ChallengeService {
       rank: userChallenge.rank,
       notes: userChallenge.notes,
       isVisible: userChallenge.isVisible,
-      isCompleted: userChallenge.isCompleted,
-      isFailed: userChallenge.isFailed,
-      isAbandoned: userChallenge.isAbandoned,
-      isInProgress: userChallenge.isInProgress,
-      hasRewards: userChallenge.hasRewards,
-      isRewardsClaimed: userChallenge.isRewardsClaimed,
-      formattedRewards: userChallenge.formattedRewards,
-      progressPercentage: userChallenge.progressPercentage,
-      timeSinceJoined: userChallenge.timeSinceJoined,
-      rankDisplay: userChallenge.rankDisplay,
       createdAt: userChallenge.createdAt,
+      updatedAt: userChallenge.updatedAt,
     };
   }
 }

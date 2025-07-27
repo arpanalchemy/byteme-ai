@@ -193,7 +193,7 @@ export class StoreService {
    */
   async createOrder(userId: string, createDto: CreateOrderDto): Promise<Order> {
     try {
-      const { productId, quantity, shippingAddress, customerNotes } = createDto;
+      const { productId, quantity, shippingAddress, userId } = createDto;
 
       // Get product
       const product = await this.productRepository.findOne({
@@ -235,10 +235,10 @@ export class StoreService {
         userId,
         productId,
         quantity,
-        unitPrice,
+        unitPrice: product.price,
         totalPrice,
         shippingAddress,
-        customerNotes,
+        customerNotes: createDto.customerNotes,
         status: OrderStatus.PENDING,
         paymentStatus: PaymentStatus.PENDING,
       });
@@ -254,7 +254,7 @@ export class StoreService {
       product.soldCount += quantity;
       await this.productRepository.save(product);
 
-      this.logger.log(`Order created: ${savedOrder.id}`);
+      this.logger.log(`Order created: ${(savedOrder as any).id}`);
       return savedOrder;
     } catch (error) {
       this.logger.error(`Failed to create order: ${error.message}`);
