@@ -64,7 +64,7 @@ export class OpenAIService {
       }
 
       // If it's an S3 URL, use S3Service to download
-      if (imageUrl.includes("s3.ca-central-1.amazonaws.com")) {
+      if (imageUrl.includes("amazonaws.com")) {
         const key = this.s3Service.extractKeyFromUrl(imageUrl);
         if (!key) {
           throw new Error("Invalid S3 URL format");

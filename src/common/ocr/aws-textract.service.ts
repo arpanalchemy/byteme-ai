@@ -40,7 +40,7 @@ export class AwsTextractService {
   constructor(private configService: ConfigService) {
     // Configure AWS v3 client
     this.textract = new TextractClient({
-      region: this.configService.get("AWS_REGION", "us-east-1"),
+      region: this.configService.get("AWS_REGION", "ca-central-1"),
       credentials: {
         accessKeyId: this.configService.get("AWS_ACCESS_KEY_ID"),
         secretAccessKey: this.configService.get("AWS_SECRET_ACCESS_KEY"),
@@ -65,12 +65,12 @@ export class AwsTextractService {
       const textractResponse = await this.textract.send(command);
 
       this.logger.log(
-        `Textract processed ${textractResponse.Blocks?.length || 0} blocks`,
+        `Textract processed ${textractResponse.Blocks?.length || 0} blocks`
       );
 
       // Extract odometer reading using multiple detection methods
       const odometerResult = this.findOdometerReading(
-        textractResponse.Blocks || [],
+        textractResponse.Blocks || []
       );
 
       if (!odometerResult) {
@@ -78,7 +78,7 @@ export class AwsTextractService {
       }
 
       this.logger.log(
-        `Odometer detected: ${odometerResult.mileage} (confidence: ${odometerResult.confidence}%)`,
+        `Odometer detected: ${odometerResult.mileage} (confidence: ${odometerResult.confidence}%)`
       );
 
       return odometerResult;
@@ -93,23 +93,31 @@ export class AwsTextractService {
    */
   private findOdometerReading(blocks: TextractBlock[]): OdometerResult | null {
     const wordBlocks = blocks.filter(
-      (block) => block.BlockType === "WORD" && block.Text,
+      (block) => block.BlockType === "WORD" && block.Text
     );
 
-    this.logger.debug(`Processing ${wordBlocks.length} word blocks`);
+    this.logger.log(`Processing ${wordBlocks.length} word blocks`);
 
-    // Method 1: Pure number detection (5-7 digits)
+    // Log all detected text for debugging
+    const allText = wordBlocks
+      .map((block) => `${block.Text} (${block.Confidence}%)`)
+      .join(", ");
+    this.logger.log(`All detected text: ${allText}`);
+
+    // Method 1: Pure number detection (4-7 digits)
     const pureNumbers = this.findPureNumbers(wordBlocks);
     if (pureNumbers.length > 0) {
-      this.logger.debug(`Found ${pureNumbers.length} pure number candidates`);
+      this.logger.log(
+        `Found ${pureNumbers.length} pure number candidates: ${pureNumbers.map((b) => b.Text).join(", ")}`
+      );
       return this.selectBestOdometer(pureNumbers, "pure_number");
     }
 
     // Method 2: Look for numbers near "MILE", "KM", "ODO" labels
     const labeledNumbers = this.findLabeledNumbers(wordBlocks);
     if (labeledNumbers.length > 0) {
-      this.logger.debug(
-        `Found ${labeledNumbers.length} labeled number candidates`,
+      this.logger.log(
+        `Found ${labeledNumbers.length} labeled number candidates: ${labeledNumbers.map((b) => b.Text).join(", ")}`
       );
       return this.selectBestOdometer(labeledNumbers, "labeled_number");
     }
@@ -117,8 +125,8 @@ export class AwsTextractService {
     // Method 3: Position-based detection (center/right area)
     const positionedNumbers = this.findPositionedNumbers(wordBlocks);
     if (positionedNumbers.length > 0) {
-      this.logger.debug(
-        `Found ${positionedNumbers.length} positioned number candidates`,
+      this.logger.log(
+        `Found ${positionedNumbers.length} positioned number candidates: ${positionedNumbers.map((b) => b.Text).join(", ")}`
       );
       return this.selectBestOdometer(positionedNumbers, "positioned_number");
     }
@@ -126,12 +134,13 @@ export class AwsTextractService {
     // Method 4: Any number with high confidence
     const highConfidenceNumbers = this.findHighConfidenceNumbers(wordBlocks);
     if (highConfidenceNumbers.length > 0) {
-      this.logger.debug(
-        `Found ${highConfidenceNumbers.length} high confidence number candidates`,
+      this.logger.log(
+        `Found ${highConfidenceNumbers.length} high confidence number candidates: ${highConfidenceNumbers.map((b) => b.Text).join(", ")}`
       );
       return this.selectBestOdometer(highConfidenceNumbers, "high_confidence");
     }
 
+    this.logger.warn("No odometer reading found using any detection method");
     return null;
   }
 
@@ -142,7 +151,8 @@ export class AwsTextractService {
     return blocks.filter((block) => {
       if (!block.Text || !block.Confidence) return false;
       const text = block.Text.replace(/[^\d]/g, "");
-      return /^\d{5,7}$/.test(text) && block.Confidence > 85;
+      // Accept 4-7 digits for odometer readings (including 2031 from the image)
+      return /^\d{4,7}$/.test(text) && block.Confidence > 80;
     });
   }
 
@@ -150,23 +160,32 @@ export class AwsTextractService {
    * Find numbers near odometer-related labels
    */
   private findLabeledNumbers(blocks: TextractBlock[]): TextractBlock[] {
-    const odometerLabels = ["MILE", "KM", "ODO", "ODOMETER", "TOTAL", "TRIP"];
+    const odometerLabels = [
+      "MILE",
+      "KM",
+      "ODO",
+      "ODOMETER",
+      "TOTAL",
+      "TRIP",
+      "ALL",
+      "TIME",
+      "DISTANCE",
+    ];
     const labelBlocks = blocks.filter(
       (block) =>
         block.Text &&
-        odometerLabels.some((label) =>
-          block.Text.toUpperCase().includes(label),
-        ),
+        odometerLabels.some((label) => block.Text.toUpperCase().includes(label))
     );
 
     return blocks.filter((block) => {
       if (!block.Text || !block.Confidence) return false;
       const text = block.Text.replace(/[^\d]/g, "");
-      if (!/^\d{4,7}$/.test(text) || block.Confidence < 80) return false;
+      // Accept 4-7 digits for odometer readings
+      if (!/^\d{4,7}$/.test(text) || block.Confidence < 75) return false;
 
       // Check if number is near a label (within reasonable distance)
       return labelBlocks.some(
-        (labelBlock) => this.isNearby(block, labelBlock, 0.1), // 10% of image width/height
+        (labelBlock) => this.isNearby(block, labelBlock, 0.15) // 15% of image width/height
       );
     });
   }
@@ -179,16 +198,21 @@ export class AwsTextractService {
       if (!block.Text || !block.Confidence || !block.Geometry?.BoundingBox)
         return false;
       const text = block.Text.replace(/[^\d]/g, "");
-      if (!/^\d{4,7}$/.test(text) || block.Confidence < 75) return false;
+      // Accept 4-7 digits for odometer readings
+      if (!/^\d{4,7}$/.test(text) || block.Confidence < 70) return false;
 
       const bbox = block.Geometry.BoundingBox;
 
-      // Odometer typically in center-right area
+      // Odometer typically in center-right area, but also check right side for dashboard displays
       const isInOdometerArea =
-        bbox.Left > 0.3 &&
-        bbox.Left < 0.9 && // Right side
-        bbox.Top > 0.2 &&
-        bbox.Top < 0.8; // Center area
+        (bbox.Left > 0.3 &&
+          bbox.Left < 0.9 &&
+          bbox.Top > 0.2 &&
+          bbox.Top < 0.8) || // Center-right
+        (bbox.Left > 0.6 &&
+          bbox.Left < 0.95 &&
+          bbox.Top > 0.1 &&
+          bbox.Top < 0.9); // Right side
 
       return isInOdometerArea;
     });
@@ -201,7 +225,8 @@ export class AwsTextractService {
     return blocks.filter((block) => {
       if (!block.Text || !block.Confidence) return false;
       const text = block.Text.replace(/[^\d]/g, "");
-      return /^\d{4,7}$/.test(text) && block.Confidence > 95;
+      // Accept 4-7 digits for odometer readings
+      return /^\d{4,7}$/.test(text) && block.Confidence > 90;
     });
   }
 
@@ -211,7 +236,7 @@ export class AwsTextractService {
   private isNearby(
     block1: TextractBlock,
     block2: TextractBlock,
-    threshold: number,
+    threshold: number
   ): boolean {
     const bbox1 = block1.Geometry?.BoundingBox;
     const bbox2 = block2.Geometry?.BoundingBox;
@@ -229,7 +254,7 @@ export class AwsTextractService {
    */
   private selectBestOdometer(
     candidates: TextractBlock[],
-    method: string,
+    method: string
   ): OdometerResult {
     // Sort by confidence, then by number length (prefer longer numbers)
     const sortedCandidates = candidates.sort((a, b) => {

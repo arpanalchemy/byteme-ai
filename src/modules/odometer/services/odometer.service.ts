@@ -115,10 +115,10 @@ export class OdometerService {
 
       const startTime = Date.now();
 
-      // Step 1: OCR Processing (placeholder for now)
-      // const ocrStartTime = Date.now();
-      // // const ocrResult = await this.processOcr(upload);
-      // const ocrTime = Date.now() - ocrStartTime;
+      // Step 1: OCR Processing
+      const ocrStartTime = Date.now();
+      const ocrResult = await this.processOcr(upload);
+      const ocrTime = Date.now() - ocrStartTime;
 
       // Step 2: OpenAI Analysis
       const aiStartTime = Date.now();
@@ -132,7 +132,7 @@ export class OdometerService {
       );
 
       // Step 4: Mileage Validation
-      const validationResult = await this.validateMileage(upload, null);
+      const validationResult = await this.validateMileage(upload, ocrResult);
 
       // Step 5: Calculate carbon savings
       const carbonSaved = await this.calculateCarbonSaved(
@@ -142,13 +142,13 @@ export class OdometerService {
 
       // Update upload with results
       await this.updateUploadWithResults(upload, {
-        ocrResult: null,
+        ocrResult,
         aiResults,
         vehicleMatch,
         validationResult,
         carbonSaved,
         processingTime: Date.now() - startTime,
-        ocrTime: 0,
+        ocrTime,
         aiTime,
       });
 
@@ -174,9 +174,12 @@ export class OdometerService {
       this.logger.log("Processing OCR using AWS Textract");
 
       // Download image from S3
+      this.logger.log(`Downloading image from: ${upload.s3ImageUrl}`);
       const imageBuffer = await this.downloadImageFromS3(upload.s3ImageUrl);
+      this.logger.log(`Downloaded image, size: ${imageBuffer.length} bytes`);
 
       // Process with AWS Textract
+      this.logger.log("Sending image to AWS Textract...");
       const ocrResult =
         await this.awsTextractService.extractOdometerReading(imageBuffer);
 
@@ -192,6 +195,7 @@ export class OdometerService {
       };
     } catch (error) {
       this.logger.error(`OCR processing failed: ${error.message}`);
+      this.logger.error(`Error stack: ${error.stack}`);
       throw error;
     }
   }
@@ -204,6 +208,7 @@ export class OdometerService {
     vehicleDetection: any;
   }> {
     try {
+      this.logger.log("Starting AI analysis");
       const imageHash = this.redisService.generateImageHash(upload.s3ImageUrl);
 
       // Check cache first
@@ -212,25 +217,37 @@ export class OdometerService {
         await this.redisService.getVehicleDetectionCache(imageHash);
 
       if (!analysis) {
+        this.logger.log("No cached analysis found, calling OpenAI...");
         analysis = await this.openaiService.analyzeOdometerImage(
           upload.s3ImageUrl
         );
+        this.logger.log("OpenAI analysis completed, caching result...");
         await this.redisService.setAnalysisCache(imageHash, analysis);
+      } else {
+        this.logger.log("Using cached analysis result");
       }
 
       if (!vehicleDetection) {
+        this.logger.log("No cached vehicle detection found, calling OpenAI...");
         vehicleDetection = await this.openaiService.detectVehicle(
           upload.s3ImageUrl
+        );
+        this.logger.log(
+          "OpenAI vehicle detection completed, caching result..."
         );
         await this.redisService.setVehicleDetectionCache(
           imageHash,
           vehicleDetection
         );
+      } else {
+        this.logger.log("Using cached vehicle detection result");
       }
 
+      this.logger.log(`AI analysis completed: vehicleType=${(analysis as any).vehicleType}, confidence=${(analysis as any).confidenceScore}`);
       return { analysis, vehicleDetection };
     } catch (error) {
       this.logger.error(`AI analysis failed: ${error.message}`);
+      this.logger.error(`Error stack: ${error.stack}`);
       throw error;
     }
   }
@@ -356,45 +373,69 @@ export class OdometerService {
         upload.vehicleId
       );
 
-      // Placeholder validation - will be replaced with actual validation later
+      // Use OCR result if available, otherwise default to 0
+      const extractedMileage = ocrResult ? ocrResult.extractedMileage : 0;
+      const ocrConfidence = ocrResult ? ocrResult.confidence : 0;
+
+      // Basic validation
       const validation = {
-        isValid: true,
-        reason: "Placeholder validation - OCR service not available",
+        isValid: extractedMileage > 0 && ocrConfidence > 0.5,
+        reason:
+          extractedMileage > 0
+            ? `OCR extracted ${extractedMileage} with ${(ocrConfidence * 100).toFixed(1)}% confidence`
+            : "No valid mileage extracted from image",
       };
 
       // AI validation if available
       let aiValidation: any = null;
-      if (upload.s3ImageUrl) {
+      if (upload.s3ImageUrl && extractedMileage > 0) {
         try {
           aiValidation = await this.openaiService.validateOcrResult(
             upload.s3ImageUrl,
-            ocrResult ? ocrResult.extractedMileage.toString() : "0"
+            extractedMileage.toString()
           );
         } catch (error) {
           this.logger.warn(`AI validation failed: ${error.message}`);
         }
       }
 
-      const finalMileage = aiValidation?.suggestedMileage
-        ? parseFloat(aiValidation.suggestedMileage)
-        : ocrResult
-          ? ocrResult.extractedMileage
-          : 0;
+      // Determine final mileage and confidence
+      let finalMileage = extractedMileage;
+      let finalConfidence = ocrConfidence;
 
-      const finalConfidence = aiValidation
-        ? (ocrResult ? ocrResult.confidence : 0 + aiValidation.confidence) / 2
-        : ocrResult
-          ? ocrResult.confidence
-          : 0;
+      if (aiValidation && aiValidation.suggestedMileage) {
+        const aiMileage = parseFloat(aiValidation.suggestedMileage);
+        if (!isNaN(aiMileage) && aiMileage > 0) {
+          finalMileage = aiMileage;
+          finalConfidence = (ocrConfidence + aiValidation.confidence) / 2;
+        }
+      }
+
+      // Additional validation checks
+      if (previousMileage && finalMileage < previousMileage) {
+        validation.isValid = false;
+        validation.reason = `Mileage (${finalMileage}) cannot be less than previous reading (${previousMileage})`;
+      }
+
+      const mileageDifference = previousMileage
+        ? finalMileage - previousMileage
+        : 0;
 
       return {
         isValid: validation.isValid,
         confidence: finalConfidence,
         finalMileage,
         previousMileage,
-        mileageDifference: previousMileage ? finalMileage - previousMileage : 0,
+        mileageDifference,
         validationNotes: validation.reason,
         aiValidation,
+        ocrResult: ocrResult
+          ? {
+              extractedMileage: ocrResult.extractedMileage,
+              confidence: ocrResult.confidence,
+              rawText: ocrResult.rawText,
+            }
+          : null,
       };
     } catch (error) {
       this.logger.error(`Mileage validation failed: ${error.message}`);
@@ -484,18 +525,28 @@ export class OdometerService {
         : ValidationStatus.REJECTED;
       upload.isApproved = results.validationResult.isValid;
 
-      upload.extractedMileage = results.ocrResult.extractedMileage;
-      upload.ocrConfidenceScore = results.ocrResult.confidence;
-      upload.ocrRawText = results.ocrResult.rawText;
+      // Store OCR results
+      if (results.ocrResult) {
+        upload.extractedMileage = results.ocrResult.extractedMileage;
+        upload.ocrConfidenceScore = results.ocrResult.confidence;
+        upload.ocrRawText = results.ocrResult.rawText;
+      } else {
+        upload.extractedMileage = 0;
+        upload.ocrConfidenceScore = 0;
+        upload.ocrRawText = null;
+      }
 
+      // Store AI analysis results
       upload.openaiAnalysis = results.aiResults.analysis;
       upload.vehicleDetected = results.aiResults.vehicleDetection;
       upload.aiValidationResult = results.validationResult.aiValidation;
 
+      // Store final validation results
       upload.finalMileage = results.validationResult.finalMileage;
       upload.mileageDifference = results.validationResult.mileageDifference;
       upload.carbonSaved = results.carbonSaved;
 
+      // Store processing times
       upload.processingTimeMs = results.processingTime;
       upload.ocrProcessingTimeMs = results.ocrTime;
       upload.aiProcessingTimeMs = results.aiTime;
@@ -504,6 +555,10 @@ export class OdometerService {
       upload.validationNotes = results.validationResult.validationNotes;
 
       await this.odometerUploadRepository.save(upload);
+
+      this.logger.log(
+        `Upload ${upload.id} updated with results: mileage=${upload.finalMileage}, confidence=${upload.ocrConfidenceScore}`
+      );
     } catch (error) {
       this.logger.error(`Failed to update upload results: ${error.message}`);
       throw error;
@@ -544,12 +599,36 @@ export class OdometerService {
   }
 
   /**
-   * Download image from S3 (placeholder - would need S3 client implementation)
+   * Download image from S3
    */
-  private async downloadImageFromS3(_url: string): Promise<Buffer> {
-    // This is a placeholder - in production you would implement S3 download
-    // For now, we'll return a dummy buffer
-    return Buffer.from("dummy image data");
+  private async downloadImageFromS3(url: string): Promise<Buffer> {
+    try {
+      this.logger.log(`Downloading image from S3: ${url}`);
+
+      // Extract S3 key from URL
+      const key = this.s3Service.extractKeyFromUrl(url);
+      if (!key) {
+        throw new Error("Invalid S3 URL format");
+      }
+
+      // Download image as base64 and convert to buffer
+      const base64Data = await this.s3Service.downloadImageAsBase64(key);
+
+      // Remove data URL prefix and convert to buffer
+      const base64String = base64Data.replace(
+        /^data:image\/[a-z]+;base64,/,
+        ""
+      );
+      const buffer = Buffer.from(base64String, "base64");
+
+      this.logger.log(
+        `Successfully downloaded image, size: ${buffer.length} bytes`
+      );
+      return buffer;
+    } catch (error) {
+      this.logger.error(`Failed to download image from S3: ${error.message}`);
+      throw new Error(`Failed to download image: ${error.message}`);
+    }
   }
 
   /**
