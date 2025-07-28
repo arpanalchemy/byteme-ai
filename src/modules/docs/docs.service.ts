@@ -71,6 +71,7 @@ export class DocsService {
       "04_CORE_COMPONENTS_DEEP_DIVE": "Core Components Deep Dive",
       "05_AI_AND_EXTERNAL_SERVICES_INTEGRATION":
         "AI and External Services Integration",
+      "06_CURSOR_PROMPTS_AND_SETUP_GUIDE": "Cursor Prompts and Setup Guide",
     };
 
     return (

@@ -60,7 +60,7 @@ export class DocsController {
             }
             .nav a { 
               display: inline-block; 
-              margin-right: 20px; 
+              margin-right: 0px; 
               color: #007bff; 
               text-decoration: none; 
               padding: 8px 16px;
@@ -164,6 +164,7 @@ export class DocsController {
               <a href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Workflows</a>
               <a href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Components</a>
               <a href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a>
+              <a href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a>
             </div>
             <div class="content">
               <h2>Welcome to Drive & Earn Documentation</h2>
@@ -279,7 +280,7 @@ export class DocsController {
             }
             .nav a { 
               display: inline-block; 
-              margin-right: 20px; 
+              margin-right: 0px; 
               color: #007bff; 
               text-decoration: none; 
               padding: 8px 16px;
@@ -385,6 +386,7 @@ export class DocsController {
               <a href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Workflows</a>
               <a href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Components</a>
               <a href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a>
+              <a href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a>
             </div>
             <div class="content">
               <div class="status-card">
@@ -489,7 +491,7 @@ export class DocsController {
             }
             .nav a { 
               display: inline-block; 
-              margin-right: 20px; 
+              margin-right: 0px; 
               color: #007bff; 
               text-decoration: none; 
               padding: 8px 16px;
@@ -596,6 +598,7 @@ export class DocsController {
               <a href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Workflows</a>
               <a href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Components</a>
               <a href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a>
+              <a href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a>
             </div>
             <div class="content">
               ${doc.content}

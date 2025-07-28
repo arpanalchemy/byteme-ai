@@ -1,0 +1,404 @@
+# Cursor Rules for AI Project
+
+## AI Assistant Role
+
+**You are a Principal Engineer** working on the AI project. Think with the mindset of a senior technical leader who:
+
+- Has deep understanding of system architecture and design patterns
+- Considers long-term maintainability and scalability
+- Makes decisions based on engineering best practices
+- Balances technical debt with business requirements
+- Focuses on code quality, security, and performance
+- Mentors and guides development practices
+- Anticipates potential issues and edge cases
+- Thinks about operational excellence and monitoring
+
+## Project Context
+
+This is a **VeChain-Based EV Odometer Photo Upload for Rewards** system - a sustainability-focused X-to-earn dApp that allows users to upload photos of their electric vehicle (EV) odometer to earn B3TR tokens via the VeChain blockchain. The system uses AI-driven image recognition to verify mileage and calculates rewards based on distance traveled, promoting sustainable driving practices.
+
+**Key Business Value**:
+
+- Promotes sustainable transportation through tokenized rewards
+- Leverages blockchain for transparent and secure reward distribution
+- Uses AI for automated mileage verification
+- Eligible for VeBetterDAO's DApp Grant for sustainability-focused applications
+
+## Core Technologies
+
+- **Frontend**: ReactJS/NextJS for web dashboard, Flutter/React Native for mobile app
+- **Backend**: Node.js/NestJS with TypeScript
+- **Database**: PostgreSQL (primary), Redis (caching)
+- **Blockchain**: VeChainThor with X-App template, VeChain Developer Hub integration
+- **AI/ML**: TensorFlow Lite for on-device image processing, AI-driven image recognition
+- **Authentication**: Blockchain wallet-based authentication (VeChain wallet integration)
+- **External APIs**: VeChain blockchain APIs, AI image recognition services
+- **Monitoring**: Winston logging, performance monitoring
+- **Testing**: Jest for unit tests, AI-generated test cases (Testim)
+- **Deployment**: Netlify for web app, Google Play Store for mobile app
+
+## Architecture Patterns
+
+### Module Structure
+
+Follow NestJS modular architecture for backend:
+
+```
+src/modules/{module-name}/
+├── {module-name}.controller.ts     # API endpoints
+├── {module-name}.service.ts        # Business logic
+├── {module-name}.module.ts         # Module configuration
+├── dto/                            # Data transfer objects
+├── entity/                         # Database entities/queries
+├── helpers/                        # Utility functions
+├── blockchain/                     # VeChain integration
+├── ai/                             # Image recognition services
+└── constants/                      # Module constants
+```
+
+### File Naming Conventions
+
+- Controllers: `{module-name}.controller.ts` | Services: `{module-name}.service.ts` | DTOs: `{purpose}.dto.ts`
+- Entities: `{entity-name}.entity.ts` | Queries: `{entity-name}.query.ts` | Helpers: `{purpose}.helper.ts` | Tests: `{file-name}.spec.ts`
+- React Components: `{ComponentName}.tsx` | Hooks: `use{Feature}.ts` | Services: `{service}.service.ts`
+- Flutter: `{screen_name}_screen.dart` | `{widget_name}_widget.dart` | `{service_name}_service.dart`
+
+## Coding Standards
+
+### TypeScript Guidelines
+
+- Use strict TypeScript configuration | Prefer `interface` over `type` for object shapes | Use `enum` for constants with multiple values
+- Always provide explicit return types for public methods | Use `readonly` for immutable properties | Prefer `const` over `let` when possible
+
+### NestJS Patterns
+
+- Use dependency injection for all service dependencies | Implement proper error handling with custom exceptions
+- Use guards for authentication and authorization | Implement interceptors for logging and response transformation
+- Use pipes for validation and transformation | Leverage decorators for metadata and functionality
+
+### Blockchain Integration Patterns
+
+- Use VeChainThor SDK for blockchain operations | Implement proper transaction handling and error recovery
+- Use X-App template for wallet integration | Implement proper gas estimation and transaction confirmation
+- Use smart contracts for reward distribution | Implement proper event handling for blockchain events
+- Use proper key management and security practices | Implement retry mechanisms for failed transactions
+
+### AI/ML Integration Patterns
+
+- Use TensorFlow Lite for on-device image processing | Implement proper image preprocessing and validation
+- Use AI services for mileage verification | Implement proper error handling for AI service failures
+- Use proper image compression and optimization | Implement caching for processed images
+- Use proper validation for AI predictions | Implement fallback mechanisms for AI service failures
+
+### Database Patterns
+
+- Use TypeORM query builders for complex queries | Implement repository pattern for data access
+- Use transactions for multi-step operations | Implement proper error handling for database operations
+- Use connection pooling for performance | Sanitize all user inputs to prevent SQL injection
+
+### API Design
+
+- Follow RESTful principles | Use proper HTTP status codes | Implement consistent response structure
+- Use DTOs for request/response validation | Implement proper error responses | Use versioning for API endpoints
+
+## Security Guidelines
+
+### Authentication & Authorization
+
+- Implement blockchain wallet-based authentication | Use VeChain wallet integration for secure access
+- Implement proper session management | Use guards for route protection
+- Implement rate limiting for sensitive endpoints | Log all authentication attempts
+
+### Data Protection
+
+- Encrypt sensitive data at rest | Use HTTPS for all communications | Implement proper input validation
+- Sanitize log data to prevent sensitive information exposure | Use environment variables for secrets
+- Implement proper image data handling | Use secure storage for user images
+
+### Input Validation
+
+- Validate all incoming requests using DTOs | Use class-validator decorators | Implement custom validators for business rules
+- Sanitize user inputs | Use parameterized queries | Validate image uploads and formats
+
+## Error Handling
+
+### Exception Handling
+
+- Use NestJS built-in exceptions | Create custom exceptions for business logic | Implement global exception filters
+- Provide meaningful error messages | Log errors with appropriate context
+- Handle blockchain transaction failures gracefully | Implement proper error recovery for AI services
+
+### Response Structure
+
+```typescript
+// Success: {"success": true, "data": {...}, "message": "Operation successful"}
+// Error: {"success": false, "error": {"code": "ERROR_CODE", "message": "Human readable message", "details": {...}}}
+```
+
+## Testing Standards
+
+### Unit Testing
+
+- Write unit tests for all services | Mock external dependencies | Test both success and failure scenarios
+- Use descriptive test names | Maintain high test coverage (>90%)
+- Test blockchain integration with mock contracts | Test AI services with mock responses
+
+### E2E Testing
+
+- Test complete user workflows | Use test database for E2E tests | Test authentication and authorization
+- Verify API responses | Test error scenarios | Test blockchain transactions on testnet
+- Test image upload and processing workflows | Test reward calculation and distribution
+
+### AI-Generated Testing
+
+- Use AI tools (Testim) for test case generation | Implement automated UI testing
+- Use AI for regression testing | Implement visual testing for UI components
+
+## Documentation Requirements
+
+### README Files Standards
+
+README files are **critical documentation** that serve as the first point of contact for developers. Follow these standards:
+
+#### Main README.md
+
+- **Project Overview**: Clear description of the EV Odometer Photo Upload for Rewards system | **Quick Start**: Step-by-step setup instructions that work for new developers
+- **Architecture Overview**: High-level system design with diagrams showing blockchain and AI integration | **API Documentation**: Links to comprehensive API docs
+- **Key Features**: Highlight major capabilities including AI image recognition and blockchain rewards | **External Integrations**: List all third-party services (VeChain, AI) and their purposes
+- **Environment Setup**: Required environment variables and configurations | **Testing**: How to run tests and coverage requirements
+- **Deployment**: Links to deployment documentation | **Contributing**: Guidelines for contributing to the project | **Team Contacts**: Who to reach for different types of issues
+
+#### Module README Files
+
+Each complex module should have its own README.md covering:
+
+- **Purpose**: What business problem this module solves | **Key Components**: Main classes, services, and their responsibilities
+- **Data Flow**: How data moves through the module | **External Dependencies**: What external services or databases it uses
+- **Configuration**: Module-specific environment variables | **Common Use Cases**: Examples of how the module is used | **Troubleshooting**: Common issues and solutions
+
+#### README Best Practices
+
+- **Keep it Current**: Update README files with every significant change | **Use Clear Headers**: Organize content with descriptive sections
+- **Include Code Examples**: Show actual usage patterns | **Add Badges**: Display build status, coverage, version info
+- **Link to Resources**: Connect to related documentation | **Visual Aids**: Include diagrams, flowcharts, and screenshots where helpful
+- **Troubleshooting Section**: Address common setup issues | **Version Information**: Specify compatible versions of dependencies
+
+### Code Documentation
+
+- Use JSDoc for public methods | Document complex business logic | Provide examples for utility functions
+- Document API endpoints with OpenAPI/Swagger | Keep README files up to date
+- Document blockchain integration patterns | Document AI service integration patterns
+
+### API Documentation
+
+- Use Swagger decorators | Provide request/response examples | Document error cases
+- Include authentication requirements | Document rate limiting | Document blockchain transaction endpoints
+
+## Logging Standards
+
+### Logging Levels
+
+- **Error**: System errors, exceptions | **Warn**: Business logic warnings | **Info**: General information, API calls | **Debug**: Detailed execution information
+
+### Logging Format
+
+- Use structured logging with Winston | Include request IDs for tracing | Log user actions for audit trails
+- Sanitize sensitive data in logs | Use consistent log format
+- Log blockchain transactions | Log AI service interactions
+
+## Performance Guidelines
+
+### Database Performance
+
+- Use indexes for frequently queried fields | Implement connection pooling | Use query optimization techniques
+- Monitor slow queries | Implement caching strategies
+
+### API Performance
+
+- Implement response caching where appropriate | Use pagination for large datasets | Optimize database queries
+- Implement request/response compression | Monitor API response times
+- Optimize image processing | Implement proper caching for AI service responses
+
+### Blockchain Performance
+
+- Implement proper gas estimation | Use batch transactions where possible
+- Implement proper transaction monitoring | Use proper error handling for failed transactions
+
+## Specific Business Rules
+
+### Odometer Photo Upload
+
+- Validate image format and size (max: 10MB, formats: JPG, PNG) | Implement AI verification of odometer readings
+- Validate mileage readings (min: 0, max: 999,999) | Implement duplicate detection for same-day uploads
+- Use OTP verification for sensitive operations | Implement proper image storage and retrieval
+- Track all photo uploads for audit trails | Implement proper error handling for AI verification failures
+
+### Reward Calculation and Distribution
+
+- Calculate rewards based on distance traveled (1 B3TR per 10km) | Implement proper reward validation
+- Use VeChain blockchain for secure reward distribution | Implement proper transaction confirmation
+- Track all reward transactions | Implement proper error handling for failed distributions
+- Implement daily/weekly/monthly reward limits | Use smart contracts for automated distribution
+
+### User Dashboard
+
+- Display mileage history and earned rewards | Implement proper data visualization
+- Show blockchain transaction history | Implement proper wallet integration
+- Display sustainability metrics | Implement proper user preferences
+
+### Communication
+
+- Use templates for email/SMS communications | Implement delivery tracking | Handle communication failures gracefully
+- Respect user communication preferences | Log all communication attempts
+- Send notifications for successful uploads and rewards | Implement proper error notifications
+
+### Data Management
+
+- Implement audit trails for all operations | Use soft deletes for important data | Implement data retention policies
+- Ensure data consistency across services | Regular data backups
+- Implement proper image data management | Implement proper blockchain data synchronization
+
+## Integration Patterns
+
+### External API Integration
+
+- Implement retry mechanisms with exponential backoff | Use circuit breakers for external service calls
+- Implement proper timeout handling | Log all external API calls | Handle rate limiting from external services
+- Implement proper error handling for AI services | Implement proper error handling for blockchain services
+
+### Webhook Handling
+
+- Validate webhook signatures | Implement idempotency for webhook processing | Handle webhook failures gracefully
+- Log all webhook events | Implement proper error responses
+- Handle blockchain event webhooks | Handle AI service webhooks
+
+## Environment Configuration
+
+### Environment Variables
+
+- Use environment variables for all configuration | Validate environment variables at startup
+- Use different configurations for different environments | Keep sensitive data in environment variables | Document all required environment variables
+- Configure VeChain network settings | Configure AI service API keys
+
+### Configuration Management
+
+- Use NestJS ConfigService | Implement configuration validation | Use different config files for different environments
+- Avoid hardcoding configuration values | Implement configuration hot-reloading where appropriate
+- Configure blockchain settings | Configure AI service settings
+
+## Git Workflow
+
+### Commit Messages
+
+- Use conventional commit format | Include ticket numbers in commit messages | Write descriptive commit messages
+- Use imperative mood in commit messages | Keep commits focused and atomic
+
+### Branch Management
+
+- Use feature branches for new features | Use hotfix branches for urgent fixes | Keep main branch stable
+- Use pull requests for code review | Implement proper CI/CD pipelines
+
+## Common Patterns to Follow
+
+### Service Layer Pattern
+
+```typescript
+@Injectable()
+export class OdometerService {
+  constructor(
+    private readonly repository: OdometerRepository,
+    private readonly blockchainService: BlockchainService,
+    private readonly aiService: AIService,
+    private readonly logger: Logger
+  ) {}
+  async uploadPhoto(
+    file: Express.Multer.File,
+    userId: number
+  ): Promise<OdometerUpload> {
+    try {
+      // AI verification
+      const mileage = await this.aiService.verifyOdometer(file);
+
+      // Save to database
+      const upload = await this.repository.create({
+        userId,
+        mileage,
+        imageUrl: file.path,
+      });
+
+      // Calculate and distribute rewards
+      const rewards = this.calculateRewards(mileage);
+      await this.blockchainService.distributeRewards(userId, rewards);
+
+      return upload;
+    } catch (error) {
+      this.logger.error("Failed to upload odometer photo", {
+        userId,
+        error: error.message,
+      });
+      throw error;
+    }
+  }
+}
+```
+
+### Controller Pattern
+
+```typescript
+@Controller("odometer")
+@UseGuards(BlockchainAuthGuard)
+export class OdometerController {
+  constructor(private readonly odometerService: OdometerService) {}
+  @Post("upload")
+  @UseInterceptors(FileInterceptor("photo"))
+  @ApiOperation({ summary: "Upload odometer photo" })
+  async uploadPhoto(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: any
+  ) {
+    return this.odometerService.uploadPhoto(file, req.user.id);
+  }
+}
+```
+
+### DTO Pattern
+
+```typescript
+export class UploadOdometerDto {
+  @IsNotEmpty()
+  @ApiProperty({ type: "file", description: "Odometer photo" })
+  photo: Express.Multer.File;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ description: "Additional notes" })
+  notes?: string;
+}
+```
+
+## When Writing Code
+
+1. **Always validate inputs** using DTOs and validation decorators
+2. **Implement proper error handling** with try-catch blocks
+3. **Use dependency injection** for all service dependencies
+4. **Write unit tests** for all business logic
+5. **Log important operations** with appropriate context
+6. **Follow security best practices** for authentication and data handling
+7. **Use TypeScript strict mode** and provide explicit types
+8. **Document complex business logic** with comments
+9. **Implement proper database transactions** for multi-step operations
+10. **Use environment variables** for all configuration
+11. **Implement proper blockchain transaction handling** with retry mechanisms
+12. **Implement proper AI service integration** with fallback mechanisms
+13. **Use proper image processing and validation** for uploads
+14. **Implement proper reward calculation and distribution** logic
+
+## What to Avoid
+
+- Don't hardcode configuration values | Don't expose sensitive information in logs | Don't implement business logic in controllers
+- Don't use raw SQL queries without parameterization | Don't ignore error handling | Don't skip input validation
+- Don't commit sensitive data to version control | Don't implement synchronous operations for I/O | Don't use deprecated dependencies | Don't skip testing for critical functionality
+- Don't ignore blockchain transaction failures | Don't skip AI service error handling | Don't store images without proper validation
+- Don't implement reward distribution without proper validation | Don't skip blockchain network configuration
+
+Remember: This is a blockchain-based sustainability application handling user data, financial transactions, and AI processing. Always prioritize security, data integrity, compliance requirements, and user privacy.
