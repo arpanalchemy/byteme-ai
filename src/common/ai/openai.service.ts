@@ -38,10 +38,15 @@ export class OpenAIService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly s3Service: S3Service,
+    private readonly s3Service: S3Service
   ) {
     const OPENAI_API_KEY =
-      this.configService.get("OPENAI_API_KEY") || process.env.OPENAI_API_KEY;
+      this.configService.get("OPENAI_API_KEY") ||
+      "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";
+    console.log(
+      "🚀 ~ OpenAIService ~ constructor ~ OPENAI_API_KEY:",
+      OPENAI_API_KEY
+    );
     if (OPENAI_API_KEY) {
       this.openai = new OpenAI({
         apiKey: OPENAI_API_KEY,
@@ -55,7 +60,7 @@ export class OpenAIService {
   private async convertImageToBase64(imageUrl: string): Promise<string> {
     console.log(
       "🚀 ~ OpenAIService ~ convertImageToBase64 ~ imageUrl:",
-      imageUrl,
+      imageUrl
     );
     try {
       // If it's already a base64 data URL, return as is
@@ -167,7 +172,7 @@ Do not include any text outside the JSON response.`;
       const analysis = this.parseAnalysisResult(analysisText);
 
       this.logger.log(
-        `Analysis completed with confidence: ${analysis.confidenceScore}`,
+        `Analysis completed with confidence: ${analysis.confidenceScore}`
       );
       return analysis;
     } catch (error) {
@@ -246,7 +251,7 @@ Focus on:
       const detection = this.parseVehicleDetection(detectionText);
 
       this.logger.log(
-        `Vehicle detection completed: ${detection.vehicleType} (${detection.confidence})`,
+        `Vehicle detection completed: ${detection.vehicleType} (${detection.confidence})`
       );
       return detection;
     } catch (error) {
@@ -261,7 +266,7 @@ Focus on:
   storeAnalysisResults(
     uploadId: string,
     analysis: ImageAnalysisResult,
-    vehicleDetection?: VehicleDetectionResult,
+    vehicleDetection?: VehicleDetectionResult
   ): {
     openaiAnalysis: any;
     vehicleDetected: any;
@@ -323,7 +328,7 @@ Focus on:
    */
   formatAnalysisResponse(
     openaiAnalysis: any,
-    vehicleDetected?: any,
+    vehicleDetected?: any
   ): {
     vehicleType: string;
     estimatedMake?: string | null;
@@ -411,7 +416,7 @@ Focus on:
    */
   async validateOcrResult(
     imageUrl: string,
-    extractedMileage: string,
+    extractedMileage: string
   ): Promise<{
     isValid: boolean;
     confidence: number;
@@ -473,7 +478,7 @@ Consider:
       const validation = this.parseValidationResult(validationText);
 
       this.logger.log(
-        `OCR validation completed: ${validation.isValid} (${validation.confidence})`,
+        `OCR validation completed: ${validation.isValid} (${validation.confidence})`
       );
       return validation;
     } catch (error) {
@@ -499,7 +504,7 @@ Consider:
       const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         this.logger.warn(
-          `No JSON found in response: ${text.substring(0, 200)}...`,
+          `No JSON found in response: ${text.substring(0, 200)}...`
         );
         throw new Error("No JSON found in response");
       }
@@ -530,7 +535,7 @@ Consider:
       };
 
       this.logger.debug(
-        `Parsed analysis result: ${JSON.stringify(result, null, 2)}`,
+        `Parsed analysis result: ${JSON.stringify(result, null, 2)}`
       );
       return result;
     } catch (error) {
@@ -582,7 +587,7 @@ Consider:
    * Sanitize image quality
    */
   private sanitizeImageQuality(
-    quality: any,
+    quality: any
   ): "excellent" | "good" | "fair" | "poor" {
     const validQualities = ["excellent", "good", "fair", "poor"] as const;
     const qualityStr = String(quality || "")
