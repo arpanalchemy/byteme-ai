@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   Index,
+  JoinColumn,
 } from "typeorm";
 import { User } from "../../users/entity/user.entity";
 import { Vehicle } from "../../vehicles/entity/vehicle.entity";
@@ -30,20 +31,18 @@ export class OdometerUpload {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @ManyToOne(() => User, { onDelete: "CASCADE" })
+  @ManyToOne(() => User, { onDelete: "CASCADE", nullable: true })
+  @JoinColumn({ name: "user_id" })
+  @Index()
   user: User;
 
+  @ManyToOne(() => Vehicle, {
+    onDelete: "SET NULL",
+    nullable: true,
+  })
+  @JoinColumn({ name: "vehicle_id" })
   @Index()
-  @Column({ name: "user_id", nullable: true })
-  userId?: string;
-
-  @ManyToOne(() => Vehicle, { onDelete: "SET NULL" })
   vehicle: Vehicle;
-
-  @Index()
-  @Column({ name: "vehicle_id", nullable: true })
-  vehicleId?: string;
-
   // Image URLs
   @Column({ name: "s3_image_url" })
   s3ImageUrl: string;
@@ -204,6 +203,26 @@ export class OdometerUpload {
     );
   }
 
+  get isPending(): boolean {
+    return this.status === UploadStatus.PENDING;
+  }
+
+  get isProcessing(): boolean {
+    return this.status === UploadStatus.PROCESSING;
+  }
+
+  get isFailed(): boolean {
+    return this.status === UploadStatus.FAILED;
+  }
+
+  get isValidationApproved(): boolean {
+    return this.validationStatus === ValidationStatus.APPROVED;
+  }
+
+  get isFlagged(): boolean {
+    return this.validationStatus === ValidationStatus.FLAGGED;
+  }
+
   get processingTimeSeconds(): number {
     return this.processingTimeMs ? this.processingTimeMs / 1000 : 0;
   }
@@ -222,5 +241,138 @@ export class OdometerUpload {
 
   get thumbnailUrl(): string {
     return this.s3ThumbnailUrl;
+  }
+
+  get hasUser(): boolean {
+    return !!this.user;
+  }
+
+  get userId(): string {
+    return this.user?.id;
+  }
+
+  get vehicleId(): string {
+    return this.vehicle?.id;
+  }
+
+  get hasVehicle(): boolean {
+    return !!this.vehicle;
+  }
+
+  get isAnonymous(): boolean {
+    return !this.user;
+  }
+
+  get canBeLinked(): boolean {
+    return this.isAnonymous && this.status === UploadStatus.COMPLETED;
+  }
+
+  get totalProcessingTime(): number {
+    const ocrTime = this.ocrProcessingTimeMs || 0;
+    const aiTime = this.aiProcessingTimeMs || 0;
+    return ocrTime + aiTime;
+  }
+
+  get totalProcessingTimeSeconds(): number {
+    return this.totalProcessingTime / 1000;
+  }
+
+  get mileageDifferenceFormatted(): string {
+    if (!this.mileageDifference) return "N/A";
+    return `${this.mileageDifference.toFixed(1)} km`;
+  }
+
+  get extractedMileageFormatted(): string {
+    if (!this.extractedMileage) return "N/A";
+    return `${this.extractedMileage.toFixed(1)} km`;
+  }
+
+  get confidenceScorePercentage(): number {
+    if (!this.ocrConfidenceScore) return 0;
+    return Math.round(this.ocrConfidenceScore * 100);
+  }
+
+  get aiConfidenceScorePercentage(): number {
+    if (!this.aiValidationResult?.confidence) return 0;
+    return Math.round(this.aiValidationResult.confidence * 100);
+  }
+
+  // Business logic methods
+  canBeProcessed(): boolean {
+    return this.status === UploadStatus.PENDING && !!this.s3ImageUrl;
+  }
+
+  canBeApproved(): boolean {
+    return (
+      this.status === UploadStatus.COMPLETED &&
+      this.validationStatus === ValidationStatus.PENDING &&
+      !!this.finalMileage &&
+      this.finalMileage > 0
+    );
+  }
+
+  canBeRejected(): boolean {
+    return (
+      this.status === UploadStatus.COMPLETED &&
+      this.validationStatus === ValidationStatus.PENDING
+    );
+  }
+
+  hasValidMileage(): boolean {
+    return (
+      !!this.finalMileage &&
+      this.finalMileage > 0 &&
+      this.finalMileage <= 999999
+    );
+  }
+
+  hasValidCarbonData(): boolean {
+    return this.carbonSaved >= 0;
+  }
+
+  getProcessingStatus(): string {
+    if (this.isFailed) return "Failed";
+    if (this.isRejected) return "Rejected";
+    if (this.isProcessed) return "Completed";
+    if (this.isProcessing) return "Processing";
+    if (this.isPending) return "Pending";
+    return "Unknown";
+  }
+
+  getValidationStatus(): string {
+    if (this.isValidationApproved) return "Approved";
+    if (this.isRejected) return "Rejected";
+    if (this.isFlagged) return "Flagged";
+    return "Pending";
+  }
+
+  getFormattedFileSize(): string {
+    if (!this.fileSizeBytes) return "Unknown";
+    const bytes = this.fileSizeBytes;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    if (bytes === 0) return "0 Bytes";
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
+  }
+
+  getImageDimensions(): { width: number; height: number } | null {
+    if (!this.imageDimensions) return null;
+    const [width, height] = this.imageDimensions.split("x").map(Number);
+    return { width, height };
+  }
+
+  getVehicleInfo(): string {
+    if (this.vehicleDetected) {
+      const { make, model, year } = this.vehicleDetected;
+      return [year, make, model].filter(Boolean).join(" ") || "Unknown Vehicle";
+    }
+    return "Unknown Vehicle";
+  }
+
+  getAIAnalysisSummary(): string {
+    if (!this.openaiAnalysis) return "No AI analysis available";
+    const { vehicleType, imageQuality, mileageReadable, confidenceScore } =
+      this.openaiAnalysis;
+    return `${vehicleType} - ${imageQuality} quality - Mileage ${mileageReadable ? "readable" : "not readable"} (${Math.round(confidenceScore * 100)}% confidence)`;
   }
 }

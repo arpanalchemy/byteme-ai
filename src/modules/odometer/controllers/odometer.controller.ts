@@ -10,6 +10,7 @@ import {
   UseGuards,
   BadRequestException,
   ParseIntPipe,
+  Logger,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import {
@@ -39,9 +40,11 @@ import { Public } from "src/common/decorators/public.decorator";
 @ApiTags("Odometer")
 @Controller("odometer")
 export class OdometerController {
+  private readonly logger = new Logger(OdometerController.name);
+
   constructor(
     private readonly odometerService: OdometerService,
-    private readonly vehicleService: VehicleService
+    private readonly vehicleService: VehicleService,
   ) {}
 
   @Post("upload")
@@ -60,7 +63,7 @@ export class OdometerController {
           callback(new BadRequestException("Invalid file type"), false);
         }
       },
-    })
+    }),
   )
   @ApiConsumes("multipart/form-data")
   @ApiBody({
@@ -96,15 +99,19 @@ export class OdometerController {
   async uploadOdometer(
     @UploadedFile() file: Express.Multer.File,
     @Body() uploadDto: UploadOdometerDto,
-    @OptionalCurrentUser() user: User | null
+    @OptionalCurrentUser() user: User | null,
   ): Promise<ProcessingResultDto> {
-    console.log("1:03:21 PM", user);
     if (!file) {
       throw new BadRequestException("No image file provided");
     }
 
     // If user is authenticated, use their ID, otherwise pass null
     const userId = user?.id || null;
+
+    this.logger.log(
+      `Upload request - User authenticated: ${!!user}, User ID: ${userId}`,
+    );
+
     return this.odometerService.uploadOdometer(file, userId, uploadDto);
   }
 
@@ -119,7 +126,7 @@ export class OdometerController {
   })
   async processOdometer(
     @Body() processDto: ProcessOdometerDto,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ): Promise<ProcessingResultDto> {
     // This endpoint would handle processing of already uploaded images
     // Implementation would be similar to upload but without file handling
@@ -137,12 +144,12 @@ export class OdometerController {
   async createVehicleFromUpload(
     @Param("uploadId") uploadId: string,
     @Body() createVehicleDto: CreateVehicleFromUploadDto,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ) {
     // Create new vehicle based on upload analysis
     const vehicle = await this.vehicleService.createVehicle(
       user.id,
-      createVehicleDto
+      createVehicleDto,
     );
 
     // Update upload with new vehicle
@@ -162,7 +169,7 @@ export class OdometerController {
   async getUserUploads(
     @CurrentUser() user: User,
     @Query("limit", ParseIntPipe) limit = 20,
-    @Query("offset", ParseIntPipe) offset = 0
+    @Query("offset", ParseIntPipe) offset = 0,
   ) {
     return this.odometerService.getUserUploads(user.id, limit, offset);
   }
@@ -182,7 +189,7 @@ export class OdometerController {
   })
   async getUploadById(
     @Param("uploadId") uploadId: string,
-    @OptionalCurrentUser() user: User | null
+    @OptionalCurrentUser() user: User | null,
   ) {
     return this.odometerService.getUploadById(uploadId, user?.id);
   }
@@ -197,5 +204,20 @@ export class OdometerController {
   })
   async getUserStats(@CurrentUser() user: User): Promise<UserStatsDto> {
     return this.odometerService.getUserStats(user.id);
+  }
+
+  @Post("uploads/:uploadId/link")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: "Upload linked to user successfully",
+  })
+  @ApiResponse({ status: 404, description: "Upload not found" })
+  async linkUploadToUser(
+    @Param("uploadId") uploadId: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.odometerService.linkUploadToUser(uploadId, user.id);
   }
 }

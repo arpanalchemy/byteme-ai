@@ -24,11 +24,8 @@ export class Leaderboard {
 
   @ManyToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
-  user: User;
-
   @Index()
-  @Column({ name: "user_id" })
-  userId: string;
+  user: User;
 
   @Column({
     type: "enum",

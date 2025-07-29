@@ -297,7 +297,7 @@ export class EmailTemplates {
       </div>
     `;
 
-    return EmailTemplates.getBaseTemplate().replace('{{content}}', content);
+    return EmailTemplates.getBaseTemplate().replace("{{content}}", content);
   }
 
   public static getSupportEmailTemplate(
@@ -334,6 +334,6 @@ export class EmailTemplates {
       </div>
     `;
 
-    return EmailTemplates.getBaseTemplate().replace('{{content}}', content);
+    return EmailTemplates.getBaseTemplate().replace("{{content}}", content);
   }
-} 
+}

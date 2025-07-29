@@ -243,11 +243,11 @@ export class ChallengeService {
       });
 
       const userChallenges = await this.userChallengeRepository.find({
-        where: { userId },
-        select: ["challengeId"],
+        where: { user: { id: userId } },
+        select: ["challenge"],
       });
 
-      const joinedChallengeIds = userChallenges.map((uc) => uc.challengeId);
+      const joinedChallengeIds = userChallenges.map((uc) => uc.challenge.id);
       const availableChallenges = challenges.filter(
         (challenge) => !joinedChallengeIds.includes(challenge.id)
       );
@@ -258,6 +258,69 @@ export class ChallengeService {
     } catch (error) {
       this.logger.error(`Failed to get available challenges: ${error.message}`);
       throw new BadRequestException("Failed to get available challenges");
+    }
+  }
+
+  /**
+   * Join active challenges for a user
+   */
+  async joinActiveChallenges(
+    userId: string
+  ): Promise<UserChallengeResponseDto[]> {
+    try {
+      // Get all active challenges
+      const activeChallenges = await this.challengeRepository.find({
+        where: {
+          status: ChallengeStatus.ACTIVE,
+          visibility: ChallengeVisibility.PUBLIC,
+        },
+      });
+      console.log(
+        "🚀 ~ ChallengeService ~ joinActiveChallenges ~ activeChallenges:",
+        activeChallenges
+      );
+
+      const joinedChallenges: UserChallengeResponseDto[] = [];
+
+      for (const challenge of activeChallenges) {
+        try {
+          // Check if user is already participating
+          const existingParticipation =
+            await this.userChallengeRepository.findOne({
+              where: {
+                user: { id: userId },
+                challenge: { id: challenge.id },
+              },
+              relations: ["user", "challenge"],
+            });
+
+          if (!existingParticipation) {
+            // Join the challenge with current progress
+            const userChallenge = await this.joinChallenge(
+              userId,
+              challenge.id
+            );
+            joinedChallenges.push(userChallenge);
+
+            this.logger.log(
+              `User ${userId} joined challenge ${challenge.name} with current progress: ${JSON.stringify(userChallenge.progress)}`
+            );
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Failed to join challenge ${challenge.id}: ${error.message}`
+          );
+          // Continue with other challenges
+        }
+      }
+
+      this.logger.log(
+        `User ${userId} joined ${joinedChallenges.length} active challenges`
+      );
+      return joinedChallenges;
+    } catch (error) {
+      this.logger.error(`Failed to join active challenges: ${error.message}`);
+      throw new BadRequestException("Failed to join active challenges");
     }
   }
 
@@ -283,24 +346,32 @@ export class ChallengeService {
 
       // Check if user already joined
       const existingUserChallenge = await this.userChallengeRepository.findOne({
-        where: { userId, challengeId },
+        where: { user: { id: userId }, challenge: { id: challengeId } },
+        relations: ["user", "challenge"],
       });
 
       if (existingUserChallenge) {
         throw new ConflictException("User already joined this challenge");
       }
 
-      // Create user challenge
+      // Get current user stats for all time (so users get credit for previous uploads)
+      const currentStats = await this.getCurrentUserStats(userId);
+      console.log(
+        "🚀 ~ ChallengeService ~ joinChallenge ~ currentStats:",
+        currentStats
+      );
+
+      // Create user challenge with current progress
       const userChallenge = this.userChallengeRepository.create({
-        userId,
-        challengeId,
+        user: { id: userId },
+        challenge: { id: challengeId },
         status: UserChallengeStatus.JOINED,
         progress: {
-          mileage: 0,
-          carbonSaved: 0,
-          uploadCount: 0,
-          vehicleCount: 0,
-          rewardsEarned: 0,
+          mileage: currentStats.mileage,
+          carbonSaved: currentStats.carbonSaved,
+          uploadCount: currentStats.uploadCount,
+          vehicleCount: currentStats.vehicleCount,
+          rewardsEarned: currentStats.rewardsEarned,
         },
       });
 
@@ -333,7 +404,8 @@ export class ChallengeService {
       const query = this.userChallengeRepository
         .createQueryBuilder("userChallenge")
         .leftJoinAndSelect("userChallenge.challenge", "challenge")
-        .where("userChallenge.userId = :userId", { userId });
+        .leftJoinAndSelect("userChallenge.user", "user")
+        .where("user.id = :userId", { userId });
 
       const total = await query.getCount();
       const userChallenges = await query
@@ -365,8 +437,8 @@ export class ChallengeService {
   ): Promise<UserChallengeResponseDto> {
     try {
       const userChallenge = await this.userChallengeRepository.findOne({
-        where: { userId, challengeId },
-        relations: ["challenge"],
+        where: { user: { id: userId }, challenge: { id: challengeId } },
+        relations: ["user", "challenge"],
       });
 
       if (!userChallenge) {
@@ -396,36 +468,50 @@ export class ChallengeService {
       ) {
         userChallenge.status = UserChallengeStatus.COMPLETED;
         userChallenge.completedAt = new Date();
-        
+
         // Calculate and assign rewards
-        const calculatedRewards = await this.calculateChallengeRewards(userChallenge);
+        const calculatedRewards =
+          await this.calculateChallengeRewards(userChallenge);
         userChallenge.rewards = calculatedRewards;
-        
-        this.logger.log(`Challenge completed! User: ${userId}, Challenge: ${challengeId}, Rewards: ${JSON.stringify(calculatedRewards)}`);
+
+        this.logger.log(
+          `Challenge completed! User: ${userId}, Challenge: ${challengeId}, Rewards: ${JSON.stringify(calculatedRewards)}`
+        );
       }
 
       const updatedUserChallenge =
         await this.userChallengeRepository.save(userChallenge);
 
       // If challenge was just completed, calculate rankings for all participants
-      if (isCompleted && userChallenge.status === UserChallengeStatus.COMPLETED) {
+      if (
+        isCompleted &&
+        userChallenge.status === UserChallengeStatus.COMPLETED
+      ) {
         try {
           await this.calculateChallengeRankings(challengeId);
-          
+
           // Update the user challenge with their final rank
-          const finalUserChallenge = await this.userChallengeRepository.findOne({
-            where: { userId, challengeId },
-          });
+          const finalUserChallenge = await this.userChallengeRepository.findOne(
+            {
+              where: { user: { id: userId }, challenge: { id: challengeId } },
+              relations: ["user", "challenge"],
+            }
+          );
           if (finalUserChallenge && finalUserChallenge.rank) {
             // Recalculate rewards with the final rank
-            const finalRewards = await this.calculateChallengeRewards(finalUserChallenge);
+            const finalRewards =
+              await this.calculateChallengeRewards(finalUserChallenge);
             finalUserChallenge.rewards = finalRewards;
             await this.userChallengeRepository.save(finalUserChallenge);
-            
-            this.logger.log(`Final rewards calculated with rank ${finalUserChallenge.rank}: ${JSON.stringify(finalRewards)}`);
+
+            this.logger.log(
+              `Final rewards calculated with rank ${finalUserChallenge.rank}: ${JSON.stringify(finalRewards)}`
+            );
           }
         } catch (rankingError) {
-          this.logger.error(`Failed to calculate rankings: ${rankingError.message}`);
+          this.logger.error(
+            `Failed to calculate rankings: ${rankingError.message}`
+          );
           // Don't fail the entire operation if ranking calculation fails
         }
       }
@@ -448,8 +534,8 @@ export class ChallengeService {
   ): Promise<UserChallengeResponseDto> {
     try {
       const userChallenge = await this.userChallengeRepository.findOne({
-        where: { id: userChallengeId, userId },
-        relations: ["challenge"],
+        where: { id: userChallengeId, user: { id: userId } },
+        relations: ["user", "challenge"],
       });
 
       if (!userChallenge) {
@@ -481,6 +567,46 @@ export class ChallengeService {
   /**
    * Get user statistics for a challenge
    */
+  /**
+   * Get current user stats for all time
+   */
+  async getCurrentUserStats(userId: string): Promise<any> {
+    // Get upload statistics for all time
+    const stats = await this.odometerUploadRepository
+      .createQueryBuilder("upload")
+      .innerJoin("upload.user", "user")
+      .select([
+        "SUM(upload.finalMileage) as totalmileage",
+        "SUM(upload.carbonSaved) as totalcarbonsaved",
+        "COUNT(*) as uploadcount",
+      ])
+      .where("user.id = :userId", { userId })
+      .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
+      .andWhere("upload.isApproved = :isApproved", { isApproved: true })
+      .getRawOne();
+    console.log("🚀 ~ ChallengeService ~ getCurrentUserStats ~ stats:", stats);
+
+    // Get vehicle count
+    const vehicleCount = await this.vehicleRepository
+      .createQueryBuilder("vehicle")
+      .where("vehicle.user_id = :userId", { userId })
+      .andWhere("vehicle.isActive = :isActive", { isActive: true })
+      .getCount();
+
+    // Get user
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    return {
+      mileage: parseFloat(stats?.totalmileage ?? "0"),
+      carbonSaved: parseFloat(stats?.totalcarbonsaved ?? "0"),
+      uploadCount: parseInt(stats?.uploadcount ?? "0"),
+      vehicleCount,
+      rewardsEarned: parseFloat(user?.b3trBalance?.toString() ?? "0"),
+    };
+  }
+
   private async getUserStatsForChallenge(
     userId: string,
     challenge: Challenge
@@ -490,21 +616,24 @@ export class ChallengeService {
     // Get upload statistics for the challenge period
     const stats = await this.odometerUploadRepository
       .createQueryBuilder("upload")
+      .innerJoin("upload.user", "user")
       .select([
-        "SUM(upload.finalMileage) as totalMileage",
-        "SUM(upload.carbonSaved) as totalCarbonSaved",
-        "COUNT(*) as uploadCount",
+        "SUM(upload.finalMileage) as totalmileage",
+        "SUM(upload.carbonSaved) as totalcarbonsaved",
+        "COUNT(*) as uploadcount",
       ])
-      .where("upload.userId = :userId", { userId })
+      .where("user.id = :userId", { userId })
       .andWhere("upload.createdAt >= :startDate", { startDate })
       .andWhere("upload.createdAt <= :endDate", { endDate })
       .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
       .getRawOne();
 
     // Get vehicle count
-    const vehicleCount = await this.vehicleRepository.count({
-      where: { userId, isActive: true },
-    });
+    const vehicleCount = await this.vehicleRepository
+      .createQueryBuilder("vehicle")
+      .where("vehicle.user_id = :userId", { userId })
+      .andWhere("vehicle.isActive = :isActive", { isActive: true })
+      .getCount();
 
     // Get user
     const user = await this.userRepository.findOne({
@@ -512,9 +641,9 @@ export class ChallengeService {
     });
 
     return {
-      mileage: parseFloat(stats?.totalMileage || "0"),
-      carbonSaved: parseFloat(stats?.totalCarbonSaved || "0"),
-      uploadCount: parseInt(stats?.uploadCount || "0"),
+      mileage: parseFloat(stats?.totalmileage || "0"),
+      carbonSaved: parseFloat(stats?.totalcarbonsaved || "0"),
+      uploadCount: parseInt(stats?.uploadcount || "0"),
       vehicleCount,
       rewardsEarned: parseFloat(user?.b3trBalance.toString() || "0"),
     };
@@ -576,7 +705,7 @@ export class ChallengeService {
     const { challenge, progress, rank } = userChallenge;
 
     this.logger.log(
-      `Calculating rewards for challenge: ${challenge.name}, User: ${userChallenge.userId}, Rank: ${rank}`
+      `Calculating rewards for challenge: ${challenge.name}, User: ${userChallenge.user.id}, Rank: ${rank}`
     );
 
     // Start with base rewards and extend with leaderboard properties

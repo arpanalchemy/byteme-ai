@@ -36,8 +36,8 @@ export enum BlockchainStatus {
 }
 
 @Entity("rewards")
-@Index(["userId", "type"])
-@Index(["userId", "status"])
+@Index(["user", "type"])
+@Index(["user", "status"])
 @Index(["blockchainStatus", "createdAt"])
 @Index(["cycleId", "createdAt"])
 export class Reward {
@@ -46,11 +46,8 @@ export class Reward {
 
   @ManyToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
-  user: User;
-
   @Index()
-  @Column({ name: "user_id" })
-  userId: string;
+  user: User;
 
   @Column({
     type: "enum",

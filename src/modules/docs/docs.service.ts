@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { readFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
-import { marked } from "marked";
 import * as matter from "gray-matter";
 import hljs from "highlight.js";
 
@@ -10,11 +9,7 @@ export class DocsService {
   private docsPath = join(process.cwd(), "docs");
 
   constructor() {
-    // Configure marked for basic rendering
-    marked.setOptions({
-      gfm: true,
-      breaks: true,
-    });
+    // Marked configuration will be done dynamically
   }
 
   getDocsList() {
@@ -42,7 +37,7 @@ export class DocsService {
       });
   }
 
-  getDocContent(filename: string) {
+  async getDocContent(filename: string) {
     const filePath = join(this.docsPath, `${filename}.md`);
 
     if (!existsSync(filePath)) {
@@ -51,6 +46,13 @@ export class DocsService {
 
     const content = readFileSync(filePath, "utf-8");
     const { data: frontMatter, content: markdown } = matter(content);
+
+    // Dynamic import for marked
+    const { marked } = await import("marked");
+    marked.setOptions({
+      gfm: true,
+      breaks: true,
+    });
     const html = marked(markdown);
 
     return {

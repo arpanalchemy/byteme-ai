@@ -232,8 +232,8 @@ export class StoreService {
 
       // Create order
       const order = this.orderRepository.create({
-        userId,
-        productId,
+        user: { id: userId },
+        product: { id: productId },
         quantity,
         unitPrice: product.price,
         totalPrice,
@@ -281,7 +281,8 @@ export class StoreService {
       const query = this.orderRepository
         .createQueryBuilder("order")
         .leftJoinAndSelect("order.product", "product")
-        .where("order.userId = :userId", { userId });
+        .leftJoinAndSelect("order.user", "user")
+        .where("user.id = :userId", { userId });
 
       const total = await query.getCount();
       const orders = await query
@@ -313,7 +314,7 @@ export class StoreService {
       .where("order.id = :orderId", { orderId });
 
     if (userId) {
-      query.andWhere("order.userId = :userId", { userId });
+      query.andWhere("user.id = :userId", { userId });
     }
 
     const order = await query.getOne();
@@ -372,7 +373,7 @@ export class StoreService {
   ): Promise<Order> {
     try {
       const order = await this.orderRepository.findOne({
-        where: { id: orderId, userId },
+        where: { id: orderId, user: { id: userId } },
       });
 
       if (!order) {
@@ -402,7 +403,7 @@ export class StoreService {
 
       // Restore product stock
       const product = await this.productRepository.findOne({
-        where: { id: order.productId },
+        where: { id: order.product.id },
       });
 
       if (product) {

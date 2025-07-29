@@ -56,7 +56,7 @@ export class HistoryController {
     @Query("startDate") startDate?: string,
     @Query("endDate") endDate?: string,
     @Query("sortBy") sortBy?: string,
-    @Query("sortOrder") sortOrder?: "ASC" | "DESC",
+    @Query("sortOrder") sortOrder?: "ASC" | "DESC"
   ) {
     const query: HistoryQueryDto = {
       page,
@@ -93,7 +93,7 @@ export class HistoryController {
   @ApiResponse({ status: 404, description: "History entry not found" })
   async getHistoryById(
     @CurrentUser() user: User,
-    @Param("id") historyId: string,
+    @Param("id") historyId: string
   ): Promise<HistoryResponseDto> {
     return this.historyService.getHistoryById(historyId, user.id);
   }
@@ -107,7 +107,7 @@ export class HistoryController {
   @ApiResponse({ status: 404, description: "History entry not found" })
   async deleteHistory(
     @CurrentUser() user: User,
-    @Param("id") historyId: string,
+    @Param("id") historyId: string
   ): Promise<void> {
     return this.historyService.deleteHistory(historyId, user.id);
   }

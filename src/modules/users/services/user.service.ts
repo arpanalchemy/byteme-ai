@@ -269,25 +269,30 @@ export class UserService {
       }
 
       // Get vehicle count
-      const vehicleCount = await this.vehicleRepository.count({
-        where: { userId, isActive: true },
-      });
+      const vehicleCount = await this.vehicleRepository
+        .createQueryBuilder("vehicle")
+        .where("vehicle.user_id = :userId", { userId })
+        .andWhere("vehicle.isActive = :isActive", { isActive: true })
+        .getCount();
 
       // Get upload count
-      const uploadCount = await this.odometerUploadRepository.count({
-        where: { userId, status: UploadStatus.COMPLETED },
-      });
+      const uploadCount = await this.odometerUploadRepository
+        .createQueryBuilder("upload")
+        .where("upload.user_id = :userId", { userId })
+        .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
+        .getCount();
 
       // Calculate weekly stats
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       const weeklyUploads = await this.odometerUploadRepository
         .createQueryBuilder("upload")
+        .innerJoin("upload.user", "user")
         .select([
-          "SUM(upload.finalMileage) as milesThisWeek",
-          "SUM(upload.carbonSaved) as carbonSavedThisWeek",
+          "SUM(upload.finalMileage) as milesthisweek",
+          "SUM(upload.carbonSaved) as carbonsavedthisweek",
         ])
-        .where("upload.userId = :userId", { userId })
+        .where("user.id = :userId", { userId })
         .andWhere("upload.createdAt >= :weekAgo", { weekAgo })
         .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
         .getRawOne();
@@ -297,21 +302,23 @@ export class UserService {
       monthAgo.setMonth(monthAgo.getMonth() - 1);
       const monthlyUploads = await this.odometerUploadRepository
         .createQueryBuilder("upload")
+        .innerJoin("upload.user", "user")
         .select([
-          "SUM(upload.finalMileage) as milesThisMonth",
-          "SUM(upload.carbonSaved) as carbonSavedThisMonth",
+          "SUM(upload.finalMileage) as milesthismonth",
+          "SUM(upload.carbonSaved) as carbonsavedthismonth",
         ])
-        .where("upload.userId = :userId", { userId })
+        .where("user.id = :userId", { userId })
         .andWhere("upload.createdAt >= :monthAgo", { monthAgo })
         .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
         .getRawOne();
 
       // Get recent activity (last 10 uploads)
-      const recentUploads = await this.odometerUploadRepository.find({
-        where: { userId },
-        order: { createdAt: "DESC" },
-        take: 10,
-      });
+      const recentUploads = await this.odometerUploadRepository
+        .createQueryBuilder("upload")
+        .where("upload.user_id = :userId", { userId })
+        .orderBy("upload.createdAt", "DESC")
+        .limit(10)
+        .getMany();
 
       const recentActivity = recentUploads.map((upload) => ({
         id: upload.id,
@@ -335,18 +342,18 @@ export class UserService {
         uploadCount,
         globalRank,
         weeklyStats: {
-          milesThisWeek: parseFloat(weeklyUploads?.milesThisWeek || "0"),
+          milesThisWeek: parseFloat(weeklyUploads?.milesthisweek || "0"),
           carbonSavedThisWeek: parseFloat(
-            weeklyUploads?.carbonSavedThisWeek || "0",
+            weeklyUploads?.carbonsavedthisweek || "0"
           ),
           rewardsEarnedThisWeek: 0, // Placeholder - would need reward tracking
           uploadsThisWeek: recentUploads.filter((u) => u.createdAt >= weekAgo)
             .length,
         },
         monthlyStats: {
-          milesThisMonth: parseFloat(monthlyUploads?.milesThisMonth || "0"),
+          milesThisMonth: parseFloat(monthlyUploads?.milesthismonth || "0"),
           carbonSavedThisMonth: parseFloat(
-            monthlyUploads?.carbonSavedThisMonth || "0",
+            monthlyUploads?.carbonsavedthismonth || "0"
           ),
           rewardsEarnedThisMonth: 0, // Placeholder - would need reward tracking
           uploadsThisMonth: recentUploads.filter((u) => u.createdAt >= monthAgo)

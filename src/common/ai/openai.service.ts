@@ -43,10 +43,7 @@ export class OpenAIService {
     const OPENAI_API_KEY =
       this.configService.get("OPENAI_API_KEY") ||
       "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";
-    console.log(
-      "🚀 ~ OpenAIService ~ constructor ~ OPENAI_API_KEY:",
-      OPENAI_API_KEY
-    );
+
     if (OPENAI_API_KEY) {
       this.openai = new OpenAI({
         apiKey: OPENAI_API_KEY,
@@ -58,10 +55,6 @@ export class OpenAIService {
    * Convert image URL to base64 for OpenAI
    */
   private async convertImageToBase64(imageUrl: string): Promise<string> {
-    console.log(
-      "🚀 ~ OpenAIService ~ convertImageToBase64 ~ imageUrl:",
-      imageUrl
-    );
     try {
       // If it's already a base64 data URL, return as is
       if (imageUrl.startsWith("data:image/")) {
@@ -90,7 +83,6 @@ export class OpenAIService {
 
       return `data:${mimeType};base64,${base64}`;
     } catch (error) {
-      console.log("🚀 ~ OpenAIService ~ convertImageToBase64 ~ error:", error);
       this.logger.error(`Failed to convert image to base64: ${error.message}`);
       throw new Error("Failed to process image for AI analysis");
     }
@@ -139,7 +131,6 @@ Analysis Guidelines:
 
 Do not include any text outside the JSON response.`;
 
-      console.log("1:15:46 PM", this.openai);
       const response = await this.openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -176,7 +167,6 @@ Do not include any text outside the JSON response.`;
       );
       return analysis;
     } catch (error) {
-      console.log("🚀 ~ OpenAIService ~ analyzeOdometerImage ~ error:", error);
       this.logger.error(`OpenAI analysis failed: ${error.message}`);
       return {
         vehicleType: "unknown",

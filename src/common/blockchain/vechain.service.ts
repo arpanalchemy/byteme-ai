@@ -125,7 +125,7 @@ export class VeChainService {
    */
   private mnemonicToPrivateKey(
     mnemonic: string,
-    derivationPath: string = "m/44'/818'/0'/0/0"
+    derivationPath: string = "m/44'/818'/0'/0/0",
   ): Buffer {
     try {
       // Validate mnemonic
@@ -170,7 +170,7 @@ export class VeChainService {
       this.mnemonic = this.configService.get<string>("VECHAIN_MNEMONIC");
       if (!this.mnemonic) {
         this.logger.warn(
-          "VECHAIN_MNEMONIC not provided - blockchain features will be disabled"
+          "VECHAIN_MNEMONIC not provided - blockchain features will be disabled",
         );
         return;
       }
@@ -179,12 +179,12 @@ export class VeChainService {
       this.privateKey = this.mnemonicToPrivateKey(this.mnemonic);
 
       this.contractAddress = this.configService.get<string>(
-        "VECHAIN_CONTRACT_ADDRESS"
+        "VECHAIN_CONTRACT_ADDRESS",
       );
 
       if (!this.contractAddress) {
         this.logger.warn(
-          "VECHAIN_CONTRACT_ADDRESS not provided - blockchain features will be disabled"
+          "VECHAIN_CONTRACT_ADDRESS not provided - blockchain features will be disabled",
         );
         return;
       }
@@ -195,12 +195,12 @@ export class VeChainService {
         EVDRIVEV2_ABI,
         new VeChainPrivateKeySigner(
           this.privateKey,
-          new VeChainProvider(this.thor)
-        )
+          new VeChainProvider(this.thor),
+        ),
       );
 
       this.logger.log(
-        `VeChain service initialized successfully on ${this.network}`
+        `VeChain service initialized successfully on ${this.network}`,
       );
       this.logger.log(`Admin address: ${this.getAdminAddress()}`);
       this.logger.log(`EVDriveV2 Contract: ${this.contractAddress}`);
@@ -249,7 +249,7 @@ export class VeChainService {
       const result = await this.evDriveContract.read.getCycleInfo(cycleId);
       this.logger.log(
         `Cycle info from EVDriveV2 for cycle ${cycleId}:`,
-        result
+        result,
       );
 
       // Extract values from the result array
@@ -265,7 +265,7 @@ export class VeChainService {
     } catch (error) {
       this.logger.error(
         `Failed to get cycle info for cycle ${cycleId}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -288,7 +288,7 @@ export class VeChainService {
       const fundsNumber = parseFloat(fundsInB3TR);
 
       this.logger.log(
-        `Available funds from EVDriveV2: ${fundsInWei} wei (${fundsNumber} B3TR)`
+        `Available funds from EVDriveV2: ${fundsInWei} wei (${fundsNumber} B3TR)`,
       );
       return fundsNumber;
     } catch (error) {
@@ -390,7 +390,7 @@ export class VeChainService {
       const rewardAmountInWei = parseUnits(rewardAmount.toString(), 18);
 
       this.logger.log(
-        `Setting reward for cycle: ${rewardAmount} B3TR (${rewardAmountInWei} wei) via EVDriveV2 contract`
+        `Setting reward for cycle: ${rewardAmount} B3TR (${rewardAmountInWei} wei) via EVDriveV2 contract`,
       );
 
       const result =
@@ -402,7 +402,7 @@ export class VeChainService {
 
       if (result.txid) {
         this.logger.log(
-          `✅ Transaction submitted successfully: ${result.txid}`
+          `✅ Transaction submitted successfully: ${result.txid}`,
         );
         return result.txid;
       } else {
@@ -411,7 +411,7 @@ export class VeChainService {
     } catch (error) {
       this.logger.error(
         `Failed to set reward for cycle ${rewardAmount}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -441,7 +441,7 @@ export class VeChainService {
       const rewardAmount = this.calculateChallengeRewardAmount(activeChallenge);
 
       this.logger.log(
-        `🎯 Setting reward for active challenge "${activeChallenge.name}": ${rewardAmount} B3TR`
+        `🎯 Setting reward for active challenge "${activeChallenge.name}": ${rewardAmount} B3TR`,
       );
 
       const txid = await this.setRewardForCycle(rewardAmount);
@@ -470,7 +470,7 @@ export class VeChainService {
         undefined, // type
         "active", // status
         undefined, // visibility
-        undefined // search
+        undefined, // search
       );
 
       // Filter for currently active challenges (within date range)
@@ -480,7 +480,7 @@ export class VeChainService {
           const startDate = new Date(challenge.startDate);
           const endDate = new Date(challenge.endDate);
           return now >= startDate && now <= endDate;
-        }
+        },
       );
 
       if (currentlyActive.length === 0) {
@@ -490,13 +490,13 @@ export class VeChainService {
 
       if (currentlyActive.length > 1) {
         this.logger.warn(
-          `Multiple active challenges found (${currentlyActive.length}). Using the first one.`
+          `Multiple active challenges found (${currentlyActive.length}). Using the first one.`,
         );
       }
 
       const activeChallenge = currentlyActive[0];
       this.logger.log(
-        `📅 Active challenge: "${activeChallenge.name}" (${activeChallenge.startDate} to ${activeChallenge.endDate})`
+        `📅 Active challenge: "${activeChallenge.name}" (${activeChallenge.startDate} to ${activeChallenge.endDate})`,
       );
 
       return activeChallenge;
@@ -520,7 +520,7 @@ export class VeChainService {
       } else {
         // Calculate based on challenge type and difficulty
         const difficultyMultiplier = this.getDifficultyMultiplier(
-          challenge.difficulty
+          challenge.difficulty,
         );
         const typeMultiplier = this.getTypeMultiplier(challenge.type);
 
@@ -538,7 +538,7 @@ export class VeChainService {
       // Add leaderboard rewards if available
       if (challenge.leaderboardRewards) {
         const leaderboardReward = this.calculateLeaderboardReward(
-          challenge.leaderboardRewards
+          challenge.leaderboardRewards,
         );
         baseReward += leaderboardReward;
       }
@@ -548,7 +548,7 @@ export class VeChainService {
       const finalReward = Math.max(baseReward, minReward);
 
       this.logger.log(
-        `💰 Calculated reward for challenge "${challenge.name}": ${finalReward} B3TR`
+        `💰 Calculated reward for challenge "${challenge.name}": ${finalReward} B3TR`,
       );
 
       return finalReward;
@@ -644,7 +644,7 @@ export class VeChainService {
       impactCodes: string[];
       impactValues: number[];
       description: string;
-    }>
+    }>,
   ): Promise<{
     txid: string;
     totalDistributed: number;
@@ -657,7 +657,7 @@ export class VeChainService {
       }
 
       this.logger.log(
-        `🚀 Starting batch reward distribution for ${batchData.length} users...`
+        `🚀 Starting batch reward distribution for ${batchData.length} users...`,
       );
 
       // Calculate total amount to be distributed
@@ -668,7 +668,7 @@ export class VeChainService {
       const availableFunds = await this.getAvailableFunds();
       if (availableFunds < totalAmount) {
         throw new Error(
-          `Insufficient funds. Available: ${availableFunds} B3TR, Required: ${totalAmount} B3TR`
+          `Insufficient funds. Available: ${availableFunds} B3TR, Required: ${totalAmount} B3TR`,
         );
       }
 
@@ -682,7 +682,7 @@ export class VeChainService {
       }
 
       this.logger.log(
-        `📦 Processing ${batches.length} batches of max ${BATCH_SIZE} users each`
+        `📦 Processing ${batches.length} batches of max ${BATCH_SIZE} users each`,
       );
 
       let totalDistributed = 0;
@@ -695,13 +695,13 @@ export class VeChainService {
         batchCount++;
 
         this.logger.log(
-          `📦 Processing batch ${batchCount}/${batches.length} with ${batch.length} users...`
+          `📦 Processing batch ${batchCount}/${batches.length} with ${batch.length} users...`,
         );
 
         // Log batch data for debugging
         batch.forEach((data, index) => {
           this.logger.log(
-            `  User ${index + 1}: ${data.user}, Amount ${data.amount} B3TR, Miles ${data.miles}`
+            `  User ${index + 1}: ${data.user}, Amount ${data.amount} B3TR, Miles ${data.miles}`,
           );
         });
 
@@ -733,11 +733,11 @@ export class VeChainService {
         if (result.txid) {
           lastTxid = result.txid;
           this.logger.log(
-            `✅ Batch ${batchCount} transaction submitted successfully: ${result.txid}`
+            `✅ Batch ${batchCount} transaction submitted successfully: ${result.txid}`,
           );
         } else {
           throw new Error(
-            `Failed to get transaction ID from batch ${batchCount} result`
+            `Failed to get transaction ID from batch ${batchCount} result`,
           );
         }
 
@@ -777,7 +777,7 @@ export class VeChainService {
 
       // Mock implementation for now
       this.logger.log(
-        `Getting transaction receipt for ${txid} (mock implementation)`
+        `Getting transaction receipt for ${txid} (mock implementation)`,
       );
       return {
         txid,
@@ -788,7 +788,7 @@ export class VeChainService {
     } catch (error) {
       this.logger.error(
         `Failed to get transaction receipt for ${txid}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -805,13 +805,13 @@ export class VeChainService {
 
       // Mock implementation for now
       this.logger.log(
-        `Checking transaction confirmation for ${txid} (mock implementation)`
+        `Checking transaction confirmation for ${txid} (mock implementation)`,
       );
       return true;
     } catch (error) {
       this.logger.error(
         `Failed to check transaction confirmation for ${txid}:`,
-        error
+        error,
       );
       return false;
     }
@@ -850,11 +850,11 @@ export class VeChainService {
   async transferTokens(
     fromAddress: string,
     toAddress: string,
-    amount: number
+    amount: number,
   ): Promise<any> {
     try {
       this.logger.log(
-        `Transferring ${amount} tokens from ${fromAddress} to ${toAddress} (mock)`
+        `Transferring ${amount} tokens from ${fromAddress} to ${toAddress} (mock)`,
       );
       return {
         txid: "0x" + Math.random().toString(16).slice(2, 66),

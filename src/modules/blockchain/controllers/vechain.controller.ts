@@ -39,7 +39,7 @@ import {
 export class VeChainController {
   constructor(
     private readonly veChainService: VeChainService,
-    private readonly challengeService: ChallengeService
+    private readonly challengeService: ChallengeService,
   ) {}
 
   @Get("status")
@@ -85,7 +85,7 @@ export class VeChainController {
     type: CycleInfoResponseDto,
   })
   async getCycleInfo(
-    @Param("cycleId") cycleId: string
+    @Param("cycleId") cycleId: string,
   ): Promise<CycleInfoResponseDto> {
     return await this.veChainService.getCycleInfo(parseInt(cycleId));
   }
@@ -116,7 +116,7 @@ export class VeChainController {
     type: UserDataResponseDto,
   })
   async getUserData(
-    @Param("address") address: string
+    @Param("address") address: string,
   ): Promise<UserDataResponseDto> {
     return await this.veChainService.getUserData(address);
   }
@@ -146,7 +146,7 @@ export class VeChainController {
     },
   })
   async setRewardForCycle(
-    @Body() data: SetRewardForCycleDto
+    @Body() data: SetRewardForCycleDto,
   ): Promise<{ txid: string; message: string }> {
     const txid = await this.veChainService.setRewardForCycle(data.rewardAmount);
     return {
@@ -166,7 +166,7 @@ export class VeChainController {
   })
   async setRewardForActiveChallenge(): Promise<SetRewardForActiveChallengeResponseDto> {
     return await this.veChainService.setRewardForActiveChallenge(
-      this.challengeService
+      this.challengeService,
     );
   }
 
@@ -181,7 +181,7 @@ export class VeChainController {
     type: DistributeRewardsResponseDto,
   })
   async distributeRewards(
-    @Body() data: DistributeRewardsDto
+    @Body() data: DistributeRewardsDto,
   ): Promise<DistributeRewardsResponseDto> {
     const result = await this.veChainService.distributeRewards(data.batchData);
     return {
@@ -201,7 +201,7 @@ export class VeChainController {
     type: TransactionReceiptResponseDto,
   })
   async getTransactionReceipt(
-    @Param("txid") txid: string
+    @Param("txid") txid: string,
   ): Promise<TransactionReceiptResponseDto> {
     return await this.veChainService.getTransactionReceipt(txid);
   }
@@ -221,7 +221,7 @@ export class VeChainController {
     },
   })
   async isTransactionConfirmed(
-    @Param("txid") txid: string
+    @Param("txid") txid: string,
   ): Promise<{ txid: string; confirmed: boolean }> {
     const confirmed = await this.veChainService.isTransactionConfirmed(txid);
     return { txid, confirmed };
@@ -242,7 +242,7 @@ export class VeChainController {
     },
   })
   async getBalance(
-    @Param("address") address: string
+    @Param("address") address: string,
   ): Promise<{ address: string; balance: number }> {
     const balance = await this.veChainService.getBalance(address);
     return { address, balance };
@@ -263,7 +263,7 @@ export class VeChainController {
     },
   })
   async getB3TRBalance(
-    @Param("address") address: string
+    @Param("address") address: string,
   ): Promise<{ address: string; b3trBalance: number }> {
     const b3trBalance = await this.veChainService.getB3TRBalance(address);
     return { address, b3trBalance };
@@ -324,7 +324,7 @@ export class VeChainController {
     },
   })
   async transferTokens(
-    @Body() data: { fromAddress: string; toAddress: string; amount: number }
+    @Body() data: { fromAddress: string; toAddress: string; amount: number },
   ): Promise<{
     txid: string;
     success: boolean;
@@ -335,7 +335,7 @@ export class VeChainController {
     const result = await this.veChainService.transferTokens(
       data.fromAddress,
       data.toAddress,
-      data.amount
+      data.amount,
     );
     return {
       txid: result.txid,

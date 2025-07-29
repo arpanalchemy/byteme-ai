@@ -98,7 +98,7 @@ export class NotificationService {
         }
 
         const notification = this.notificationRepository.create({
-          userId,
+          user: { id: userId },
           type: createDto.type,
           priority: createDto.priority || NotificationPriority.MEDIUM,
           title: createDto.title,
@@ -168,7 +168,8 @@ export class NotificationService {
         this.notificationRepository.createQueryBuilder("notification");
 
       if (userId) {
-        queryBuilder.andWhere("notification.userId = :userId", { userId });
+        queryBuilder.innerJoin("notification.user", "user");
+        queryBuilder.andWhere("user.id = :userId", { userId });
       }
 
       if (type) {
@@ -243,7 +244,8 @@ export class NotificationService {
       .andWhere("notification.isDeleted = :isDeleted", { isDeleted: false });
 
     if (userId) {
-      queryBuilder.andWhere("notification.userId = :userId", { userId });
+      queryBuilder.innerJoin("notification.user", "user");
+      queryBuilder.andWhere("user.id = :userId", { userId });
     }
 
     const notification = await queryBuilder.getOne();
@@ -270,7 +272,8 @@ export class NotificationService {
         .andWhere("notification.isDeleted = :isDeleted", { isDeleted: false });
 
       if (userId) {
-        queryBuilder.andWhere("notification.userId = :userId", { userId });
+        queryBuilder.innerJoin("notification.user", "user");
+        queryBuilder.andWhere("user.id = :userId", { userId });
       }
 
       const notification = await queryBuilder.getOne();
@@ -330,7 +333,8 @@ export class NotificationService {
         .andWhere("notification.isDeleted = :isDeleted", { isDeleted: false });
 
       if (userId) {
-        queryBuilder.andWhere("notification.userId = :userId", { userId });
+        queryBuilder.innerJoin("notification.user", "user");
+        queryBuilder.andWhere("user.id = :userId", { userId });
       }
 
       const notification = await queryBuilder.getOne();
@@ -452,7 +456,8 @@ export class NotificationService {
         .where("notification.isDeleted = :isDeleted", { isDeleted: false });
 
       if (userId) {
-        queryBuilder.andWhere("notification.userId = :userId", { userId });
+        queryBuilder.innerJoin("notification.user", "user");
+        queryBuilder.andWhere("user.id = :userId", { userId });
       }
 
       const total = await queryBuilder.getCount();
@@ -598,7 +603,7 @@ export class NotificationService {
   ): NotificationResponseDto {
     return {
       id: notification.id,
-      userId: notification.userId,
+      userId: notification.user.id,
       type: notification.type,
       priority: notification.priority,
       status: notification.status,

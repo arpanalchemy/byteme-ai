@@ -33,7 +33,7 @@ export class RewardService {
     private readonly rewardRepository: Repository<Reward>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly vechainService: VeChainService,
+    private readonly vechainService: VeChainService
   ) {}
 
   // Reward Management (Admin)
@@ -53,7 +53,7 @@ export class RewardService {
       }
 
       const reward = this.rewardRepository.create({
-        userId: createDto.userId,
+        user: { id: createDto.userId },
         type: createDto.type,
         amount: createDto.amount,
         description: createDto.description,
@@ -66,7 +66,7 @@ export class RewardService {
       const savedReward = await this.rewardRepository.save(reward);
 
       this.logger.log(
-        `Reward created: ${savedReward.id} for user: ${createDto.userId}`,
+        `Reward created: ${savedReward.id} for user: ${createDto.userId}`
       );
       return this.transformRewardToResponse(savedReward);
     } catch (error) {
@@ -80,7 +80,7 @@ export class RewardService {
    */
   async getRewards(
     query: RewardQueryDto,
-    userId?: string,
+    userId?: string
   ): Promise<{
     rewards: RewardResponseDto[];
     total: number;
@@ -105,7 +105,8 @@ export class RewardService {
       const queryBuilder = this.rewardRepository.createQueryBuilder("reward");
 
       if (userId) {
-        queryBuilder.andWhere("reward.userId = :userId", { userId });
+        queryBuilder.innerJoin("reward.user", "user");
+        queryBuilder.andWhere("user.id = :userId", { userId });
       }
 
       if (type) {
@@ -125,7 +126,7 @@ export class RewardService {
       if (search) {
         queryBuilder.andWhere(
           "reward.description ILIKE :search OR reward.type ILIKE :search",
-          { search: `%${search}%` },
+          { search: `%${search}%` }
         );
       }
 
@@ -150,7 +151,7 @@ export class RewardService {
 
       return {
         rewards: rewards.map((reward) =>
-          this.transformRewardToResponse(reward),
+          this.transformRewardToResponse(reward)
         ),
         total,
         page,
@@ -167,14 +168,15 @@ export class RewardService {
    */
   async getRewardById(
     rewardId: string,
-    userId?: string,
+    userId?: string
   ): Promise<RewardResponseDto> {
     const queryBuilder = this.rewardRepository
       .createQueryBuilder("reward")
       .where("reward.id = :rewardId", { rewardId });
 
     if (userId) {
-      queryBuilder.andWhere("reward.userId = :userId", { userId });
+      queryBuilder.innerJoin("reward.user", "user");
+      queryBuilder.andWhere("user.id = :userId", { userId });
     }
 
     const reward = await queryBuilder.getOne();
@@ -192,7 +194,7 @@ export class RewardService {
   async updateReward(
     rewardId: string,
     updateDto: UpdateRewardDto,
-    userId?: string,
+    userId?: string
   ): Promise<RewardResponseDto> {
     try {
       const queryBuilder = this.rewardRepository
@@ -200,7 +202,8 @@ export class RewardService {
         .where("reward.id = :rewardId", { rewardId });
 
       if (userId) {
-        queryBuilder.andWhere("reward.userId = :userId", { userId });
+        queryBuilder.innerJoin("reward.user", "user");
+        queryBuilder.andWhere("user.id = :userId", { userId });
       }
 
       const reward = await queryBuilder.getOne();
@@ -230,7 +233,8 @@ export class RewardService {
         .where("reward.id = :rewardId", { rewardId });
 
       if (userId) {
-        queryBuilder.andWhere("reward.userId = :userId", { userId });
+        queryBuilder.innerJoin("reward.user", "user");
+        queryBuilder.andWhere("user.id = :userId", { userId });
       }
 
       const reward = await queryBuilder.getOne();
@@ -260,7 +264,7 @@ export class RewardService {
    */
   async getUserRewards(
     userId: string,
-    query: RewardQueryDto,
+    query: RewardQueryDto
   ): Promise<{
     rewards: RewardResponseDto[];
     total: number;
@@ -285,7 +289,8 @@ export class RewardService {
       const queryBuilder = this.rewardRepository.createQueryBuilder("reward");
 
       if (userId) {
-        queryBuilder.andWhere("reward.userId = :userId", { userId });
+        queryBuilder.innerJoin("reward.user", "user");
+        queryBuilder.andWhere("user.id = :userId", { userId });
       }
 
       const total = await queryBuilder.getCount();
@@ -293,47 +298,50 @@ export class RewardService {
       // Get total amounts
       const totalStats = await queryBuilder
         .select([
-          "SUM(reward.amount) as totalAmount",
-          "SUM(reward.milesDriven) as totalMiles",
-          "SUM(reward.carbonSaved) as totalCarbonSaved",
+          "SUM(reward.amount) as totalamount",
+          "SUM(reward.milesDriven) as totalmiles",
+          "SUM(reward.carbonSaved) as totalcarbonsaved",
         ])
         .getRawOne();
 
-      const totalAmount = parseFloat(totalStats?.totalAmount || "0");
-      const totalMiles = parseFloat(totalStats?.totalMiles || "0");
-      const totalCarbonSaved = parseFloat(totalStats?.totalCarbonSaved || "0");
+      const totalAmount = parseFloat(totalStats?.totalamount || "0");
+      const totalMiles = parseFloat(totalStats?.totalmiles || "0");
+      const totalCarbonSaved = parseFloat(totalStats?.totalcarbonsaved || "0");
 
       // Get rewards by type
       const byTypeQuery = await queryBuilder
-        .select(["reward.type", "COUNT(*) as count"])
+        .select(["reward.type as rewardtype", "COUNT(*) as count"])
         .groupBy("reward.type")
         .getRawMany();
 
       const byType: Record<string, number> = {};
       byTypeQuery.forEach((item) => {
-        byType[item.reward_type] = parseInt(item.count);
+        byType[item.rewardtype] = parseInt(item.count);
       });
 
       // Get rewards by status
       const byStatusQuery = await queryBuilder
-        .select(["reward.status", "COUNT(*) as count"])
+        .select(["reward.status as rewardstatus", "COUNT(*) as count"])
         .groupBy("reward.status")
         .getRawMany();
 
       const byStatus: Record<string, number> = {};
       byStatusQuery.forEach((item) => {
-        byStatus[item.reward_status] = parseInt(item.count);
+        byStatus[item.rewardstatus] = parseInt(item.count);
       });
 
       // Get rewards by blockchain status
       const byBlockchainStatusQuery = await queryBuilder
-        .select(["reward.blockchainStatus", "COUNT(*) as count"])
+        .select([
+          "reward.blockchainStatus as rewardblockchainstatus",
+          "COUNT(*) as count",
+        ])
         .groupBy("reward.blockchainStatus")
         .getRawMany();
 
       const byBlockchainStatus: Record<string, number> = {};
       byBlockchainStatusQuery.forEach((item) => {
-        byBlockchainStatus[item.reward_blockchainStatus] = parseInt(item.count);
+        byBlockchainStatus[item.rewardblockchainstatus] = parseInt(item.count);
       });
 
       // Calculate averages
@@ -377,7 +385,7 @@ export class RewardService {
   /**
    * Process pending rewards and send to blockchain
    */
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  // @Cron(CronExpression.EVERY_5_MINUTES)
   async processPendingRewards(): Promise<void> {
     try {
       this.logger.log("Processing pending rewards...");
@@ -402,10 +410,10 @@ export class RewardService {
       // Group rewards by user for batch processing
       const userRewards = new Map<string, Reward[]>();
       pendingRewards.forEach((reward) => {
-        if (!userRewards.has(reward.userId)) {
-          userRewards.set(reward.userId, []);
+        if (!userRewards.has(reward.user.id)) {
+          userRewards.set(reward.user.id, []);
         }
-        userRewards.get(reward.userId).push(reward);
+        userRewards.get(reward.user.id).push(reward);
       });
 
       // Process each user's rewards
@@ -422,7 +430,7 @@ export class RewardService {
    */
   private async processUserRewards(
     userId: string,
-    rewards: Reward[],
+    rewards: Reward[]
   ): Promise<void> {
     try {
       // Get user wallet address
@@ -471,7 +479,7 @@ export class RewardService {
       }
 
       this.logger.log(
-        `Processed ${rewards.length} rewards for user ${userId}: ${txHash}`,
+        `Processed ${rewards.length} rewards for user ${userId}: ${txHash}`
       );
     } catch (error) {
       this.logger.error(`Failed to process rewards for user ${userId}:`, error);
@@ -496,7 +504,7 @@ export class RewardService {
   /**
    * Check blockchain transaction status
    */
-  @Cron(CronExpression.EVERY_MINUTE)
+  // @Cron(CronExpression.EVERY_MINUTE)
   async checkBlockchainTransactions(): Promise<void> {
     try {
       this.logger.log("Checking blockchain transactions...");
@@ -569,7 +577,7 @@ export class RewardService {
   private transformRewardToResponse(reward: Reward): RewardResponseDto {
     return {
       id: reward.id,
-      userId: reward.userId,
+      userId: reward.user.id,
       type: reward.type,
       status: reward.status,
       blockchainStatus: reward.blockchainStatus,
@@ -632,7 +640,7 @@ export class RewardService {
     uploadId: string,
     milesDriven: number,
     carbonSaved: number,
-    imageHash: string,
+    imageHash: string
   ): Promise<RewardResponseDto> {
     const rewardAmount = this.calculateUploadReward(milesDriven, carbonSaved);
 
@@ -665,7 +673,7 @@ export class RewardService {
     userId: string,
     badgeId: string,
     badgeName: string,
-    rewardAmount: number,
+    rewardAmount: number
   ): Promise<RewardResponseDto> {
     return this.createReward({
       userId,
@@ -693,7 +701,7 @@ export class RewardService {
     userId: string,
     challengeId: string,
     challengeName: string,
-    rewardAmount: number,
+    rewardAmount: number
   ): Promise<RewardResponseDto> {
     return this.createReward({
       userId,
@@ -719,7 +727,7 @@ export class RewardService {
    */
   private calculateUploadReward(
     milesDriven: number,
-    carbonSaved: number,
+    carbonSaved: number
   ): number {
     // Base reward: 0.1 B3TR per mile
     const baseReward = milesDriven * 0.1;

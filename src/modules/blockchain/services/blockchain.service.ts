@@ -108,7 +108,7 @@ export class BlockchainService {
     try {
       const user = await this.userRepository.findOne({ where: { id: userId } });
       const userWallet = await this.userWalletRepository.findOne({
-        where: { userId },
+        where: { user: { id: userId } },
       });
 
       if (!user || !userWallet) {
@@ -181,10 +181,10 @@ export class BlockchainService {
         where: { id: toUserId },
       });
       const fromWallet = await this.userWalletRepository.findOne({
-        where: { userId: fromUserId },
+        where: { user: { id: fromUserId } },
       });
       const toWallet = await this.userWalletRepository.findOne({
-        where: { userId: toUserId },
+        where: { user: { id: toUserId } },
       });
 
       if (!fromUser || !toUser || !fromWallet || !toWallet) {
@@ -248,7 +248,7 @@ export class BlockchainService {
     try {
       const user = await this.userRepository.findOne({ where: { id: userId } });
       const userWallet = await this.userWalletRepository.findOne({
-        where: { userId },
+        where: { user: { id: userId } },
       });
 
       if (!user || !userWallet) {
@@ -256,7 +256,7 @@ export class BlockchainService {
       }
 
       const rewards = await this.rewardRepository.find({
-        where: { id: In(rewardIds), userId },
+        where: { id: In(rewardIds), user: { id: userId } },
       });
 
       if (rewards.length === 0) {
@@ -386,7 +386,7 @@ export class BlockchainService {
         where: { id: userId },
       });
       const userWallet = await this.userWalletRepository.findOne({
-        where: { userId },
+        where: { user: { id: userId } },
       });
 
       if (!_user || !userWallet) {

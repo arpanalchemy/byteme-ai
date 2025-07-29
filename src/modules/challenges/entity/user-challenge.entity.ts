@@ -20,26 +20,20 @@ export enum UserChallengeStatus {
 }
 
 @Entity("user_challenges")
-@Index(["userId", "challengeId"], { unique: true })
+@Index(["user", "challenge"], { unique: true })
 export class UserChallenge {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @ManyToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
-  user: User;
-
   @Index()
-  @Column({ name: "user_id" })
-  userId: string;
+  user: User;
 
   @ManyToOne(() => Challenge, { onDelete: "CASCADE" })
   @JoinColumn({ name: "challenge_id" })
-  challenge: Challenge;
-
   @Index()
-  @Column({ name: "challenge_id" })
-  challengeId: string;
+  challenge: Challenge;
 
   @Column({
     type: "enum",
@@ -162,7 +156,7 @@ export class UserChallenge {
     if (objectives.carbonSaved && progress.carbonSaved !== undefined) {
       totalProgress += Math.min(
         progress.carbonSaved / objectives.carbonSaved,
-        1,
+        1
       );
       totalObjectives += 1;
     }
@@ -170,7 +164,7 @@ export class UserChallenge {
     if (objectives.uploadCount && progress.uploadCount !== undefined) {
       totalProgress += Math.min(
         progress.uploadCount / objectives.uploadCount,
-        1,
+        1
       );
       totalObjectives += 1;
     }
@@ -178,7 +172,7 @@ export class UserChallenge {
     if (objectives.vehicleCount && progress.vehicleCount !== undefined) {
       totalProgress += Math.min(
         progress.vehicleCount / objectives.vehicleCount,
-        1,
+        1
       );
       totalObjectives += 1;
     }
@@ -186,7 +180,7 @@ export class UserChallenge {
     if (objectives.rewardsEarned && progress.rewardsEarned !== undefined) {
       totalProgress += Math.min(
         progress.rewardsEarned / objectives.rewardsEarned,
-        1,
+        1
       );
       totalObjectives += 1;
     }

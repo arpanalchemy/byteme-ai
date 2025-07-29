@@ -14,9 +14,6 @@ export class UserWallet {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ name: "user_id", type: "uuid", unique: true })
-  userId: string;
-
   @OneToOne(() => User)
   @JoinColumn({ name: "user_id" })
   user: User;

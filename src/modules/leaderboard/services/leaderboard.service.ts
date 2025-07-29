@@ -8,6 +8,10 @@ import {
   UploadStatus,
 } from "../../odometer/entity/odometer-upload.entity";
 import {
+  UserChallenge,
+  UserChallengeStatus,
+} from "../../challenges/entity/user-challenge.entity";
+import {
   LeaderboardResponseDto,
   LeaderboardEntryDto,
 } from "../dto/leaderboard.dto";
@@ -23,6 +27,8 @@ export class LeaderboardService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(OdometerUpload)
     private readonly odometerUploadRepository: Repository<OdometerUpload>,
+    @InjectRepository(UserChallenge)
+    private readonly userChallengeRepository: Repository<UserChallenge>
   ) {}
 
   /**
@@ -33,7 +39,7 @@ export class LeaderboardService {
     page: number = 1,
     limit: number = 20,
     userId?: string,
-    sortBy: "mileage" | "carbon" | "rewards" | "points" = "mileage",
+    sortBy: "mileage" | "carbon" | "rewards" | "points" = "mileage"
   ): Promise<LeaderboardResponseDto> {
     try {
       const { periodStart, periodEnd } = this.getPeriodDates(period);
@@ -42,7 +48,11 @@ export class LeaderboardService {
       // Get user statistics for the period
       const userStats = await this.getUserStatsForPeriod(
         periodStart,
-        periodEnd,
+        periodEnd
+      );
+      console.log(
+        "🚀 ~ LeaderboardService ~ getLeaderboard ~ userStats:",
+        userStats
       );
 
       // Sort by the specified criteria
@@ -63,6 +73,10 @@ export class LeaderboardService {
 
       // Get paginated results
       const paginatedStats = sortedStats.slice(offset, offset + limit);
+      console.log(
+        "🚀 ~ LeaderboardService ~ getLeaderboard ~ paginatedStats:",
+        paginatedStats
+      );
 
       // Get user details for the paginated results
       const entries: LeaderboardEntryDto[] = await Promise.all(
@@ -90,7 +104,7 @@ export class LeaderboardService {
             uploadCount: stat.uploadCount,
             rankDisplay: this.getRankDisplay(rank),
           };
-        }),
+        })
       );
 
       // Filter out null entries
@@ -103,7 +117,7 @@ export class LeaderboardService {
           userId,
           period,
           periodStart,
-          periodEnd,
+          periodEnd
         );
       }
 
@@ -128,7 +142,7 @@ export class LeaderboardService {
    * Update leaderboard for a specific period
    */
   async updateLeaderboard(
-    period: LeaderboardPeriod = LeaderboardPeriod.WEEKLY,
+    period: LeaderboardPeriod = LeaderboardPeriod.WEEKLY
   ): Promise<void> {
     try {
       const { periodStart, periodEnd } = this.getPeriodDates(period);
@@ -136,7 +150,7 @@ export class LeaderboardService {
       // Get user statistics for the period
       const userStats = await this.getUserStatsForPeriod(
         periodStart,
-        periodEnd,
+        periodEnd
       );
 
       // Clear existing leaderboard entries for this period
@@ -149,7 +163,7 @@ export class LeaderboardService {
       const leaderboardEntries = userStats.map((stat, index) => {
         return this.leaderboardRepository.create({
           period,
-          userId: stat.userId,
+          user: { id: stat.userId },
           rank: index + 1,
           totalMileage: stat.totalMileage,
           totalCarbonSaved: stat.totalCarbonSaved,
@@ -178,12 +192,12 @@ export class LeaderboardService {
     userId: string,
     period: LeaderboardPeriod,
     periodStart: Date,
-    periodEnd: Date,
+    periodEnd: Date
   ): Promise<number> {
     try {
       const userStats = await this.getUserStatsForPeriod(
         periodStart,
-        periodEnd,
+        periodEnd
       );
       const userIndex = userStats.findIndex((stat) => stat.userId === userId);
 
@@ -244,48 +258,140 @@ export class LeaderboardService {
    */
   private async getUserStatsForPeriod(
     periodStart: Date,
-    periodEnd: Date,
+    periodEnd: Date
   ): Promise<any[]> {
-    const stats = await this.odometerUploadRepository
+    // Get odometer upload stats
+    const uploadStats = await this.odometerUploadRepository
       .createQueryBuilder("upload")
+      .innerJoin("upload.user", "user")
       .select([
-        "upload.userId as userId",
-        "SUM(upload.finalMileage) as totalMileage",
-        "SUM(upload.carbonSaved) as totalCarbonSaved",
-        "COUNT(*) as uploadCount",
+        "user.id as userid",
+        "SUM(upload.finalMileage) as totalmileage",
+        "SUM(upload.carbonSaved) as totalcarbonsaved",
+        "COUNT(*) as uploadcount",
       ])
       .where("upload.createdAt >= :periodStart", { periodStart })
       .andWhere("upload.createdAt < :periodEnd", { periodEnd })
       .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
-      .groupBy("upload.userId")
-      .orderBy("totalMileage", "DESC")
-      .addOrderBy("totalCarbonSaved", "DESC")
-      .addOrderBy("uploadCount", "DESC")
+      .andWhere("upload.isApproved = :isApproved", { isApproved: true })
+      .groupBy("user.id")
       .getRawMany();
+    console.log(
+      "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ uploadStats:",
+      uploadStats
+    );
 
-    // Get user details and calculate points
+    // Get challenge participation stats
+    const challengeStats = await this.userChallengeRepository
+      .createQueryBuilder("userChallenge")
+      .leftJoin("userChallenge.challenge", "challenge")
+      .innerJoin("userChallenge.user", "user")
+      .select([
+        "user.id as userid",
+        "COUNT(*) as challengecount",
+        "SUM(CASE WHEN userChallenge.status = :completedStatus THEN 1 ELSE 0 END) as completedchallenges",
+        "0 as challengerewards",
+      ])
+      .where("userChallenge.createdAt >= :periodStart", { periodStart })
+      .andWhere("userChallenge.createdAt <= :periodEnd", { periodEnd })
+      .andWhere("challenge.status = :challengeStatus", {
+        challengeStatus: "active",
+      })
+      .setParameter("completedStatus", UserChallengeStatus.COMPLETED)
+      .groupBy("user.id")
+      .getRawMany();
+    console.log(
+      "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ challengeStats:",
+      challengeStats
+    );
+
+    // Combine stats
+    const userStatsMap = new Map();
+
+    // Process upload stats
+    uploadStats.forEach((stat) => {
+      userStatsMap.set(stat.userid, {
+        userId: stat.userid,
+        totalMileage: parseFloat(stat.totalmileage || "0"),
+        totalCarbonSaved: parseFloat(stat.totalcarbonsaved || "0"),
+        totalRewards: 0,
+        totalPoints: 0,
+        uploadCount: parseInt(stat.uploadcount || "0"),
+        challengeCount: 0,
+        completedChallenges: 0,
+        challengeRewards: 0,
+      });
+    });
+    console.log(
+      "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ uploadStats:",
+      uploadStats
+    );
+    console.log(
+      "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ userStatsMap:",
+      userStatsMap
+    );
+
+    // Process challenge stats
+    challengeStats.forEach((stat) => {
+      const existing = userStatsMap.get(stat.userid);
+      if (existing) {
+        existing.challengeCount = parseInt(stat.challengecount || "0");
+        existing.completedChallenges = parseInt(
+          stat.completedchallenges || "0"
+        );
+        existing.challengeRewards = parseFloat(stat.challengerewards || "0");
+        existing.totalRewards += existing.challengeRewards;
+      } else {
+        userStatsMap.set(stat.userid, {
+          userId: stat.userid,
+          totalMileage: 0,
+          totalCarbonSaved: 0,
+          totalRewards: parseFloat(stat.challengerewards || "0"),
+          totalPoints: 0,
+          uploadCount: 0,
+          challengeCount: parseInt(stat.challengecount || "0"),
+          completedChallenges: parseInt(stat.completedchallenges || "0"),
+          challengeRewards: parseFloat(stat.challengerewards || "0"),
+        });
+      }
+    });
+    console.log(
+      "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ challengeStats:",
+      challengeStats
+    );
+
+    // Get user details and calculate final points
     const userStats = await Promise.all(
-      stats.map(async (stat) => {
+      Array.from(userStatsMap.values()).map(async (stat) => {
         const user = await this.userRepository.findOne({
           where: { id: stat.userId },
         });
+        console.log(
+          "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ user:",
+          user
+        );
 
         if (!user) return null;
 
-        // Calculate points (1 point per km + bonus for carbon saved)
-        const points =
-          parseFloat(stat.totalMileage || "0") +
-          parseFloat(stat.totalCarbonSaved || "0") * 0.1;
+        // Calculate total points (mileage + carbon saved + challenge rewards + completion bonus)
+        const totalPoints = Math.round(
+          stat.totalMileage * 0.1 + // 0.1 points per km
+            stat.totalCarbonSaved * 10 + // 10 points per kg CO2 saved
+            stat.challengeRewards * 100 + // 100 points per B3TR token earned
+            stat.completedChallenges * 500 // 500 points per completed challenge
+        );
+        console.log(
+          "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ totalPoints:",
+          totalPoints
+        );
 
         return {
-          userId: stat.userId,
-          totalMileage: parseFloat(stat.totalMileage || "0"),
-          totalCarbonSaved: parseFloat(stat.totalCarbonSaved || "0"),
-          totalRewards: parseFloat(user.b3trBalance.toString()),
-          totalPoints: Math.floor(points),
-          uploadCount: parseInt(stat.uploadCount || "0"),
+          ...stat,
+          totalRewards:
+            stat.totalRewards + parseFloat(user.b3trBalance.toString()),
+          totalPoints,
         };
-      }),
+      })
     );
 
     return userStats.filter(Boolean);

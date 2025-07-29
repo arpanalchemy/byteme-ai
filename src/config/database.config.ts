@@ -12,7 +12,7 @@ export const getDatabaseConfig = (
   database: configService.get("DB_NAME", "drive_earn"),
   entities: [__dirname + "/../**/*.entity{.ts,.js}"],
   synchronize: false, // Disable in production
-  logging: configService.get("NODE_ENV") !== "development",
+  logging: false,
   ssl:
     configService.get("NODE_ENV") === "production"
       ? { rejectUnauthorized: false }

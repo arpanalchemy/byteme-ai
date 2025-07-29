@@ -222,7 +222,8 @@ export class BadgeService {
       const query = this.userBadgeRepository
         .createQueryBuilder("userBadge")
         .leftJoinAndSelect("userBadge.badge", "badge")
-        .where("userBadge.userId = :userId", { userId });
+        .leftJoinAndSelect("userBadge.user", "user")
+        .where("user.id = :userId", { userId });
 
       const total = await query.getCount();
       const userBadges = await query
@@ -255,11 +256,11 @@ export class BadgeService {
       });
 
       const userBadges = await this.userBadgeRepository.find({
-        where: { userId },
-        select: ["badgeId"],
+        where: { user: { id: userId } },
+        select: ["badge"],
       });
 
-      const earnedBadgeIds = userBadges.map((ub) => ub.badgeId);
+      const earnedBadgeIds = userBadges.map((ub) => ub.badge.id);
       const availableBadges = badges.filter(
         (badge) => !earnedBadgeIds.includes(badge.id),
       );
@@ -319,8 +320,7 @@ export class BadgeService {
   ): Promise<UserBadgeResponseDto> {
     try {
       const userBadge = await this.userBadgeRepository.findOne({
-        where: { id: userBadgeId, userId },
-        relations: ["badge"],
+        where: { id: userBadgeId, user: { id: userId } },
       });
 
       if (!userBadge) {
@@ -351,23 +351,27 @@ export class BadgeService {
     // Get total mileage
     const totalMileage = await this.odometerUploadRepository
       .createQueryBuilder("upload")
-      .select("SUM(upload.finalMileage)", "totalMileage")
-      .where("upload.userId = :userId", { userId })
+      .innerJoin("upload.user", "user")
+      .select("SUM(upload.finalMileage)", "totalmileage")
+      .where("user.id = :userId", { userId })
       .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
       .getRawOne();
 
     // Get total carbon saved
     const totalCarbonSaved = await this.odometerUploadRepository
       .createQueryBuilder("upload")
-      .select("SUM(upload.carbonSaved)", "totalCarbonSaved")
-      .where("upload.userId = :userId", { userId })
+      .innerJoin("upload.user", "user")
+      .select("SUM(upload.carbonSaved)", "totalcarbonsaved")
+      .where("user.id = :userId", { userId })
       .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
       .getRawOne();
 
     // Get vehicle count
-    const vehicleCount = await this.vehicleRepository.count({
-      where: { userId, isActive: true },
-    });
+    const vehicleCount = await this.vehicleRepository
+      .createQueryBuilder("vehicle")
+      .where("vehicle.user_id = :userId", { userId })
+      .andWhere("vehicle.isActive = :isActive", { isActive: true })
+      .getCount();
 
     // Get user
     const user = await this.userRepository.findOne({
@@ -375,8 +379,8 @@ export class BadgeService {
     });
 
     return {
-      totalMileage: parseFloat(totalMileage?.totalMileage || "0"),
-      totalCarbonSaved: parseFloat(totalCarbonSaved?.totalCarbonSaved || "0"),
+      totalMileage: parseFloat(totalMileage?.totalmileage || "0"),
+      totalCarbonSaved: parseFloat(totalCarbonSaved?.totalcarbonsaved || "0"),
       vehicleCount,
       totalRewards: parseFloat(user?.b3trBalance.toString() || "0"),
       totalPoints: user?.totalPoints || 0,
@@ -443,7 +447,7 @@ export class BadgeService {
 
     // Check if user already has this badge
     const existingUserBadge = await this.userBadgeRepository.findOne({
-      where: { userId, badgeId },
+      where: { user: { id: userId }, badge: { id: badgeId } },
     });
 
     if (existingUserBadge) {
@@ -452,8 +456,8 @@ export class BadgeService {
 
     // Create user badge
     const userBadge = this.userBadgeRepository.create({
-      userId,
-      badgeId,
+      user: { id: userId },
+      badge: { id: badgeId },
       earnedData: {
         mileage: userStats.totalMileage,
         carbonSaved: userStats.totalCarbonSaved,

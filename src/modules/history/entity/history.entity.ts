@@ -41,9 +41,9 @@ export enum HistoryCategory {
 }
 
 @Entity("history")
-@Index(["userId", "type"])
-@Index(["userId", "category"])
-@Index(["userId", "createdAt"])
+@Index(["user", "type"])
+@Index(["user", "category"])
+@Index(["user", "createdAt"])
 @Index(["type", "createdAt"])
 export class History {
   @PrimaryGeneratedColumn("uuid")
@@ -51,11 +51,8 @@ export class History {
 
   @ManyToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
-  user: User;
-
   @Index()
-  @Column({ name: "user_id" })
-  userId: string;
+  user: User;
 
   @Column({
     type: "enum",

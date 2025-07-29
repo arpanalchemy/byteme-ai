@@ -1,8 +1,8 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { UserService } from './user.service';
-import { ContactSupportDto } from '../dto/contact-support.dto';
-import { EmailTemplates } from '../helpers/email-templates.helper';
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { UserService } from "./user.service";
+import { ContactSupportDto } from "../dto/contact-support.dto";
+import { EmailTemplates } from "../helpers/email-templates.helper";
 
 @Injectable()
 export class SupportService {
@@ -13,19 +13,24 @@ export class SupportService {
     private readonly userService: UserService,
     private readonly configService: ConfigService,
   ) {
-    this.supportEmail = this.configService.get('SUPPORT_EMAIL', 'jaimin.tank@alchemytech.ca');
+    this.supportEmail = this.configService.get(
+      "SUPPORT_EMAIL",
+      "jaimin.tank@alchemytech.ca",
+    );
   }
 
   private sanitizeInput(input: string): string {
     return input
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
-  async submitSupportRequest(supportRequest: ContactSupportDto): Promise<{ message: string }> {
+  async submitSupportRequest(
+    supportRequest: ContactSupportDto,
+  ): Promise<{ message: string }> {
     try {
       // Sanitize user input
       const sanitizedRequest = {
@@ -49,16 +54,22 @@ export class SupportService {
           ),
         );
       } catch (error) {
-        this.logger.error(`Failed to send support team email: ${error.message}`);
-        throw new BadRequestException('Failed to process support request. Please try again later.');
+        this.logger.error(
+          `Failed to send support team email: ${error.message}`,
+        );
+        throw new BadRequestException(
+          "Failed to process support request. Please try again later.",
+        );
       }
 
       // Send confirmation email to user
       try {
         await this.userService.sendEmail(
           sanitizedRequest.emailAddress,
-          'We received your support request',
-          EmailTemplates.getBaseTemplate().replace('{{content}}', `
+          "We received your support request",
+          EmailTemplates.getBaseTemplate().replace(
+            "{{content}}",
+            `
             <div class="header">
               <h1 class="header-title">Support Request Received</h1>
             </div>
@@ -84,21 +95,26 @@ export class SupportService {
               <p>This is an automated message, please do not reply.</p>
               <p>&copy; ${new Date().getFullYear()} B3TR - Powered by VeChain</p>
             </div>
-          `),
+          `,
+          ),
         );
       } catch (error) {
-        this.logger.error(`Failed to send confirmation email: ${error.message}`);
+        this.logger.error(
+          `Failed to send confirmation email: ${error.message}`,
+        );
         // Don't throw here as the support request was already processed
         // Just log the error and continue
       }
 
-      return { message: 'Support request submitted successfully' };
+      return { message: "Support request submitted successfully" };
     } catch (error) {
       this.logger.error(`Failed to submit support request: ${error.message}`);
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException('An error occurred while processing your request');
+      throw new BadRequestException(
+        "An error occurred while processing your request",
+      );
     }
   }
-} 
+}

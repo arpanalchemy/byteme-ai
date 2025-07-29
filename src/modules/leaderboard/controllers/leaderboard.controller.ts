@@ -9,10 +9,7 @@ import { ApiTags, ApiResponse, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../../../common/decorators/current-user.decorator";
 import { LeaderboardService } from "../services/leaderboard.service";
-import {
-  LeaderboardResponseDto,
-  LeaderboardQueryDto,
-} from "../dto/leaderboard.dto";
+import { LeaderboardResponseDto } from "../dto/leaderboard.dto";
 import { LeaderboardPeriod } from "../entity/leaderboard.entity";
 import { User } from "../../users/entity/user.entity";
 

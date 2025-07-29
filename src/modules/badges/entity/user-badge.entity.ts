@@ -12,26 +12,20 @@ import { User } from "../../users/entity/user.entity";
 import { Badge } from "./badge.entity";
 
 @Entity("user_badges")
-@Index(["userId", "badgeId"], { unique: true })
+@Index(["user", "badge"], { unique: true })
 export class UserBadge {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @ManyToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
-  user: User;
-
   @Index()
-  @Column({ name: "user_id" })
-  userId: string;
+  user: User;
 
   @ManyToOne(() => Badge, { onDelete: "CASCADE" })
   @JoinColumn({ name: "badge_id" })
-  badge: Badge;
-
   @Index()
-  @Column({ name: "badge_id" })
-  badgeId: string;
+  badge: Badge;
 
   @Column({ name: "earned_data", type: "json", nullable: true })
   earnedData?: {

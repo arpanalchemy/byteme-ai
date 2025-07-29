@@ -53,8 +53,8 @@ export enum NotificationChannel {
 }
 
 @Entity("notifications")
-@Index(["userId", "status"])
-@Index(["userId", "createdAt"])
+@Index(["user", "status"])
+@Index(["user", "createdAt"])
 @Index(["type", "createdAt"])
 export class Notification {
   @PrimaryGeneratedColumn("uuid")
@@ -62,11 +62,8 @@ export class Notification {
 
   @ManyToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
-  user: User;
-
   @Index()
-  @Column({ name: "user_id" })
-  userId: string;
+  user: User;
 
   @Column({
     type: "enum",
@@ -282,7 +279,7 @@ export class Notification {
 
     const channels = Object.keys(this.deliveryStatus);
     const successful = channels.filter(
-      (channel) => this.deliveryStatus[channel]?.sent,
+      (channel) => this.deliveryStatus[channel]?.sent
     ).length;
 
     return channels.length > 0 ? (successful / channels.length) * 100 : 0;

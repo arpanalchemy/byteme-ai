@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   Index,
+  JoinColumn,
 } from "typeorm";
 import { User } from "../../users/entity/user.entity";
 
@@ -30,11 +31,9 @@ export class Vehicle {
   id: string;
 
   @ManyToOne(() => User, { onDelete: "CASCADE" })
-  user: User;
-
+  @JoinColumn({ name: "user_id" })
   @Index()
-  @Column({ name: "user_id" })
-  userId: string;
+  user: User;
 
   @Column({
     type: "enum",

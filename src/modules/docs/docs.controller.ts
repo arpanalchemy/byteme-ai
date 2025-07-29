@@ -3,7 +3,6 @@ import { Response } from "express";
 import { join } from "path";
 import { existsSync } from "fs";
 import { DocsService } from "./docs.service";
-import fetch from "node-fetch";
 
 @Controller("docs")
 export class DocsController {
@@ -191,7 +190,7 @@ export class DocsController {
                     <p>Click to view the complete documentation for this section.</p>
                     <a href="/docs/${doc.name}">View Documentation →</a>
                   </div>
-                `
+                `,
                   )
                   .join("")}
               </div>
@@ -205,7 +204,7 @@ export class DocsController {
                   .map(
                     (doc) => `
                   <a href="/docs/${doc.name}">${doc.displayName}</a>
-                `
+                `,
                   )
                   .join("")}
               </div>
@@ -227,7 +226,8 @@ export class DocsController {
   @Get("healthcheck")
   async getHealthCheck(@Res() res: Response) {
     try {
-      // Fetch health check data
+      // Fetch health check data using dynamic import
+      const fetch = (await import("node-fetch")).default;
       const healthResponse = await fetch("http://localhost:3000/healthcheck");
       const healthData = (await healthResponse.json()) as {
         status: string;
@@ -447,7 +447,7 @@ export class DocsController {
   @Get(":filename")
   async getDoc(@Param("filename") filename: string, @Res() res: Response) {
     try {
-      const doc = this.docsService.getDocContent(filename);
+      const doc = await this.docsService.getDocContent(filename);
 
       const html = `
         <!DOCTYPE html>

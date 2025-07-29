@@ -49,7 +49,7 @@ export class ChallengeController {
     @Query("type") type?: ChallengeType,
     @Query("status") status?: ChallengeStatus,
     @Query("visibility") visibility?: ChallengeVisibility,
-    @Query("search") search?: string,
+    @Query("search") search?: string
   ) {
     return this.challengeService.getChallenges(
       page,
@@ -57,7 +57,7 @@ export class ChallengeController {
       type,
       status,
       visibility,
-      search,
+      search
     );
   }
 
@@ -71,7 +71,7 @@ export class ChallengeController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async getAvailableChallenges(
-    @CurrentUser() user: User,
+    @CurrentUser() user: User
   ): Promise<ChallengeResponseDto[]> {
     return this.challengeService.getAvailableChallenges(user.id);
   }
@@ -84,7 +84,7 @@ export class ChallengeController {
   })
   @ApiResponse({ status: 404, description: "Challenge not found" })
   async getChallengeById(
-    @Param("id") challengeId: string,
+    @Param("id") challengeId: string
   ): Promise<ChallengeResponseDto> {
     return this.challengeService.getChallengeById(challengeId);
   }
@@ -102,9 +102,36 @@ export class ChallengeController {
   @ApiResponse({ status: 409, description: "Already joined challenge" })
   async joinChallenge(
     @CurrentUser() user: User,
-    @Param("id") challengeId: string,
+    @Param("id") challengeId: string
   ): Promise<UserChallengeResponseDto> {
     return this.challengeService.joinChallenge(user.id, challengeId);
+  }
+
+  @Get("current-stats")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    description: "Current user stats for challenges",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  async getCurrentUserStats(@CurrentUser() user: User) {
+    return this.challengeService.getCurrentUserStats(user.id);
+  }
+
+  @Post("join-active")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 201,
+    description: "Successfully joined active challenges",
+    type: [UserChallengeResponseDto],
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  async joinActiveChallenges(
+    @CurrentUser() user: User
+  ): Promise<UserChallengeResponseDto[]> {
+    return this.challengeService.joinActiveChallenges(user.id);
   }
 
   @Put(":id/progress")
@@ -119,7 +146,7 @@ export class ChallengeController {
   @ApiResponse({ status: 404, description: "User challenge not found" })
   async updateChallengeProgress(
     @CurrentUser() user: User,
-    @Param("id") challengeId: string,
+    @Param("id") challengeId: string
   ): Promise<UserChallengeResponseDto> {
     return this.challengeService.updateChallengeProgress(user.id, challengeId);
   }

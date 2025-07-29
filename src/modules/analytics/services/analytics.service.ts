@@ -142,7 +142,7 @@ export class AnalyticsService {
     });
 
     const vehicles = await this.vehicleRepository.find({
-      where: { userId },
+      where: { user: { id: userId } },
     });
 
     // AI-powered analysis algorithms
@@ -204,7 +204,7 @@ export class AnalyticsService {
 
     const rewards = await this.rewardRepository.find({
       where: {
-        userId,
+        user: { id: userId },
         createdAt: MoreThanOrEqual(sixMonthsAgo),
       },
       order: { createdAt: "ASC" },
@@ -317,12 +317,12 @@ export class AnalyticsService {
     });
 
     const rewards = await this.rewardRepository.find({
-      where: { userId },
+      where: { user: { id: userId } },
       order: { createdAt: "DESC" },
     });
 
     const leaderboard = await this.leaderboardRepository.find({
-      where: { userId },
+      where: { user: { id: userId } },
     });
 
     // AI recommendation algorithms

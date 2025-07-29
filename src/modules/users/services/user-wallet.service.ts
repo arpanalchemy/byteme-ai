@@ -16,7 +16,7 @@ export class UserWalletService {
     @InjectRepository(UserWallet)
     private readonly userWalletRepository: Repository<UserWallet>,
     private readonly vechainWalletService: VeChainWalletService,
-    private readonly encryptionService: EncryptionService
+    private readonly encryptionService: EncryptionService,
   ) {}
 
   /**
@@ -33,11 +33,11 @@ export class UserWalletService {
     try {
       // Check if user already has a wallet
       const existingWallet = await this.userWalletRepository.findOne({
-        where: { userId },
+        where: { user: { id: userId } },
       });
       console.log(
         "🚀 ~ UserWalletService ~ createUserWallet ~ existingWallet:",
-        existingWallet
+        existingWallet,
       );
 
       let wallet = null;
@@ -51,12 +51,12 @@ export class UserWalletService {
         });
         console.log(
           "🚀 ~ UserWalletService ~ createUserWallet ~ encryptedData:",
-          encryptedData
+          encryptedData,
         );
 
         // Store encrypted wallet in database
         const userWallet = this.userWalletRepository.create({
-          userId,
+          user: { id: userId },
           encryptedMnemonic: encryptedData.encryptedMnemonic,
           encryptedPrivateKey: encryptedData.encryptedPrivateKey,
           encryptedPublicKey: encryptedData.encryptedPublicKey,
@@ -74,7 +74,7 @@ export class UserWalletService {
         await this.userWalletRepository.save(userWallet);
 
         this.logger.log(
-          `Created encrypted wallet for user ${userId}: ${wallet.address}`
+          `Created encrypted wallet for user ${userId}: ${wallet.address}`,
         );
       } else {
         wallet = existingWallet;
@@ -100,7 +100,7 @@ export class UserWalletService {
   async getUserWallet(userId: string): Promise<UserWallet | null> {
     try {
       return await this.userWalletRepository.findOne({
-        where: { userId },
+        where: { user: { id: userId } },
       });
     } catch (error) {
       this.logger.error(`Failed to get wallet for user ${userId}:`, error);
@@ -113,7 +113,7 @@ export class UserWalletService {
    */
   async getDecryptedWallet(
     userId: string,
-    masterKey?: string
+    masterKey?: string,
   ): Promise<{
     mnemonic: string;
     privateKey: string;
@@ -155,18 +155,18 @@ export class UserWalletService {
   async markWalletAsBackedUp(userId: string): Promise<void> {
     try {
       await this.userWalletRepository.update(
-        { userId },
+        { user: { id: userId } },
         {
           isBackedUp: true,
           backedUpAt: new Date(),
-        }
+        },
       );
 
       this.logger.log(`Marked wallet as backed up for user ${userId}`);
     } catch (error) {
       this.logger.error(
         `Failed to mark wallet as backed up for user ${userId}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -177,7 +177,7 @@ export class UserWalletService {
    */
   async updateWalletBackupStatus(
     userId: string,
-    isBackedUp: boolean
+    isBackedUp: boolean,
   ): Promise<void> {
     try {
       const updateData: any = { isBackedUp };
@@ -188,15 +188,18 @@ export class UserWalletService {
         updateData.backedUpAt = null;
       }
 
-      await this.userWalletRepository.update({ userId }, updateData);
+      await this.userWalletRepository.update(
+        { user: { id: userId } },
+        updateData,
+      );
 
       this.logger.log(
-        `Updated wallet backup status for user ${userId}: ${isBackedUp}`
+        `Updated wallet backup status for user ${userId}: ${isBackedUp}`,
       );
     } catch (error) {
       this.logger.error(
         `Failed to update wallet backup status for user ${userId}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -207,7 +210,7 @@ export class UserWalletService {
    */
   async deleteUserWallet(userId: string): Promise<void> {
     try {
-      await this.userWalletRepository.delete({ userId });
+      await this.userWalletRepository.delete({ user: { id: userId } });
       this.logger.log(`Deleted wallet for user ${userId}`);
     } catch (error) {
       this.logger.error(`Failed to delete wallet for user ${userId}:`, error);
@@ -252,7 +255,7 @@ export class UserWalletService {
    */
   async signMessage(
     userId: string,
-    message: string
+    message: string,
   ): Promise<{
     signature: string;
     address: string;
@@ -266,7 +269,7 @@ export class UserWalletService {
 
       const signature = this.vechainWalletService.signMessage(
         message,
-        decryptedWallet.privateKey
+        decryptedWallet.privateKey,
       );
 
       return {
@@ -285,12 +288,12 @@ export class UserWalletService {
   verifySignature(
     message: string,
     signature: string,
-    address: string
+    address: string,
   ): boolean {
     return this.vechainWalletService.verifySignature(
       message,
       signature,
-      address
+      address,
     );
   }
 }

@@ -5,9 +5,17 @@ import { LeaderboardService } from "./services/leaderboard.service";
 import { Leaderboard } from "./entity/leaderboard.entity";
 import { User } from "../users/entity/user.entity";
 import { OdometerUpload } from "../odometer/entity/odometer-upload.entity";
+import { UserChallenge } from "../challenges/entity/user-challenge.entity";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Leaderboard, User, OdometerUpload])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Leaderboard,
+      User,
+      OdometerUpload,
+      UserChallenge,
+    ]),
+  ],
   controllers: [LeaderboardController],
   providers: [LeaderboardService],
   exports: [LeaderboardService],

@@ -36,15 +36,9 @@ export class Order {
   @JoinColumn({ name: "user_id" })
   user: User;
 
-  @Column({ name: "user_id" })
-  userId: string;
-
   @ManyToOne(() => Product, { onDelete: "CASCADE" })
   @JoinColumn({ name: "product_id" })
   product: Product;
-
-  @Column({ name: "product_id" })
-  productId: string;
 
   @Column({ default: 1 })
   quantity: number;

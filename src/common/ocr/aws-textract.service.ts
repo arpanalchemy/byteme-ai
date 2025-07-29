@@ -65,12 +65,12 @@ export class AwsTextractService {
       const textractResponse = await this.textract.send(command);
 
       this.logger.log(
-        `Textract processed ${textractResponse.Blocks?.length || 0} blocks`
+        `Textract processed ${textractResponse.Blocks?.length || 0} blocks`,
       );
 
       // Extract odometer reading using multiple detection methods
       const odometerResult = this.findOdometerReading(
-        textractResponse.Blocks || []
+        textractResponse.Blocks || [],
       );
 
       if (!odometerResult) {
@@ -78,7 +78,7 @@ export class AwsTextractService {
       }
 
       this.logger.log(
-        `Odometer detected: ${odometerResult.mileage} (confidence: ${odometerResult.confidence}%)`
+        `Odometer detected: ${odometerResult.mileage} (confidence: ${odometerResult.confidence}%)`,
       );
 
       return odometerResult;
@@ -93,7 +93,7 @@ export class AwsTextractService {
    */
   private findOdometerReading(blocks: TextractBlock[]): OdometerResult | null {
     const wordBlocks = blocks.filter(
-      (block) => block.BlockType === "WORD" && block.Text
+      (block) => block.BlockType === "WORD" && block.Text,
     );
 
     this.logger.log(`Processing ${wordBlocks.length} word blocks`);
@@ -108,7 +108,7 @@ export class AwsTextractService {
     const pureNumbers = this.findPureNumbers(wordBlocks);
     if (pureNumbers.length > 0) {
       this.logger.log(
-        `Found ${pureNumbers.length} pure number candidates: ${pureNumbers.map((b) => b.Text).join(", ")}`
+        `Found ${pureNumbers.length} pure number candidates: ${pureNumbers.map((b) => b.Text).join(", ")}`,
       );
       return this.selectBestOdometer(pureNumbers, "pure_number");
     }
@@ -117,7 +117,7 @@ export class AwsTextractService {
     const labeledNumbers = this.findLabeledNumbers(wordBlocks);
     if (labeledNumbers.length > 0) {
       this.logger.log(
-        `Found ${labeledNumbers.length} labeled number candidates: ${labeledNumbers.map((b) => b.Text).join(", ")}`
+        `Found ${labeledNumbers.length} labeled number candidates: ${labeledNumbers.map((b) => b.Text).join(", ")}`,
       );
       return this.selectBestOdometer(labeledNumbers, "labeled_number");
     }
@@ -126,7 +126,7 @@ export class AwsTextractService {
     const positionedNumbers = this.findPositionedNumbers(wordBlocks);
     if (positionedNumbers.length > 0) {
       this.logger.log(
-        `Found ${positionedNumbers.length} positioned number candidates: ${positionedNumbers.map((b) => b.Text).join(", ")}`
+        `Found ${positionedNumbers.length} positioned number candidates: ${positionedNumbers.map((b) => b.Text).join(", ")}`,
       );
       return this.selectBestOdometer(positionedNumbers, "positioned_number");
     }
@@ -135,7 +135,7 @@ export class AwsTextractService {
     const highConfidenceNumbers = this.findHighConfidenceNumbers(wordBlocks);
     if (highConfidenceNumbers.length > 0) {
       this.logger.log(
-        `Found ${highConfidenceNumbers.length} high confidence number candidates: ${highConfidenceNumbers.map((b) => b.Text).join(", ")}`
+        `Found ${highConfidenceNumbers.length} high confidence number candidates: ${highConfidenceNumbers.map((b) => b.Text).join(", ")}`,
       );
       return this.selectBestOdometer(highConfidenceNumbers, "high_confidence");
     }
@@ -174,7 +174,9 @@ export class AwsTextractService {
     const labelBlocks = blocks.filter(
       (block) =>
         block.Text &&
-        odometerLabels.some((label) => block.Text.toUpperCase().includes(label))
+        odometerLabels.some((label) =>
+          block.Text.toUpperCase().includes(label),
+        ),
     );
 
     return blocks.filter((block) => {
@@ -185,7 +187,7 @@ export class AwsTextractService {
 
       // Check if number is near a label (within reasonable distance)
       return labelBlocks.some(
-        (labelBlock) => this.isNearby(block, labelBlock, 0.15) // 15% of image width/height
+        (labelBlock) => this.isNearby(block, labelBlock, 0.15), // 15% of image width/height
       );
     });
   }
@@ -236,7 +238,7 @@ export class AwsTextractService {
   private isNearby(
     block1: TextractBlock,
     block2: TextractBlock,
-    threshold: number
+    threshold: number,
   ): boolean {
     const bbox1 = block1.Geometry?.BoundingBox;
     const bbox2 = block2.Geometry?.BoundingBox;
@@ -254,7 +256,7 @@ export class AwsTextractService {
    */
   private selectBestOdometer(
     candidates: TextractBlock[],
-    method: string
+    method: string,
   ): OdometerResult {
     // Sort by confidence, then by number length (prefer longer numbers)
     const sortedCandidates = candidates.sort((a, b) => {

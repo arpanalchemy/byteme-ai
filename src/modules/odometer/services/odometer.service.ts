@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
+import { HistoryService } from "../../history/services/history.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { S3Service } from "../../../common/upload/s3.service";
@@ -39,7 +40,8 @@ export class OdometerService {
     private readonly s3Service: S3Service,
     private readonly openaiService: OpenAIService,
     private readonly redisService: RedisService,
-    private readonly awsTextractService: AwsTextractService
+    private readonly awsTextractService: AwsTextractService,
+    private readonly historyService: HistoryService
   ) {}
 
   /**
@@ -69,8 +71,8 @@ export class OdometerService {
 
       // Create upload record
       const upload = this.odometerUploadRepository.create({
-        userId,
-        vehicleId: uploadDto.vehicleId,
+        user: userId ? { id: userId } : null,
+        vehicle: uploadDto.vehicleId ? { id: uploadDto.vehicleId } : null,
         s3ImageUrl: uploadResult.url,
         s3ThumbnailUrl: uploadResult.thumbnailUrl,
         imageHash: this.redisService.generateImageHash(uploadResult.url),
@@ -81,13 +83,14 @@ export class OdometerService {
 
       const savedUpload = await this.odometerUploadRepository.save(upload);
 
+      const uploadID = savedUpload.id;
       // Process the upload asynchronously
-      void this.processUploadAsync(savedUpload.id);
+      void this.processUploadAsync(uploadID);
 
       const processingTime = Date.now() - startTime;
 
       return {
-        uploadId: savedUpload.id,
+        uploadId: uploadID,
         status: UploadStatus.PROCESSING,
         processingTime,
       };
@@ -108,7 +111,12 @@ export class OdometerService {
 
       const upload = await this.odometerUploadRepository.findOne({
         where: { id: uploadId },
+        relations: ["user", "vehicle"],
       });
+      console.log(
+        "🚀 ~ OdometerService ~ processUploadAsync ~ upload:",
+        upload
+      );
       if (!upload) {
         throw new NotFoundException("Upload not found");
       }
@@ -243,7 +251,9 @@ export class OdometerService {
         this.logger.log("Using cached vehicle detection result");
       }
 
-      this.logger.log(`AI analysis completed: vehicleType=${(analysis as any).vehicleType}, confidence=${(analysis as any).confidenceScore}`);
+      this.logger.log(
+        `AI analysis completed: vehicleType=${(analysis as any).vehicleType}, confidence=${(analysis as any).confidenceScore}`
+      );
       return { analysis, vehicleDetection };
     } catch (error) {
       this.logger.error(`AI analysis failed: ${error.message}`);
@@ -261,9 +271,9 @@ export class OdometerService {
   ): Promise<VehicleMatchResultDto> {
     try {
       // If user already specified a vehicle, use it
-      if (upload.vehicleId) {
+      if (upload.vehicle) {
         const vehicle = await this.vehicleRepository.findOne({
-          where: { id: upload.vehicleId },
+          where: { id: upload.vehicle.id },
         });
         if (vehicle) {
           return {
@@ -280,7 +290,7 @@ export class OdometerService {
 
       // Try to match with existing vehicles
       const userVehicles = await this.vehicleRepository.find({
-        where: { userId: upload.userId, isActive: true },
+        where: { user: { id: upload.user.id }, isActive: true },
       });
 
       let bestMatch: Vehicle | null = null;
@@ -458,13 +468,15 @@ export class OdometerService {
 
       const query = this.odometerUploadRepository
         .createQueryBuilder("upload")
-        .where("upload.userId = :userId", { userId })
+        .innerJoinAndSelect("upload.user", "user")
+        .innerJoinAndSelect("upload.vehicle", "vehicle")
+        .where("user.id = :userId", { userId })
         .andWhere("upload.isApproved = :isApproved", { isApproved: true })
         .orderBy("upload.createdAt", "DESC")
         .limit(1);
 
       if (vehicleId) {
-        query.andWhere("upload.vehicleId = :vehicleId", { vehicleId });
+        query.andWhere("vehicle.id = :vehicleId", { vehicleId });
       }
 
       const lastUpload = await query.getOne();
@@ -559,6 +571,39 @@ export class OdometerService {
       this.logger.log(
         `Upload ${upload.id} updated with results: mileage=${upload.finalMileage}, confidence=${upload.ocrConfidenceScore}`
       );
+
+      // Create history entry if user is authenticated
+      if (upload.user) {
+        try {
+          const vehicle = upload.vehicle
+            ? await this.vehicleRepository.findOne({
+                where: { id: upload.vehicle.id },
+              })
+            : null;
+
+          const vehicleName =
+            vehicle?.customName || vehicle?.displayName || "Unknown Vehicle";
+
+          await this.historyService.createVehicleUploadHistory(
+            upload.user.id,
+            upload.vehicle?.id || "unknown",
+            vehicleName,
+            upload.id,
+            upload.finalMileage || 0,
+            upload.carbonSaved || 0,
+            upload.mileageDifference
+              ? upload.finalMileage - upload.mileageDifference
+              : undefined
+          );
+
+          this.logger.log(`History entry created for upload ${upload.id}`);
+        } catch (historyError) {
+          this.logger.error(
+            `Failed to create history entry: ${historyError.message}`
+          );
+          // Don't throw error as history creation failure shouldn't fail the upload
+        }
+      }
     } catch (error) {
       this.logger.error(`Failed to update upload results: ${error.message}`);
       throw error;
@@ -640,10 +685,11 @@ export class OdometerService {
   ): Promise<OdometerUpload> {
     const whereClause: any = { id: uploadId };
     if (userId) {
-      whereClause.userId = userId;
+      whereClause.user = { id: userId };
     }
     const upload = await this.odometerUploadRepository.findOne({
       where: whereClause,
+      relations: ["user", "vehicle"],
     });
 
     if (!upload) {
@@ -662,11 +708,44 @@ export class OdometerService {
     offset = 0
   ): Promise<OdometerUpload[]> {
     return this.odometerUploadRepository.find({
-      where: { userId },
+      where: { user: { id: userId } },
+      relations: ["user", "vehicle"],
       order: { createdAt: "DESC" },
       take: limit,
       skip: offset,
     });
+  }
+
+  /**
+   * Link an anonymous upload to a user
+   */
+  async linkUploadToUser(
+    uploadId: string,
+    userId: string
+  ): Promise<{ message: string }> {
+    try {
+      const upload = await this.odometerUploadRepository.findOne({
+        where: { id: uploadId },
+        relations: ["user", "vehicle"],
+      });
+
+      if (!upload) {
+        throw new NotFoundException("Upload not found");
+      }
+
+      if (upload.user) {
+        throw new BadRequestException("Upload is already linked to a user");
+      }
+
+      upload.user = { id: userId } as any;
+      await this.odometerUploadRepository.save(upload);
+
+      this.logger.log(`Upload ${uploadId} linked to user ${userId}`);
+      return { message: "Upload linked to user successfully" };
+    } catch (error) {
+      this.logger.error(`Failed to link upload to user: ${error.message}`);
+      throw error;
+    }
   }
 
   /**
@@ -675,69 +754,86 @@ export class OdometerService {
   async getUserStats(userId: string): Promise<UserStatsDto> {
     try {
       // Get total uploads
-      const totalUploads = await this.odometerUploadRepository.count({
-        where: { userId },
-      });
+      const totalUploads = await this.odometerUploadRepository
+        .createQueryBuilder("upload")
+        .where("upload.user_id = :userId", { userId })
+        .getCount();
 
       // Get approved uploads
-      const approvedUploads = await this.odometerUploadRepository.count({
-        where: { userId, isApproved: true },
-      });
+      const approvedUploads = await this.odometerUploadRepository
+        .createQueryBuilder("upload")
+        .where("upload.user_id = :userId", { userId })
+        .andWhere("upload.isApproved = :isApproved", { isApproved: true })
+        .getCount();
 
       // Get total mileage and carbon saved
       const mileageStats = await this.odometerUploadRepository
         .createQueryBuilder("upload")
+        .innerJoin("upload.user", "user")
         .select([
-          "SUM(upload.finalMileage) as totalMileage",
-          "SUM(upload.carbonSaved) as totalCarbonSaved",
-          "AVG(upload.ocrConfidenceScore) as averageConfidence",
+          "SUM(upload.finalMileage) as totalmileage",
+          "SUM(upload.carbonSaved) as totalcarbonsaved",
+          "AVG(upload.ocrConfidenceScore) as averageconfidence",
         ])
-        .where("upload.userId = :userId", { userId })
+        .where("user.id = :userId", { userId })
         .andWhere("upload.isApproved = :isApproved", { isApproved: true })
         .getRawOne();
 
       // Get total vehicles
-      const totalVehicles = await this.vehicleRepository.count({
-        where: { userId, isActive: true },
-      });
+      const totalVehicles = await this.vehicleRepository
+        .createQueryBuilder("vehicle")
+        .where("vehicle.user_id = :userId", { userId })
+        .andWhere("vehicle.isActive = :isActive", { isActive: true })
+        .getCount();
 
-      // Get monthly stats for the last 6 months
+      // Get monthly stats for the last 6 months (including current month)
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
       const monthlyStats = await this.odometerUploadRepository
         .createQueryBuilder("upload")
+        .innerJoin("upload.user", "user")
         .select([
-          'DATE_FORMAT(upload.createdAt, "%Y-%m") as month',
+          'TO_CHAR(upload.createdAt, "YYYY-MM") as month',
           "COUNT(*) as uploads",
           "SUM(upload.finalMileage) as mileage",
-          "SUM(upload.carbonSaved) as carbonSaved",
+          "SUM(upload.carbonSaved) as carbonsaved",
         ])
-        .where("upload.userId = :userId", { userId })
+        .where("user.id = :userId", { userId })
         .andWhere("upload.createdAt >= :sixMonthsAgo", {
-          sixMonthsAgo: new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000),
+          sixMonthsAgo,
         })
-        .groupBy("month")
-        .orderBy("month", "DESC")
+        .groupBy('TO_CHAR(upload.createdAt, "YYYY-MM")')
+        .orderBy('TO_CHAR(upload.createdAt, "YYYY-MM")', "DESC")
         .getRawMany();
 
       // Get recent activity (last 10 uploads)
-      const recentActivity = await this.odometerUploadRepository.find({
-        where: { userId },
-        select: ["id", "status", "finalMileage", "carbonSaved", "createdAt"],
-        order: { createdAt: "DESC" },
-        take: 10,
-      });
+      const recentActivity = await this.odometerUploadRepository
+        .createQueryBuilder("upload")
+        .select([
+          "upload.id",
+          "upload.status",
+          "upload.finalMileage",
+          "upload.carbonSaved",
+          "upload.createdAt",
+        ])
+        .where("upload.user_id = :userId", { userId })
+        .orderBy("upload.createdAt", "DESC")
+        .limit(10)
+        .getMany();
 
       return {
         totalUploads,
         approvedUploads,
-        totalMileage: parseFloat(mileageStats?.totalMileage || "0"),
-        totalCarbonSaved: parseFloat(mileageStats?.totalCarbonSaved || "0"),
-        averageConfidence: parseFloat(mileageStats?.averageConfidence || "0"),
+        totalMileage: parseFloat(mileageStats?.totalmileage || "0"),
+        totalCarbonSaved: parseFloat(mileageStats?.totalcarbonsaved || "0"),
+        averageConfidence: parseFloat(mileageStats?.averageconfidence || "0"),
         totalVehicles,
         monthlyStats: monthlyStats.map((stat) => ({
           month: stat.month,
           uploads: parseInt(stat.uploads),
           mileage: parseFloat(stat.mileage || "0"),
-          carbonSaved: parseFloat(stat.carbonSaved || "0"),
+          carbonSaved: parseFloat(stat.carbonsaved || "0"),
         })),
         recentActivity: recentActivity.map((activity) => ({
           uploadId: activity.id,

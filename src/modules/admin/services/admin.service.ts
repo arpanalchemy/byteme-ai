@@ -355,10 +355,12 @@ export class AdminService {
    */
   async getUserVehicles(userId: string): Promise<any[]> {
     try {
-      const vehicles = await this.vehicleRepository.find({
-        where: { userId, isActive: true },
-        order: { createdAt: "DESC" },
-      });
+      const vehicles = await this.vehicleRepository
+        .createQueryBuilder("vehicle")
+        .where("vehicle.user_id = :userId", { userId })
+        .andWhere("vehicle.isActive = :isActive", { isActive: true })
+        .orderBy("vehicle.createdAt", "DESC")
+        .getMany();
 
       return vehicles.map((vehicle) => ({
         id: vehicle.id,
@@ -384,11 +386,12 @@ export class AdminService {
    */
   async getUserUploadHistory(userId: string): Promise<any[]> {
     try {
-      const uploads = await this.odometerUploadRepository.find({
-        where: { userId },
-        order: { createdAt: "DESC" },
-        take: 50, // Limit to last 50 uploads
-      });
+      const uploads = await this.odometerUploadRepository
+        .createQueryBuilder("upload")
+        .where("upload.user_id = :userId", { userId })
+        .orderBy("upload.createdAt", "DESC")
+        .limit(50) // Limit to last 50 uploads
+        .getMany();
 
       return uploads.map((upload) => ({
         id: upload.id,
