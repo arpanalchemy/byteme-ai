@@ -115,10 +115,6 @@ export class OdometerService {
         where: { id: uploadId },
         relations: ["user", "vehicle"],
       });
-      console.log(
-        "🚀 ~ OdometerService ~ processUploadAsync ~ upload:",
-        upload
-      );
       if (!upload) {
         throw new NotFoundException("Upload not found");
       }
@@ -603,20 +599,63 @@ export class OdometerService {
           // Create reward if upload is approved and user is authenticated
           if (upload.isApproved && upload.finalMileage > 0) {
             try {
+              const vehicle = upload.vehicle
+                ? await this.vehicleRepository.findOne({
+                    where: { id: upload.vehicle.id },
+                  })
+                : null;
+
+              const vehicleName =
+                vehicle?.customName ||
+                vehicle?.displayName ||
+                "Unknown Vehicle";
+
               await this.rewardService.createUploadReward(
                 upload.user.id,
                 upload.id,
                 upload.finalMileage,
                 upload.carbonSaved || 0,
-                upload.imageHash
+                upload.imageHash,
+                {
+                  vehicleId: upload.vehicle?.id,
+                  vehicleName,
+                  previousMileage: upload.mileageDifference
+                    ? upload.finalMileage - upload.mileageDifference
+                    : undefined,
+                  mileageDifference: upload.mileageDifference,
+                  ocrConfidence: upload.ocrConfidenceScore,
+                  processingTime: upload.processingTimeMs,
+                  uploadDate: upload.processedAt,
+                  // These would be set when blockchain integration is complete
+                  // cycleId: undefined,
+                  // submissionId: undefined,
+                }
               );
-              this.logger.log(`Reward created for upload ${upload.id}`);
+              this.logger.log(
+                `Reward created for upload ${upload.id} with comprehensive data`
+              );
+
+              // Update user statistics after successful reward creation
+              if (upload.user) {
+                await this.updateUserStatistics(
+                  upload.user.id,
+                  upload.finalMileage || 0,
+                  upload.carbonSaved || 0
+                );
+              }
             } catch (rewardError) {
               this.logger.error(
                 `Failed to create reward for upload ${upload.id}: ${rewardError.message}`
               );
               // Don't throw error as reward creation failure shouldn't fail the upload
             }
+          } else if (upload.user && upload.isApproved) {
+            // Update user statistics for approved uploads even if no reward is created
+            await this.updateUserStatistics(
+              upload.user.id,
+              upload.finalMileage || 0,
+              upload.carbonSaved || 0
+            );
           }
         } catch (historyError) {
           this.logger.error(
@@ -628,6 +667,37 @@ export class OdometerService {
     } catch (error) {
       this.logger.error(`Failed to update upload results: ${error.message}`);
       throw error;
+    }
+  }
+
+  /**
+   * Update user statistics after successful upload
+   */
+  private async updateUserStatistics(
+    userId: string,
+    mileage: number,
+    carbonSaved: number
+  ): Promise<void> {
+    try {
+      // Update user's total mileage and carbon saved
+      await this.userRepository
+        .createQueryBuilder()
+        .update(User)
+        .set({
+          totalMileage: () => `total_mileage + ${mileage}`,
+          totalCarbonSaved: () => `total_carbon_saved + ${carbonSaved}`,
+        })
+        .where("id = :userId", { userId })
+        .execute();
+
+      this.logger.log(
+        `Updated user ${userId} statistics: +${mileage} miles, +${carbonSaved} carbon saved`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to update user statistics for user ${userId}: ${error.message}`
+      );
+      // Don't throw error as statistics update failure shouldn't fail the upload
     }
   }
 

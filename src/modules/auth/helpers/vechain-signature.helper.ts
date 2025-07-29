@@ -13,20 +13,20 @@ export class VeChainSignatureHelper {
   async verifyCertificate(signedCertificate: any): Promise<boolean> {
     try {
       this.logger.debug(
-        `Verifying certificate for signer: ${signedCertificate.signer}`,
+        `Verifying certificate for signer: ${signedCertificate.signer}`
       );
 
       // Verify the certificate using thor-devkit
       Certificate.verify(signedCertificate);
 
       this.logger.debug(
-        `Certificate verification successful for: ${signedCertificate.signer}`,
+        `Certificate verification successful for: ${signedCertificate.signer}`
       );
       return true;
     } catch (error) {
       this.logger.error(
         `Certificate verification failed for ${signedCertificate.signer}:`,
-        error.message,
+        error.message
       );
       return false;
     }
@@ -42,16 +42,8 @@ export class VeChainSignatureHelper {
   async verifySignature(
     message: string,
     signature: string,
-    walletAddress: string,
+    walletAddress: string
   ): Promise<boolean> {
-    console.log(
-      "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ signature:",
-      signature,
-    );
-    console.log(
-      "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ message:",
-      message,
-    );
     try {
       this.logger.debug(`Verifying signature for wallet: ${walletAddress}`);
 
@@ -59,17 +51,9 @@ export class VeChainSignatureHelper {
       const cleanSignature = signature.startsWith("0x")
         ? signature.slice(2)
         : signature;
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ signature:",
-        cleanSignature,
-      );
       const cleanAddress = walletAddress.startsWith("0x")
         ? walletAddress.slice(2)
         : walletAddress;
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ cleanAddress:",
-        cleanAddress,
-      );
 
       // Convert message to bytes
       const messageBytes = Buffer.from(message, "utf8");
@@ -77,17 +61,9 @@ export class VeChainSignatureHelper {
       // Create message hash (Keccak-256)
       const { keccak256 } = await import("thor-devkit");
       const messageHash = keccak256(messageBytes);
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ messageHash:",
-        messageHash,
-      );
 
       // Parse signature
       const signatureBuffer = Buffer.from(cleanSignature, "hex");
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ signatureBuffer:",
-        signatureBuffer,
-      );
 
       // Extract r, s, and v from signature
       const r = signatureBuffer.slice(0, 32);
@@ -98,58 +74,34 @@ export class VeChainSignatureHelper {
       const { secp256k1 } = await import("thor-devkit");
       const publicKey = secp256k1.recover(
         messageHash,
-        Buffer.concat([r, s, Buffer.from([v])]),
-      );
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ publicKey:",
-        publicKey,
+        Buffer.concat([r, s, Buffer.from([v])])
       );
 
       if (!publicKey) {
         this.logger.warn(
-          `Failed to recover public key from signature for wallet: ${walletAddress}`,
+          `Failed to recover public key from signature for wallet: ${walletAddress}`
         );
         return false;
       }
 
       // Get address from public key (remove first byte and hash)
       const publicKeyWithoutPrefix = publicKey.slice(1);
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ publicKeyWithoutPrefix:",
-        publicKeyWithoutPrefix,
-      );
       const addressHash = keccak256(publicKeyWithoutPrefix);
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ addressHash:",
-        addressHash,
-      );
       const recoveredAddress = addressHash.slice(-20).toString("hex");
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ recoveredAddress:",
-        recoveredAddress,
-      );
 
       // Compare addresses (case-insensitive)
       const isValid =
         recoveredAddress.toLowerCase() === cleanAddress.toLowerCase();
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ cleanAddress:",
-        cleanAddress,
-      );
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifySignature ~ recoveredAddress:",
-        recoveredAddress,
-      );
 
       this.logger.debug(
-        `Signature verification result for ${walletAddress}: ${isValid}`,
+        `Signature verification result for ${walletAddress}: ${isValid}`
       );
 
       return isValid;
     } catch (error) {
       this.logger.error(
         `Error verifying signature for wallet ${walletAddress}:`,
-        error,
+        error
       );
       return false;
     }
@@ -165,30 +117,22 @@ export class VeChainSignatureHelper {
   async verifyPersonalSignature(
     message: string,
     signature: string,
-    walletAddress: string,
+    walletAddress: string
   ): Promise<boolean> {
     try {
       this.logger.debug(
-        `Verifying personal signature for wallet: ${walletAddress}`,
+        `Verifying personal signature for wallet: ${walletAddress}`
       );
 
       // VeChain personal message prefix (similar to Ethereum)
       const personalMessagePrefix = `\x19VeChain Signed Message:\n${message.length}`;
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifyPersonalSignature ~ personalMessagePrefix:",
-        personalMessagePrefix,
-      );
       const prefixedMessage = message;
-      console.log(
-        "🚀 ~ VeChainSignatureHelper ~ verifyPersonalSignature ~ prefixedMessage:",
-        prefixedMessage,
-      );
 
       return this.verifySignature(prefixedMessage, signature, walletAddress);
     } catch (error) {
       this.logger.error(
         `Error verifying personal signature for wallet ${walletAddress}:`,
-        error,
+        error
       );
       return false;
     }

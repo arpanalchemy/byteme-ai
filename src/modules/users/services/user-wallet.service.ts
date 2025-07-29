@@ -35,10 +35,6 @@ export class UserWalletService {
       const existingWallet = await this.userWalletRepository.findOne({
         where: { user: { id: userId } },
       });
-      console.log(
-        "🚀 ~ UserWalletService ~ createUserWallet ~ existingWallet:",
-        existingWallet,
-      );
 
       let wallet = null;
 
@@ -49,10 +45,6 @@ export class UserWalletService {
           privateKey: wallet.privateKey,
           publicKey: wallet.publicKey,
         });
-        console.log(
-          "🚀 ~ UserWalletService ~ createUserWallet ~ encryptedData:",
-          encryptedData,
-        );
 
         // Store encrypted wallet in database
         const userWallet = this.userWalletRepository.create({
@@ -74,7 +66,7 @@ export class UserWalletService {
         await this.userWalletRepository.save(userWallet);
 
         this.logger.log(
-          `Created encrypted wallet for user ${userId}: ${wallet.address}`,
+          `Created encrypted wallet for user ${userId}: ${wallet.address}`
         );
       } else {
         wallet = existingWallet;

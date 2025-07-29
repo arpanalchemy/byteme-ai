@@ -75,6 +75,13 @@ export class CreateRewardDto {
     tier?: string;
     multiplier?: number;
     bonus?: number;
+    // Upload-specific metadata
+    vehicleName?: string;
+    uploadDate?: Date;
+    processingTime?: number;
+    ocrConfidence?: number;
+    mileageDifference?: number;
+    previousMileage?: number;
     // Transaction details
     transactionDetails?: {
       txid: string;
@@ -180,6 +187,13 @@ export class RewardResponseDto {
     tier?: string;
     multiplier?: number;
     bonus?: number;
+    // Upload-specific metadata
+    vehicleName?: string;
+    uploadDate?: Date;
+    processingTime?: number;
+    ocrConfidence?: number;
+    mileageDifference?: number;
+    previousMileage?: number;
     // Transaction details
     transactionDetails?: {
       txid: string;

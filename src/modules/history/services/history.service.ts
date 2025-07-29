@@ -97,12 +97,10 @@ export class HistoryService {
       } = query;
       const offset = (page - 1) * limit;
 
-      const queryBuilder = this.historyRepository
-        .createQueryBuilder("history")
-        .innerJoinAndSelect("history.user", "user");
+      const queryBuilder = this.historyRepository.createQueryBuilder("history");
 
       if (userId) {
-        queryBuilder.andWhere("user.id = :userId", { userId });
+        queryBuilder.andWhere("history.user_id = :userId", { userId });
       }
 
       if (type) {
@@ -178,8 +176,7 @@ export class HistoryService {
       .andWhere("history.isDeleted = :isDeleted", { isDeleted: false });
 
     if (userId) {
-      queryBuilder.innerJoin("history.user", "user");
-      queryBuilder.andWhere("user.id = :userId", { userId });
+      queryBuilder.andWhere("history.user_id = :userId", { userId });
       queryBuilder.andWhere("history.isVisible = :isVisible", {
         isVisible: true,
       });

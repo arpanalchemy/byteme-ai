@@ -50,10 +50,6 @@ export class LeaderboardService {
         periodStart,
         periodEnd
       );
-      console.log(
-        "🚀 ~ LeaderboardService ~ getLeaderboard ~ userStats:",
-        userStats
-      );
 
       // Sort by the specified criteria
       const sortedStats = userStats.sort((a, b) => {
@@ -73,10 +69,6 @@ export class LeaderboardService {
 
       // Get paginated results
       const paginatedStats = sortedStats.slice(offset, offset + limit);
-      console.log(
-        "🚀 ~ LeaderboardService ~ getLeaderboard ~ paginatedStats:",
-        paginatedStats
-      );
 
       // Get user details for the paginated results
       const entries: LeaderboardEntryDto[] = await Promise.all(
@@ -276,10 +268,6 @@ export class LeaderboardService {
       .andWhere("upload.isApproved = :isApproved", { isApproved: true })
       .groupBy("user.id")
       .getRawMany();
-    console.log(
-      "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ uploadStats:",
-      uploadStats
-    );
 
     // Get challenge participation stats
     const challengeStats = await this.userChallengeRepository
@@ -300,10 +288,6 @@ export class LeaderboardService {
       .setParameter("completedStatus", UserChallengeStatus.COMPLETED)
       .groupBy("user.id")
       .getRawMany();
-    console.log(
-      "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ challengeStats:",
-      challengeStats
-    );
 
     // Combine stats
     const userStatsMap = new Map();
@@ -322,14 +306,6 @@ export class LeaderboardService {
         challengeRewards: 0,
       });
     });
-    console.log(
-      "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ uploadStats:",
-      uploadStats
-    );
-    console.log(
-      "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ userStatsMap:",
-      userStatsMap
-    );
 
     // Process challenge stats
     challengeStats.forEach((stat) => {
@@ -355,10 +331,6 @@ export class LeaderboardService {
         });
       }
     });
-    console.log(
-      "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ challengeStats:",
-      challengeStats
-    );
 
     // Get user details and calculate final points
     const userStats = await Promise.all(
@@ -366,10 +338,6 @@ export class LeaderboardService {
         const user = await this.userRepository.findOne({
           where: { id: stat.userId },
         });
-        console.log(
-          "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ user:",
-          user
-        );
 
         if (!user) return null;
 
@@ -379,10 +347,6 @@ export class LeaderboardService {
             stat.totalCarbonSaved * 10 + // 10 points per kg CO2 saved
             stat.challengeRewards * 100 + // 100 points per B3TR token earned
             stat.completedChallenges * 500 // 500 points per completed challenge
-        );
-        console.log(
-          "🚀 ~ LeaderboardService ~ getUserStatsForPeriod ~ totalPoints:",
-          totalPoints
         );
 
         return {

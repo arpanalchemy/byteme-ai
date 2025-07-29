@@ -43,7 +43,6 @@ export class RewardService {
    */
   async createReward(createDto: CreateRewardDto): Promise<RewardResponseDto> {
     try {
-      console.log("🚀 ~ RewardService ~ createReward ~ createDto:", createDto);
       // Verify user exists
       const user = await this.userRepository.findOne({
         where: { id: createDto.userId },
@@ -586,6 +585,9 @@ export class RewardService {
 
               await this.rewardRepository.save(reward);
 
+              // Update user's B3TR balance when reward is confirmed
+              await this.updateUserB3trBalance(reward.user.id, reward.amount);
+
               this.logger.log(
                 `Reward ${reward.id} confirmed on blockchain with transaction details`
               );
@@ -847,17 +849,20 @@ export class RewardService {
     uploadId: string,
     milesDriven: number,
     carbonSaved: number,
-    imageHash: string
+    imageHash: string,
+    additionalData?: {
+      vehicleId?: string;
+      vehicleName?: string;
+      previousMileage?: number;
+      mileageDifference?: number;
+      ocrConfidence?: number;
+      processingTime?: number;
+      uploadDate?: Date;
+      cycleId?: number;
+      submissionId?: number;
+    }
   ): Promise<RewardResponseDto> {
-    console.log(
-      "🚀 ~ RewardService ~ createUploadReward ~ milesDriven:",
-      milesDriven
-    );
     const rewardAmount = this.calculateUploadReward(milesDriven, carbonSaved);
-    console.log(
-      "🚀 ~ RewardService ~ createUploadReward ~ rewardAmount:",
-      rewardAmount
-    );
 
     return this.createReward({
       userId,
@@ -865,7 +870,9 @@ export class RewardService {
       amount: rewardAmount,
       milesDriven,
       carbonSaved,
-      description: `Reward for uploading ${milesDriven.toFixed(1)} miles`,
+      cycleId: additionalData?.cycleId,
+      submissionId: additionalData?.submissionId,
+      description: `Reward for uploading ${milesDriven.toFixed(1)} miles${additionalData?.vehicleName ? ` for ${additionalData.vehicleName}` : ""}`,
       proofData: {
         proofTypes: ["image"],
         proofValues: [imageHash],
@@ -873,10 +880,21 @@ export class RewardService {
         impactValues: [carbonSaved],
         imageHash,
         uploadId,
+        vehicleId: additionalData?.vehicleId,
+        previousMileage: additionalData?.previousMileage,
+        mileageDifference: additionalData?.mileageDifference,
+        ocrConfidence: additionalData?.ocrConfidence,
+        processingTime: additionalData?.processingTime,
       },
       metadata: {
         source: "upload",
-        trigger: "automatic",
+        trigger: "odometer_photo",
+        vehicleName: additionalData?.vehicleName,
+        uploadDate: additionalData?.uploadDate,
+        processingTime: additionalData?.processingTime,
+        ocrConfidence: additionalData?.ocrConfidence,
+        mileageDifference: additionalData?.mileageDifference,
+        previousMileage: additionalData?.previousMileage,
       },
     });
   }
@@ -955,5 +973,34 @@ export class RewardService {
 
     // Round to 8 decimal places (B3TR precision)
     return Math.round(totalReward * 100000000) / 100000000;
+  }
+
+  /**
+   * Update user's B3TR balance when reward is confirmed
+   */
+  private async updateUserB3trBalance(
+    userId: string,
+    rewardAmount: number
+  ): Promise<void> {
+    try {
+      // Update user's B3TR balance
+      await this.userRepository
+        .createQueryBuilder()
+        .update(User)
+        .set({
+          b3trBalance: () => `b3tr_balance + ${rewardAmount}`,
+        })
+        .where("id = :userId", { userId })
+        .execute();
+
+      this.logger.log(
+        `Updated user ${userId} B3TR balance: +${rewardAmount} B3TR`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to update B3TR balance for user ${userId}: ${error.message}`
+      );
+      // Don't throw error as balance update failure shouldn't fail the reward confirmation
+    }
   }
 }

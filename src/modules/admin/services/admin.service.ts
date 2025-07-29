@@ -214,10 +214,10 @@ export class AdminService {
         totalUsers,
         activeUsers,
         totalVehicles,
-        totalEvMiles: parseFloat(userStats?.totalEvMiles || "0"),
-        totalCarbonSaved: parseFloat(userStats?.totalCarbonSaved || "0"),
+        totalEvMiles: parseFloat(userStats?.totalevmiles || "0"),
+        totalCarbonSaved: parseFloat(userStats?.totalcarbonsaved || "0"),
         totalTokensDistributed: parseFloat(
-          userStats?.totalTokensDistributed || "0",
+          userStats?.totaltokensdistributed || "0"
         ),
         weeklyRewardsDistributed,
         totalUploads,

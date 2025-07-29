@@ -115,6 +115,12 @@ export class Reward {
     milestoneType?: string;
     leaderboardPeriod?: string;
     leaderboardRank?: number;
+    // Upload-specific proof data
+    vehicleId?: string;
+    previousMileage?: number;
+    mileageDifference?: number;
+    ocrConfidence?: number;
+    processingTime?: number;
   };
 
   @Column({ name: "blockchain_data", type: "json", nullable: true })
@@ -148,6 +154,13 @@ export class Reward {
     tier?: string;
     multiplier?: number;
     bonus?: number;
+    // Upload-specific metadata
+    vehicleName?: string;
+    uploadDate?: Date;
+    processingTime?: number;
+    ocrConfidence?: number;
+    mileageDifference?: number;
+    previousMileage?: number;
     // Transaction details
     transactionDetails?: {
       txid: string;

@@ -277,10 +277,6 @@ export class ChallengeService {
           visibility: ChallengeVisibility.PUBLIC,
         },
       });
-      console.log(
-        "🚀 ~ ChallengeService ~ joinActiveChallenges ~ activeChallenges:",
-        activeChallenges
-      );
 
       const joinedChallenges: UserChallengeResponseDto[] = [];
 
@@ -358,10 +354,6 @@ export class ChallengeService {
 
       // Get current user stats for all time (so users get credit for previous uploads)
       const currentStats = await this.getCurrentUserStats(userId);
-      console.log(
-        "🚀 ~ ChallengeService ~ joinChallenge ~ currentStats:",
-        currentStats
-      );
 
       // Create user challenge with current progress
       const userChallenge = this.userChallengeRepository.create({
@@ -606,7 +598,6 @@ export class ChallengeService {
       .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
       .andWhere("upload.isApproved = :isApproved", { isApproved: true })
       .getRawOne();
-    console.log("🚀 ~ ChallengeService ~ getCurrentUserStats ~ stats:", stats);
 
     // Get vehicle count
     const vehicleCount = await this.vehicleRepository

@@ -287,12 +287,11 @@ export class UserService {
       weekAgo.setDate(weekAgo.getDate() - 7);
       const weeklyUploads = await this.odometerUploadRepository
         .createQueryBuilder("upload")
-        .innerJoin("upload.user", "user")
         .select([
           "SUM(upload.finalMileage) as milesthisweek",
           "SUM(upload.carbonSaved) as carbonsavedthisweek",
         ])
-        .where("user.id = :userId", { userId })
+        .where("upload.user_id = :userId", { userId })
         .andWhere("upload.createdAt >= :weekAgo", { weekAgo })
         .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
         .getRawOne();
@@ -302,12 +301,11 @@ export class UserService {
       monthAgo.setMonth(monthAgo.getMonth() - 1);
       const monthlyUploads = await this.odometerUploadRepository
         .createQueryBuilder("upload")
-        .innerJoin("upload.user", "user")
         .select([
           "SUM(upload.finalMileage) as milesthismonth",
           "SUM(upload.carbonSaved) as carbonsavedthismonth",
         ])
-        .where("user.id = :userId", { userId })
+        .where("upload.user_id = :userId", { userId })
         .andWhere("upload.createdAt >= :monthAgo", { monthAgo })
         .andWhere("upload.status = :status", { status: UploadStatus.COMPLETED })
         .getRawOne();

@@ -40,10 +40,13 @@ export class VehicleService {
 
       // If setting as primary, unset other primary vehicles
       if (isPrimary) {
-        await this.vehicleRepository.update(
-          { user: { id: userId }, isPrimary: true },
-          { isPrimary: false }
-        );
+        await this.vehicleRepository
+          .createQueryBuilder()
+          .update(Vehicle)
+          .set({ isPrimary: false })
+          .where("user_id = :userId", { userId })
+          .andWhere("isPrimary = :isPrimary", { isPrimary: true })
+          .execute();
       }
 
       const vehicle = this.vehicleRepository.create({
@@ -121,10 +124,13 @@ export class VehicleService {
 
       // If setting as primary, unset other primary vehicles
       if (updateDto.isPrimary) {
-        await this.vehicleRepository.update(
-          { user: { id: userId }, isPrimary: true },
-          { isPrimary: false }
-        );
+        await this.vehicleRepository
+          .createQueryBuilder()
+          .update(Vehicle)
+          .set({ isPrimary: false })
+          .where("user_id = :userId", { userId })
+          .andWhere("isPrimary = :isPrimary", { isPrimary: true })
+          .execute();
       }
 
       // Update vehicle
@@ -184,19 +190,27 @@ export class VehicleService {
    * Get user vehicles
    */
   async getUserVehicles(userId: string): Promise<Vehicle[]> {
-    return this.vehicleRepository.find({
-      where: { user: { id: userId }, isActive: true },
-      order: { isPrimary: "DESC", createdAt: "ASC" },
-    });
+    return this.vehicleRepository
+      .createQueryBuilder("vehicle")
+      .leftJoinAndSelect("vehicle.user", "user")
+      .where("vehicle.user_id = :userId", { userId })
+      .andWhere("vehicle.isActive = :isActive", { isActive: true })
+      .orderBy("vehicle.isPrimary", "DESC")
+      .addOrderBy("vehicle.createdAt", "ASC")
+      .getMany();
   }
 
   /**
    * Get primary vehicle
    */
   async getPrimaryVehicle(userId: string): Promise<Vehicle | null> {
-    return this.vehicleRepository.findOne({
-      where: { user: { id: userId }, isPrimary: true, isActive: true },
-    });
+    return this.vehicleRepository
+      .createQueryBuilder("vehicle")
+      .leftJoinAndSelect("vehicle.user", "user")
+      .where("vehicle.user_id = :userId", { userId })
+      .andWhere("vehicle.isPrimary = :isPrimary", { isPrimary: true })
+      .andWhere("vehicle.isActive = :isActive", { isActive: true })
+      .getOne();
   }
 
   /**
@@ -207,10 +221,13 @@ export class VehicleService {
       this.logger.log(`Setting vehicle as primary: ${vehicleId}`);
 
       // Unset current primary vehicle
-      await this.vehicleRepository.update(
-        { user: { id: userId }, isPrimary: true },
-        { isPrimary: false }
-      );
+      await this.vehicleRepository
+        .createQueryBuilder()
+        .update(Vehicle)
+        .set({ isPrimary: false })
+        .where("user_id = :userId", { userId })
+        .andWhere("isPrimary = :isPrimary", { isPrimary: true })
+        .execute();
 
       // Set new primary vehicle
       const vehicle = await this.vehicleRepository.findOne({
@@ -256,9 +273,12 @@ export class VehicleService {
    */
   async getVehicleStats(userId: string): Promise<any> {
     try {
-      const vehicles = await this.vehicleRepository.find({
-        where: { user: { id: userId }, isActive: true },
-      });
+      const vehicles = await this.vehicleRepository
+        .createQueryBuilder("vehicle")
+        .leftJoinAndSelect("vehicle.user", "user")
+        .where("vehicle.user_id = :userId", { userId })
+        .andWhere("vehicle.isActive = :isActive", { isActive: true })
+        .getMany();
 
       const totalMileage = vehicles.reduce(
         (sum, vehicle) => sum + vehicle.totalMileage,
@@ -356,39 +376,36 @@ export class VehicleService {
       } = criteria;
       const offset = (page - 1) * limit;
 
-      const query = this.vehicleRepository
-        .createQueryBuilder("vehicle")
-        .innerJoin("vehicle.user", "user")
-        .where("user.id = :userId", { userId })
-        .andWhere("vehicle.isActive = :isActive", { isActive: true });
+      // Build where conditions
+      const whereConditions: any = {
+        user: { id: userId },
+        isActive: true,
+      };
 
-      // Apply filters
       if (filters.vehicleType) {
-        query.andWhere("vehicle.vehicleType = :vehicleType", {
-          vehicleType: filters.vehicleType,
-        });
+        whereConditions.vehicleType = filters.vehicleType;
       }
 
       if (filters.make) {
-        query.andWhere("LOWER(vehicle.make) LIKE LOWER(:make)", {
-          make: `%${filters.make}%`,
-        });
+        whereConditions.make = filters.make;
       }
 
       if (filters.model) {
-        query.andWhere("LOWER(vehicle.model) LIKE LOWER(:model)", {
-          model: `%${filters.model}%`,
-        });
+        whereConditions.model = filters.model;
       }
 
       // Get total count
-      const total = await query.getCount();
+      const total = await this.vehicleRepository.count({
+        where: whereConditions,
+      });
 
-      // Apply sorting and pagination
-      query.orderBy(`vehicle.${sortBy}`, sortOrder);
-      query.skip(offset).take(limit);
-
-      const vehicles = await query.getMany();
+      // Get vehicles with pagination and sorting
+      const vehicles = await this.vehicleRepository.find({
+        where: whereConditions,
+        order: { [sortBy]: sortOrder },
+        skip: offset,
+        take: limit,
+      });
 
       return {
         vehicles,
@@ -479,19 +496,35 @@ export class VehicleService {
    */
   async getVehicleTypeStats(userId: string): Promise<any> {
     try {
-      const stats = await this.vehicleRepository
+      // Get all vehicles for the user
+      const vehicles = await this.vehicleRepository
         .createQueryBuilder("vehicle")
-        .innerJoin("vehicle.user", "user")
-        .select("vehicle.vehicleType", "type")
-        .addSelect("COUNT(*)", "count")
-        .addSelect("SUM(vehicle.totalMileage)", "totalMileage")
-        .addSelect("SUM(vehicle.totalCarbonSaved)", "totalCarbonSaved")
-        .where("user.id = :userId", { userId })
+        .leftJoinAndSelect("vehicle.user", "user")
+        .where("vehicle.user_id = :userId", { userId })
         .andWhere("vehicle.isActive = :isActive", { isActive: true })
-        .groupBy("vehicle.vehicleType")
-        .getRawMany();
+        .getMany();
 
-      return stats;
+      // Group by vehicle type and calculate stats
+      const statsMap = new Map();
+
+      vehicles.forEach((vehicle) => {
+        const type = vehicle.vehicleType;
+        if (!statsMap.has(type)) {
+          statsMap.set(type, {
+            type,
+            count: 0,
+            totalMileage: 0,
+            totalCarbonSaved: 0,
+          });
+        }
+
+        const stats = statsMap.get(type);
+        stats.count++;
+        stats.totalMileage += vehicle.totalMileage;
+        stats.totalCarbonSaved += vehicle.totalCarbonSaved;
+      });
+
+      return Array.from(statsMap.values());
     } catch (error) {
       this.logger.error(`Failed to get vehicle type stats: ${error.message}`);
       return [];
@@ -516,18 +549,20 @@ export class VehicleService {
     excludeVehicleId?: string,
   ): Promise<boolean> {
     try {
-      const query = this.vehicleRepository
-        .createQueryBuilder("vehicle")
-        .innerJoin("vehicle.user", "user")
-        .where("user.id = :userId", { userId })
-        .andWhere("vehicle.plateNumber = :plateNumber", { plateNumber })
-        .andWhere("vehicle.isActive = :isActive", { isActive: true });
+      const whereConditions: any = {
+        user: { id: userId },
+        plateNumber,
+        isActive: true,
+      };
 
       if (excludeVehicleId) {
-        query.andWhere("vehicle.id != :excludeVehicleId", { excludeVehicleId });
+        whereConditions.id = { $ne: excludeVehicleId };
       }
 
-      const count = await query.getCount();
+      const count = await this.vehicleRepository.count({
+        where: whereConditions,
+      });
+      
       return count === 0;
     } catch (error) {
       this.logger.error(

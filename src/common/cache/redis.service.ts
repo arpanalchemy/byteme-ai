@@ -13,7 +13,7 @@ export class RedisService implements OnModuleDestroy {
     try {
       const redisUrl = this.configService.get(
         "REDIS_URL",
-        "redis://localhost:6379",
+        "redis://localhost:6379"
       );
       const redisPassword = this.configService.get("REDIS_PASSWORD");
 
@@ -40,11 +40,10 @@ export class RedisService implements OnModuleDestroy {
         });
       } else {
         this.logger.warn(
-          "Redis URL not configured, running without Redis cache",
+          "Redis URL not configured, running without Redis cache"
         );
       }
     } catch (error) {
-      console.log("🚀 ~ RedisService ~ constructor ~ error:", error);
       this.logger.error("Failed to initialize Redis client:", error);
       this.isConnected = false;
     }

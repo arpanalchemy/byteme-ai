@@ -32,7 +32,6 @@ export class Vehicle {
 
   @ManyToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
-  @Index()
   user: User;
 
   @Column({

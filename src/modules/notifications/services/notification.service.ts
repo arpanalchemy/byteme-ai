@@ -168,8 +168,7 @@ export class NotificationService {
         this.notificationRepository.createQueryBuilder("notification");
 
       if (userId) {
-        queryBuilder.innerJoin("notification.user", "user");
-        queryBuilder.andWhere("user.id = :userId", { userId });
+        queryBuilder.andWhere("notification.user_id = :userId", { userId });
       }
 
       if (type) {
@@ -244,8 +243,7 @@ export class NotificationService {
       .andWhere("notification.isDeleted = :isDeleted", { isDeleted: false });
 
     if (userId) {
-      queryBuilder.innerJoin("notification.user", "user");
-      queryBuilder.andWhere("user.id = :userId", { userId });
+      queryBuilder.andWhere("notification.user_id = :userId", { userId });
     }
 
     const notification = await queryBuilder.getOne();
