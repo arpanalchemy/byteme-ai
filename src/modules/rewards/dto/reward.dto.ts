@@ -75,6 +75,50 @@ export class CreateRewardDto {
     tier?: string;
     multiplier?: number;
     bonus?: number;
+    // Transaction details
+    transactionDetails?: {
+      txid: string;
+      blockNumber: number;
+      blockTime: Date;
+      from: string;
+      to: string;
+      value: string;
+      gasUsed: number;
+      gasPrice: string;
+      status: "success" | "failed" | "pending";
+      confirmations: number;
+      receipt: {
+        contractAddress?: string;
+        cumulativeGasUsed: number;
+        effectiveGasPrice: string;
+        logs: Array<{
+          address: string;
+          topics: string[];
+          data: string;
+          logIndex: number;
+          transactionIndex: number;
+          blockNumber: number;
+          blockHash: string;
+          transactionHash: string;
+          removed: boolean;
+        }>;
+        logsBloom: string;
+        status: number;
+        transactionHash: string;
+        transactionIndex: number;
+        type: number;
+      };
+      input: string;
+      nonce: number;
+      hash: string;
+      r: string;
+      s: string;
+      v: number;
+      network: string;
+      timestamp: Date;
+    };
+    lastTransactionCheck?: Date;
+    lastTransactionCheckError?: string;
   };
 
   @IsOptional()
@@ -136,6 +180,50 @@ export class RewardResponseDto {
     tier?: string;
     multiplier?: number;
     bonus?: number;
+    // Transaction details
+    transactionDetails?: {
+      txid: string;
+      blockNumber: number;
+      blockTime: Date;
+      from: string;
+      to: string;
+      value: string;
+      gasUsed: number;
+      gasPrice: string;
+      status: "success" | "failed" | "pending";
+      confirmations: number;
+      receipt: {
+        contractAddress?: string;
+        cumulativeGasUsed: number;
+        effectiveGasPrice: string;
+        logs: Array<{
+          address: string;
+          topics: string[];
+          data: string;
+          logIndex: number;
+          transactionIndex: number;
+          blockNumber: number;
+          blockHash: string;
+          transactionHash: string;
+          removed: boolean;
+        }>;
+        logsBloom: string;
+        status: number;
+        transactionHash: string;
+        transactionIndex: number;
+        type: number;
+      };
+      input: string;
+      nonce: number;
+      hash: string;
+      r: string;
+      s: string;
+      v: number;
+      network: string;
+      timestamp: Date;
+    };
+    lastTransactionCheck?: Date;
+    lastTransactionCheckError?: string;
   };
   transactionHash?: string;
   processedAt?: Date;

@@ -43,6 +43,7 @@ export class RewardService {
    */
   async createReward(createDto: CreateRewardDto): Promise<RewardResponseDto> {
     try {
+      console.log("🚀 ~ RewardService ~ createReward ~ createDto:", createDto);
       // Verify user exists
       const user = await this.userRepository.findOne({
         where: { id: createDto.userId },
@@ -58,6 +59,11 @@ export class RewardService {
         amount: createDto.amount,
         description: createDto.description,
         metadata: createDto.metadata,
+        milesDriven: createDto.milesDriven,
+        carbonSaved: createDto.carbonSaved,
+        cycleId: createDto.cycleId,
+        submissionId: createDto.submissionId,
+        proofData: createDto.proofData,
         processedAt: createDto.processedAt
           ? new Date(createDto.processedAt)
           : undefined,
@@ -104,10 +110,10 @@ export class RewardService {
 
       const queryBuilder = this.rewardRepository.createQueryBuilder("reward");
 
-      if (userId) {
-        queryBuilder.innerJoin("reward.user", "user");
-        queryBuilder.andWhere("user.id = :userId", { userId });
-      }
+      // if (userId) {
+      //   queryBuilder.innerJoin("reward.user", "user");
+      //   queryBuilder.andWhere("user.id = :userId", { userId });
+      // }
 
       if (type) {
         queryBuilder.andWhere("reward.type = :type", { type });
@@ -385,7 +391,7 @@ export class RewardService {
   /**
    * Process pending rewards and send to blockchain
    */
-  // @Cron(CronExpression.EVERY_5_MINUTES)
+  // @Cron(CronExpression.EVERY_MINUTE)
   async processPendingRewards(): Promise<void> {
     try {
       this.logger.log("Processing pending rewards...");
@@ -396,6 +402,7 @@ export class RewardService {
           status: RewardStatus.PENDING,
           blockchainStatus: BlockchainStatus.NOT_SENT,
         },
+        relations: ["user"],
         order: { createdAt: "ASC" },
         take: 100, // Process in batches
       });
@@ -466,6 +473,7 @@ export class RewardService {
       }
 
       // Send to blockchain
+
       const txHash = await this.vechainService.distributeRewards(batchData);
 
       // Update rewards with transaction hash
@@ -502,7 +510,7 @@ export class RewardService {
   }
 
   /**
-   * Check blockchain transaction status
+   * Check blockchain transaction status and update transaction details
    */
   // @Cron(CronExpression.EVERY_MINUTE)
   async checkBlockchainTransactions(): Promise<void> {
@@ -519,22 +527,221 @@ export class RewardService {
 
       for (const reward of sentRewards) {
         if (reward.blockchainData?.txHash) {
-          const isConfirmed = await this.vechainService.isTransactionConfirmed(
-            reward.blockchainData.txHash.txid
-          );
+          const txid = reward.blockchainData.txHash.txid;
 
-          if (isConfirmed) {
-            reward.status = RewardStatus.COMPLETED;
-            reward.blockchainStatus = BlockchainStatus.CONFIRMED;
-            reward.confirmedAt = new Date();
+          try {
+            // Check if transaction is confirmed
+            const isConfirmed =
+              await this.vechainService.isTransactionConfirmed(txid);
+
+            if (isConfirmed) {
+              // Get detailed transaction information
+              const transactionDetails =
+                await this.vechainService.getTransactionDetails(txid);
+
+              // Update reward with transaction details and confirmation
+              reward.status = RewardStatus.COMPLETED;
+              reward.blockchainStatus = BlockchainStatus.CONFIRMED;
+              reward.confirmedAt = new Date();
+
+              // Store transaction details in metadata
+              reward.metadata = {
+                ...reward.metadata,
+                transactionDetails: {
+                  txid: transactionDetails.txid,
+                  blockNumber: transactionDetails.blockNumber,
+                  blockTime: transactionDetails.blockTime,
+                  from: transactionDetails.from,
+                  to: transactionDetails.to,
+                  value: transactionDetails.value,
+                  gasUsed: transactionDetails.gasUsed,
+                  gasPrice: transactionDetails.gasPrice,
+                  status: transactionDetails.status,
+                  confirmations: transactionDetails.confirmations,
+                  receipt: {
+                    contractAddress: transactionDetails.receipt.contractAddress,
+                    cumulativeGasUsed:
+                      transactionDetails.receipt.cumulativeGasUsed,
+                    effectiveGasPrice:
+                      transactionDetails.receipt.effectiveGasPrice,
+                    logs: transactionDetails.receipt.logs,
+                    logsBloom: transactionDetails.receipt.logsBloom,
+                    status: transactionDetails.receipt.status,
+                    transactionHash: transactionDetails.receipt.transactionHash,
+                    transactionIndex:
+                      transactionDetails.receipt.transactionIndex,
+                    type: transactionDetails.receipt.type,
+                  },
+                  input: transactionDetails.input,
+                  nonce: transactionDetails.nonce,
+                  hash: transactionDetails.hash,
+                  r: transactionDetails.r,
+                  s: transactionDetails.s,
+                  v: transactionDetails.v,
+                  network: transactionDetails.network,
+                  timestamp: transactionDetails.timestamp,
+                },
+                lastTransactionCheck: new Date(),
+              };
+
+              await this.rewardRepository.save(reward);
+
+              this.logger.log(
+                `Reward ${reward.id} confirmed on blockchain with transaction details`
+              );
+            } else {
+              // Update last check time even if not confirmed
+              reward.metadata = {
+                ...reward.metadata,
+                lastTransactionCheck: new Date(),
+              };
+              await this.rewardRepository.save(reward);
+            }
+          } catch (txError) {
+            this.logger.error(
+              `Failed to check transaction ${txid} for reward ${reward.id}:`,
+              txError
+            );
+
+            // Update last check time and error
+            reward.metadata = {
+              ...reward.metadata,
+              lastTransactionCheck: new Date(),
+              lastTransactionCheckError: txError.message,
+            };
             await this.rewardRepository.save(reward);
-
-            this.logger.log(`Reward ${reward.id} confirmed on blockchain`);
           }
         }
       }
     } catch (error) {
       this.logger.error("Failed to check blockchain transactions:", error);
+    }
+  }
+
+  /**
+   * Update transaction details for a specific reward
+   */
+  async updateTransactionDetails(rewardId: string): Promise<RewardResponseDto> {
+    try {
+      const reward = await this.rewardRepository.findOne({
+        where: { id: rewardId },
+      });
+
+      if (!reward) {
+        throw new NotFoundException("Reward not found");
+      }
+
+      if (!reward.blockchainData?.txHash?.txid) {
+        throw new BadRequestException("Reward has no transaction hash");
+      }
+
+      const txid = reward.blockchainData.txHash.txid;
+      this.logger.log(
+        `Updating transaction details for reward ${rewardId}: ${txid}`
+      );
+
+      // Get detailed transaction information
+      const transactionDetails =
+        await this.vechainService.getTransactionDetails(txid);
+
+      // Update reward with transaction details
+      reward.metadata = {
+        ...reward.metadata,
+        transactionDetails: {
+          txid: transactionDetails.txid,
+          blockNumber: transactionDetails.blockNumber,
+          blockTime: transactionDetails.blockTime,
+          from: transactionDetails.from,
+          to: transactionDetails.to,
+          value: transactionDetails.value,
+          gasUsed: transactionDetails.gasUsed,
+          gasPrice: transactionDetails.gasPrice,
+          status: transactionDetails.status,
+          confirmations: transactionDetails.confirmations,
+          receipt: {
+            contractAddress: transactionDetails.receipt.contractAddress,
+            cumulativeGasUsed: transactionDetails.receipt.cumulativeGasUsed,
+            effectiveGasPrice: transactionDetails.receipt.effectiveGasPrice,
+            logs: transactionDetails.receipt.logs,
+            logsBloom: transactionDetails.receipt.logsBloom,
+            status: transactionDetails.receipt.status,
+            transactionHash: transactionDetails.receipt.transactionHash,
+            transactionIndex: transactionDetails.receipt.transactionIndex,
+            type: transactionDetails.receipt.type,
+          },
+          input: transactionDetails.input,
+          nonce: transactionDetails.nonce,
+          hash: transactionDetails.hash,
+          r: transactionDetails.r,
+          s: transactionDetails.s,
+          v: transactionDetails.v,
+          network: transactionDetails.network,
+          timestamp: transactionDetails.timestamp,
+        },
+        lastTransactionCheck: new Date(),
+      };
+
+      const updatedReward = await this.rewardRepository.save(reward);
+
+      this.logger.log(`Transaction details updated for reward ${rewardId}`);
+      return this.transformRewardToResponse(updatedReward);
+    } catch (error) {
+      this.logger.error(
+        `Failed to update transaction details for reward ${rewardId}:`,
+        error
+      );
+      throw new BadRequestException(
+        `Failed to update transaction details: ${error.message}`
+      );
+    }
+  }
+
+  /**
+   * Update transaction details for all rewards with transaction hashes
+   */
+  async updateAllTransactionDetails(): Promise<{
+    updated: number;
+    failed: number;
+    errors: string[];
+  }> {
+    try {
+      this.logger.log("Updating transaction details for all rewards...");
+
+      // Get all rewards with transaction hashes
+      const rewards = await this.rewardRepository
+        .createQueryBuilder("reward")
+        .where("reward.blockchainData->>'txHash' IS NOT NULL")
+        .andWhere("reward.blockchainData->'txHash'->>'txid' IS NOT NULL")
+        .take(100)
+        .getMany();
+
+      let updated = 0;
+      let failed = 0;
+      const errors: string[] = [];
+
+      for (const reward of rewards) {
+        try {
+          await this.updateTransactionDetails(reward.id);
+          updated++;
+        } catch (error) {
+          failed++;
+          errors.push(`Reward ${reward.id}: ${error.message}`);
+          this.logger.error(
+            `Failed to update transaction details for reward ${reward.id}:`,
+            error
+          );
+        }
+      }
+
+      this.logger.log(
+        `Transaction details update completed: ${updated} updated, ${failed} failed`
+      );
+      return { updated, failed, errors };
+    } catch (error) {
+      this.logger.error("Failed to update all transaction details:", error);
+      throw new BadRequestException(
+        `Failed to update all transaction details: ${error.message}`
+      );
     }
   }
 
@@ -577,7 +784,7 @@ export class RewardService {
   private transformRewardToResponse(reward: Reward): RewardResponseDto {
     return {
       id: reward.id,
-      userId: reward.user.id,
+      userId: reward.user?.id,
       type: reward.type,
       status: reward.status,
       blockchainStatus: reward.blockchainStatus,
@@ -642,7 +849,15 @@ export class RewardService {
     carbonSaved: number,
     imageHash: string
   ): Promise<RewardResponseDto> {
+    console.log(
+      "🚀 ~ RewardService ~ createUploadReward ~ milesDriven:",
+      milesDriven
+    );
     const rewardAmount = this.calculateUploadReward(milesDriven, carbonSaved);
+    console.log(
+      "🚀 ~ RewardService ~ createUploadReward ~ rewardAmount:",
+      rewardAmount
+    );
 
     return this.createReward({
       userId,

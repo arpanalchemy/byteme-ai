@@ -14,6 +14,7 @@ import { Challenge } from "../challenges/entity/challenge.entity";
 import { UserChallenge } from "../challenges/entity/user-challenge.entity";
 import { Vehicle } from "../vehicles/entity/vehicle.entity";
 import { OdometerUpload } from "../odometer/entity/odometer-upload.entity";
+import { RewardService } from "../rewards/services/reward.service";
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { OdometerUpload } from "../odometer/entity/odometer-upload.entity";
     CarbonCreditService,
     SmartContractService,
     ChallengeService,
+    RewardService,
   ],
   exports: [
     BlockchainService,
@@ -41,6 +43,7 @@ import { OdometerUpload } from "../odometer/entity/odometer-upload.entity";
     CarbonCreditService,
     SmartContractService,
     ChallengeService,
+    RewardService,
   ],
 })
 export class BlockchainModule {}

@@ -148,6 +148,50 @@ export class Reward {
     tier?: string;
     multiplier?: number;
     bonus?: number;
+    // Transaction details
+    transactionDetails?: {
+      txid: string;
+      blockNumber: number;
+      blockTime: Date;
+      from: string;
+      to: string;
+      value: string;
+      gasUsed: number;
+      gasPrice: string;
+      status: "success" | "failed" | "pending";
+      confirmations: number;
+      receipt: {
+        contractAddress?: string;
+        cumulativeGasUsed: number;
+        effectiveGasPrice: string;
+        logs: Array<{
+          address: string;
+          topics: string[];
+          data: string;
+          logIndex: number;
+          transactionIndex: number;
+          blockNumber: number;
+          blockHash: string;
+          transactionHash: string;
+          removed: boolean;
+        }>;
+        logsBloom: string;
+        status: number;
+        transactionHash: string;
+        transactionIndex: number;
+        type: number;
+      };
+      input: string;
+      nonce: number;
+      hash: string;
+      r: string;
+      s: string;
+      v: number;
+      network: string;
+      timestamp: Date;
+    };
+    lastTransactionCheck?: Date;
+    lastTransactionCheckError?: string;
   };
 
   @Column({ name: "processed_at", nullable: true })
@@ -213,15 +257,15 @@ export class Reward {
   }
 
   get formattedAmount(): string {
-    return `${this.amount.toFixed(8)} B3TR`;
+    return `${this.amount} B3TR`;
   }
 
   get formattedMiles(): string {
-    return `${this.milesDriven.toFixed(1)} miles`;
+    return `${this.milesDriven} miles`;
   }
 
   get formattedCarbonSaved(): string {
-    return `${this.carbonSaved.toFixed(2)}g CO2`;
+    return `${this.carbonSaved}g CO2`;
   }
 
   get carbonSavedKg(): number {
@@ -229,7 +273,7 @@ export class Reward {
   }
 
   get formattedCarbonSavedKg(): string {
-    return `${this.carbonSavedKg.toFixed(3)}kg CO2`;
+    return `${this.carbonSavedKg}kg CO2`;
   }
 
   get rewardPerMile(): number {
@@ -237,7 +281,7 @@ export class Reward {
   }
 
   get formattedRewardPerMile(): string {
-    return `${this.rewardPerMile.toFixed(6)} B3TR/mile`;
+    return `${this.rewardPerMile} B3TR/mile`;
   }
 
   get carbonEfficiency(): number {

@@ -17,6 +17,7 @@ import {
   ApiQuery,
 } from "@nestjs/swagger";
 import { BlockchainService } from "../services/blockchain.service";
+import { VeChainService } from "../../../common/blockchain/vechain.service";
 import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../../../common/decorators/current-user.decorator";
 import { User } from "../../users/entity/user.entity";
@@ -28,7 +29,10 @@ import { map } from "rxjs/operators";
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class BlockchainController {
-  constructor(private readonly blockchainService: BlockchainService) {}
+  constructor(
+    private readonly blockchainService: BlockchainService,
+    private readonly vechainService: VeChainService
+  ) {}
 
   @Post("tokenize-carbon/:userId")
   @ApiParam({
@@ -57,12 +61,12 @@ export class BlockchainController {
   })
   async tokenizeCarbonSavings(
     @Param("userId") userId: string,
-    @Body() data: { carbonAmount: number; metadata: any },
+    @Body() data: { carbonAmount: number; metadata: any }
   ) {
     return this.blockchainService.tokenizeCarbonSavings(
       userId,
       data.carbonAmount,
-      data.metadata,
+      data.metadata
     );
   }
 
@@ -90,13 +94,13 @@ export class BlockchainController {
       toUserId: string;
       amount: number;
       metadata?: any;
-    },
+    }
   ) {
     return this.blockchainService.transferB3TRTokens(
       data.fromUserId,
       data.toUserId,
       data.amount,
-      data.metadata,
+      data.metadata
     );
   }
 
@@ -122,7 +126,7 @@ export class BlockchainController {
   })
   async claimRewards(
     @Param("userId") userId: string,
-    @Body() data: { rewardIds: string[] },
+    @Body() data: { rewardIds: string[] }
   ) {
     return this.blockchainService.claimRewards(userId, data.rewardIds);
   }
@@ -269,11 +273,11 @@ export class BlockchainController {
   })
   async subscribeToSmartContractEvents(
     @Param("contractAddress") contractAddress: string,
-    @Param("eventName") eventName: string,
+    @Param("eventName") eventName: string
   ) {
     return this.blockchainService.subscribeToSmartContractEvents(
       contractAddress,
-      eventName,
+      eventName
     );
   }
 
@@ -290,7 +294,7 @@ export class BlockchainController {
           message: "Live transaction monitoring active",
           // In a real implementation, this would emit actual transaction data
         },
-      })),
+      }))
     );
   }
 
@@ -307,7 +311,7 @@ export class BlockchainController {
           message: "Live marketplace monitoring active",
           // In a real implementation, this would emit actual marketplace data
         },
-      })),
+      }))
     );
   }
 
@@ -339,7 +343,7 @@ export class BlockchainController {
   async getCarbonCreditHistory(
     @Param("userId") userId: string,
     @Query("limit") limit: number = 50,
-    @Query("offset") offset: number = 0,
+    @Query("offset") offset: number = 0
   ) {
     // Implementation would query carbon credit history from blockchain
     return {
@@ -396,7 +400,7 @@ export class BlockchainController {
     @Param("userId") userId: string,
     @Query("type") type: string = "all",
     @Query("limit") limit: number = 50,
-    @Query("offset") offset: number = 0,
+    @Query("offset") offset: number = 0
   ) {
     // Implementation would query transaction history from blockchain
     return {
@@ -457,7 +461,7 @@ export class BlockchainController {
   })
   async getPortfolioPerformance(
     @Param("userId") userId: string,
-    @Query("period") period: string = "30d",
+    @Query("period") period: string = "30d"
   ) {
     // Implementation would calculate portfolio performance
     return {
@@ -473,5 +477,77 @@ export class BlockchainController {
       },
       chartData: [],
     };
+  }
+
+  @Get("transaction/:txid")
+  @ApiParam({
+    name: "txid",
+    description: "Transaction ID to get details for",
+    example:
+      "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Transaction details retrieved successfully",
+    schema: {
+      type: "object",
+      properties: {
+        txid: { type: "string" },
+        blockNumber: { type: "number" },
+        blockTime: { type: "string", format: "date-time" },
+        from: { type: "string" },
+        to: { type: "string" },
+        value: { type: "string" },
+        gasUsed: { type: "number" },
+        gasPrice: { type: "string" },
+        status: { type: "string", enum: ["success", "failed", "pending"] },
+        confirmations: { type: "number" },
+        receipt: {
+          type: "object",
+          properties: {
+            contractAddress: { type: "string" },
+            cumulativeGasUsed: { type: "number" },
+            effectiveGasPrice: { type: "string" },
+            logs: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  address: { type: "string" },
+                  topics: { type: "array", items: { type: "string" } },
+                  data: { type: "string" },
+                  logIndex: { type: "number" },
+                  transactionIndex: { type: "number" },
+                  blockNumber: { type: "number" },
+                  blockHash: { type: "string" },
+                  transactionHash: { type: "string" },
+                  removed: { type: "boolean" },
+                },
+              },
+            },
+            logsBloom: { type: "string" },
+            status: { type: "number" },
+            transactionHash: { type: "string" },
+            transactionIndex: { type: "number" },
+            type: { type: "number" },
+          },
+        },
+        input: { type: "string" },
+        nonce: { type: "number" },
+        hash: { type: "string" },
+        r: { type: "string" },
+        s: { type: "string" },
+        v: { type: "number" },
+        network: { type: "string" },
+        timestamp: { type: "string", format: "date-time" },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Transaction not found",
+  })
+  async getTransactionDetails(@Param("txid") txid: string) {
+    return this.vechainService.getTransactionDetails(txid);
   }
 }

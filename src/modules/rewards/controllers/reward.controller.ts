@@ -66,7 +66,7 @@ export class RewardController {
     @Query("startDate") startDate?: string,
     @Query("endDate") endDate?: string,
     @Query("sortBy") sortBy?: string,
-    @Query("sortOrder") sortOrder?: "ASC" | "DESC",
+    @Query("sortOrder") sortOrder?: "ASC" | "DESC"
   ) {
     const query: RewardQueryDto = {
       page,
@@ -104,7 +104,7 @@ export class RewardController {
   @ApiResponse({ status: 404, description: "Reward not found" })
   async getRewardById(
     @CurrentUser() user: User,
-    @Param("id") rewardId: string,
+    @Param("id") rewardId: string
   ): Promise<RewardResponseDto> {
     return this.rewardService.getRewardById(rewardId, user.id);
   }
@@ -118,7 +118,7 @@ export class RewardController {
   @ApiResponse({ status: 404, description: "Reward not found" })
   async cancelReward(
     @CurrentUser() user: User,
-    @Param("id") rewardId: string,
+    @Param("id") rewardId: string
   ): Promise<void> {
     return this.rewardService.cancelReward(rewardId, user.id);
   }
@@ -132,7 +132,7 @@ export class RewardController {
   @ApiResponse({ status: 404, description: "Reward not found" })
   async retryReward(
     @CurrentUser() user: User,
-    @Param("id") rewardId: string,
+    @Param("id") rewardId: string
   ): Promise<void> {
     return this.rewardService.retryFailedReward(rewardId);
   }
@@ -153,7 +153,7 @@ export class AdminRewardController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   async createReward(
-    @Body() createDto: CreateRewardDto,
+    @Body() createDto: CreateRewardDto
   ): Promise<RewardResponseDto> {
     return this.rewardService.createReward(createDto);
   }
@@ -188,7 +188,7 @@ export class AdminRewardController {
     @Query("startDate") startDate?: string,
     @Query("endDate") endDate?: string,
     @Query("sortBy") sortBy?: string,
-    @Query("sortOrder") sortOrder?: "ASC" | "DESC",
+    @Query("sortOrder") sortOrder?: "ASC" | "DESC"
   ) {
     const query: RewardQueryDto = {
       page,
@@ -216,6 +216,26 @@ export class AdminRewardController {
     return this.rewardService.getRewardStats();
   }
 
+  @Get("process/pending-rewards")
+  @ApiResponse({
+    status: 200,
+    description: "Pending rewards processed successfully",
+    type: RewardStatsDto,
+  })
+  async processPendingRewards(): Promise<void> {
+    return this.rewardService.processPendingRewards();
+  }
+
+  @Get("verify/blockchain-transactions")
+  @ApiResponse({
+    status: 200,
+    description: "Blockchain transactions verified successfully",
+    type: RewardStatsDto,
+  })
+  async checkBlockchainTransactions(): Promise<void> {
+    return this.rewardService.checkBlockchainTransactions();
+  }
+
   @Get(":id")
   @ApiResponse({
     status: 200,
@@ -225,7 +245,7 @@ export class AdminRewardController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Reward not found" })
   async getRewardById(
-    @Param("id") rewardId: string,
+    @Param("id") rewardId: string
   ): Promise<RewardResponseDto> {
     return this.rewardService.getRewardById(rewardId);
   }
@@ -240,7 +260,7 @@ export class AdminRewardController {
   @ApiResponse({ status: 404, description: "Reward not found" })
   async updateReward(
     @Param("id") rewardId: string,
-    @Body() updateDto: UpdateRewardDto,
+    @Body() updateDto: UpdateRewardDto
   ): Promise<RewardResponseDto> {
     return this.rewardService.updateReward(rewardId, updateDto);
   }
@@ -265,5 +285,45 @@ export class AdminRewardController {
   @ApiResponse({ status: 404, description: "Reward not found" })
   async retryReward(@Param("id") rewardId: string): Promise<void> {
     return this.rewardService.retryFailedReward(rewardId);
+  }
+
+  @Post(":id/update-transaction-details")
+  @ApiResponse({
+    status: 200,
+    description: "Transaction details updated successfully",
+    type: RewardResponseDto,
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 404, description: "Reward not found" })
+  @ApiResponse({ status: 400, description: "Reward has no transaction hash" })
+  async updateTransactionDetails(
+    @Param("id") rewardId: string
+  ): Promise<RewardResponseDto> {
+    return this.rewardService.updateTransactionDetails(rewardId);
+  }
+
+  @Post("update-all-transaction-details")
+  @ApiResponse({
+    status: 200,
+    description: "All transaction details updated successfully",
+    schema: {
+      type: "object",
+      properties: {
+        updated: { type: "number" },
+        failed: { type: "number" },
+        errors: {
+          type: "array",
+          items: { type: "string" },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  async updateAllTransactionDetails(): Promise<{
+    updated: number;
+    failed: number;
+    errors: string[];
+  }> {
+    return this.rewardService.updateAllTransactionDetails();
   }
 }

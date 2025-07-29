@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { HistoryService } from "../../history/services/history.service";
+import { RewardService } from "../../rewards/services/reward.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { S3Service } from "../../../common/upload/s3.service";
@@ -41,7 +42,8 @@ export class OdometerService {
     private readonly openaiService: OpenAIService,
     private readonly redisService: RedisService,
     private readonly awsTextractService: AwsTextractService,
-    private readonly historyService: HistoryService
+    private readonly historyService: HistoryService,
+    private readonly rewardService: RewardService
   ) {}
 
   /**
@@ -597,6 +599,25 @@ export class OdometerService {
           );
 
           this.logger.log(`History entry created for upload ${upload.id}`);
+
+          // Create reward if upload is approved and user is authenticated
+          if (upload.isApproved && upload.finalMileage > 0) {
+            try {
+              await this.rewardService.createUploadReward(
+                upload.user.id,
+                upload.id,
+                upload.finalMileage,
+                upload.carbonSaved || 0,
+                upload.imageHash
+              );
+              this.logger.log(`Reward created for upload ${upload.id}`);
+            } catch (rewardError) {
+              this.logger.error(
+                `Failed to create reward for upload ${upload.id}: ${rewardError.message}`
+              );
+              // Don't throw error as reward creation failure shouldn't fail the upload
+            }
+          }
         } catch (historyError) {
           this.logger.error(
             `Failed to create history entry: ${historyError.message}`

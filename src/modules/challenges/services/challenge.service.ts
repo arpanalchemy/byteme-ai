@@ -29,6 +29,7 @@ import {
   ChallengeResponseDto,
   UserChallengeResponseDto,
 } from "../dto/challenge.dto";
+import { RewardService } from "../../rewards/services/reward.service";
 
 @Injectable()
 export class ChallengeService {
@@ -44,7 +45,8 @@ export class ChallengeService {
     @InjectRepository(Vehicle)
     private readonly vehicleRepository: Repository<Vehicle>,
     @InjectRepository(OdometerUpload)
-    private readonly odometerUploadRepository: Repository<OdometerUpload>
+    private readonly odometerUploadRepository: Repository<OdometerUpload>,
+    private readonly rewardService: RewardService
   ) {}
 
   /**
@@ -477,6 +479,26 @@ export class ChallengeService {
         this.logger.log(
           `Challenge completed! User: ${userId}, Challenge: ${challengeId}, Rewards: ${JSON.stringify(calculatedRewards)}`
         );
+
+        // Create reward if challenge has rewards
+        if (calculatedRewards && calculatedRewards.b3trTokens > 0) {
+          try {
+            await this.rewardService.createChallengeReward(
+              userId,
+              challengeId,
+              userChallenge.challenge.name,
+              calculatedRewards.b3trTokens
+            );
+            this.logger.log(
+              `Reward created for challenge ${userChallenge.challenge.name} for user ${userId}`
+            );
+          } catch (rewardError) {
+            this.logger.error(
+              `Failed to create reward for challenge ${userChallenge.challenge.name}: ${rewardError.message}`
+            );
+            // Don't throw error as reward creation failure shouldn't fail the challenge completion
+          }
+        }
       }
 
       const updatedUserChallenge =
