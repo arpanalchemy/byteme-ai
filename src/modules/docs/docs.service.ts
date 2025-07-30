@@ -54,10 +54,8 @@ export class DocsService {
 
   async getDocContent(filename: string) {
     const filePath = join(this.docsPath, `${filename}.md`);
-    console.log("[DocsService] Looking for doc file at:", filePath);
 
     if (!existsSync(filePath)) {
-      console.error("[DocsService] File does not exist:", filePath);
       throw new Error("Document not found");
     }
 

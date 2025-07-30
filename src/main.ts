@@ -23,7 +23,7 @@ async function bootstrap() {
         transformOptions: {
           enableImplicitConversion: true,
         },
-      }),
+      })
     );
 
     // Swagger documentation
@@ -52,14 +52,12 @@ async function bootstrap() {
 
     const port = process.env.PORT || 3000;
     await app.listen(port, "0.0.0.0");
-    console.log(`✅ Application successfully listening on port: ${port}`);
     console.log(`🚗 Drive & Earn API is running on: http://localhost:${port}`);
-    console.log(`📚 API Documentation (UI): http://localhost:${port}/api`);
+    console.log(`📚 Project Documentation (UI): http://localhost:${port}/docs`);
     console.log(
-      `📄 API Documentation (JSON): http://localhost:${port}/api-json`,
+      `📄 API Documentation (JSON): http://localhost:${port}/api-json`
     );
     console.log(`🏥 Health Check: http://localhost:${port}/healthcheck`);
-    console.log(`🏥 Health Check: http://localhost:${port}/docs`);
     console.log(`🎉 Application startup completed successfully!`);
   } catch (error) {
     console.error("❌ Failed to start application:", error);
