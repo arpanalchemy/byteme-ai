@@ -97,7 +97,9 @@ export class HistoryService {
       } = query;
       const offset = (page - 1) * limit;
 
-      const queryBuilder = this.historyRepository.createQueryBuilder("history");
+      const queryBuilder = this.historyRepository
+        .createQueryBuilder("history")
+        .leftJoinAndSelect("history.user", "user");
 
       if (userId) {
         queryBuilder.andWhere("history.user_id = :userId", { userId });
@@ -158,6 +160,7 @@ export class HistoryService {
         limit,
       };
     } catch (error) {
+      console.log("🚀 ~ HistoryService ~ getHistory ~ error:", error);
       this.logger.error(`Failed to get history: ${error.message}`);
       throw new BadRequestException("Failed to get history");
     }
@@ -403,7 +406,7 @@ export class HistoryService {
   private transformHistoryToResponse(history: History): HistoryResponseDto {
     return {
       id: history.id,
-      userId: history.user.id,
+      userId: history.user?.id,
       type: history.type,
       category: history.category,
       title: history.title,
@@ -498,7 +501,7 @@ export class HistoryService {
       type: HistoryType.REWARD_EARNED,
       category: HistoryCategory.REWARDS,
       title: "Rewards Earned",
-      description: `Earned ${rewardAmount.toFixed(2)} B3TR tokens`,
+      description: `Earned ${rewardAmount} B3TR tokens`,
       data: {
         rewardAmount,
         rewardType,
@@ -529,7 +532,7 @@ export class HistoryService {
       type: HistoryType.REWARD_SPENT,
       category: HistoryCategory.REWARDS,
       title: "Rewards Spent",
-      description: `Spent ${rewardAmount.toFixed(2)} B3TR tokens${purpose ? ` on ${purpose}` : ""}`,
+      description: `Spent ${rewardAmount} B3TR tokens${purpose ? ` on ${purpose}` : ""}`,
       data: {
         rewardAmount,
         rewardType,
@@ -785,7 +788,7 @@ export class HistoryService {
       type: HistoryType.REWARD_EARNED,
       category: HistoryCategory.REWARDS,
       title: "B3TR Tokens Distributed",
-      description: `Successfully distributed ${rewardAmount.toFixed(2)} B3TR tokens via blockchain`,
+      description: `Successfully distributed ${rewardAmount} B3TR tokens via blockchain`,
       data: {
         rewardAmount,
         rewardType: distributionData.rewardType,
@@ -850,7 +853,7 @@ export class HistoryService {
       type: HistoryType.SYSTEM_EVENT,
       category: HistoryCategory.REWARDS,
       title: "Reward Distribution Failed",
-      description: `Failed to distribute ${rewardAmount.toFixed(2)} B3TR tokens: ${failureReason}`,
+      description: `Failed to distribute ${rewardAmount} B3TR tokens: ${failureReason}`,
       data: {
         rewardAmount,
         rewardType: distributionData.rewardType,
@@ -905,7 +908,7 @@ export class HistoryService {
       type: HistoryType.SYSTEM_EVENT,
       category: HistoryCategory.REWARDS,
       title: "Reward Distribution Retry",
-      description: `Retrying distribution of ${rewardAmount.toFixed(2)} B3TR tokens (attempt ${retryCount})`,
+      description: `Retrying distribution of ${rewardAmount} B3TR tokens (attempt ${retryCount})`,
       data: {
         rewardAmount,
         rewardType: distributionData.rewardType,
@@ -1054,7 +1057,7 @@ export class HistoryService {
       type: HistoryType.SYSTEM_EVENT,
       category: HistoryCategory.REWARDS,
       title: `Transaction ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}`,
-      description: `Blockchain transaction ${statusText} for ${confirmationData.rewardAmount.toFixed(2)} B3TR tokens`,
+      description: `Blockchain transaction ${statusText} for ${confirmationData.rewardAmount} B3TR tokens`,
       data: {
         txHash,
         rewardAmount: confirmationData.rewardAmount,
@@ -1106,7 +1109,7 @@ export class HistoryService {
       type: HistoryType.SYSTEM_EVENT,
       category: HistoryCategory.REWARDS,
       title: `Reward Processing ${statusText}`,
-      description: `Reward processing status updated to ${status} for ${rewardAmount.toFixed(2)} B3TR tokens`,
+      description: `Reward processing status updated to ${status} for ${rewardAmount} B3TR tokens`,
       data: {
         rewardAmount,
         rewardType: statusData.rewardType,
