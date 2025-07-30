@@ -14,6 +14,7 @@ import {
 } from "../entity/reward.entity";
 import { User } from "../../users/entity/user.entity";
 import { VeChainService } from "../../../common/blockchain/vechain.service";
+import { HistoryService } from "../../history/services/history.service";
 import {
   CreateRewardDto,
   UpdateRewardDto,
@@ -33,7 +34,8 @@ export class RewardService {
     private readonly rewardRepository: Repository<Reward>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly vechainService: VeChainService
+    private readonly vechainService: VeChainService,
+    private readonly historyService: HistoryService
   ) {}
 
   // Reward Management (Admin)
@@ -438,6 +440,8 @@ export class RewardService {
     userId: string,
     rewards: Reward[]
   ): Promise<void> {
+    const startTime = Date.now();
+
     try {
       // Get user wallet address
       const user = await this.userRepository.findOne({
@@ -448,6 +452,9 @@ export class RewardService {
         this.logger.warn(`User ${userId} has no wallet address`);
         return;
       }
+
+      // Get user's current balance for history tracking
+      const currentBalance = user.b3trBalance || 0;
 
       // Prepare batch data for blockchain
       const batchData: BatchRewardDto[] = rewards.map((reward) => ({
@@ -463,35 +470,109 @@ export class RewardService {
         description: reward.description || `Reward for ${reward.type}`,
       }));
 
-      // Update rewards to processing status
+      // Update rewards to processing status and log processing start
       for (const reward of rewards) {
         reward.status = RewardStatus.PROCESSING;
         reward.blockchainStatus = BlockchainStatus.SENT;
         reward.processedAt = new Date();
         await this.rewardRepository.save(reward);
+
+        // Log processing status update
+        await this.historyService.createRewardProcessingStatusHistory(
+          userId,
+          reward.amount,
+          "processing",
+          {
+            rewardType: reward.type,
+            source: reward.metadata?.source || "odometer_upload",
+            uploadId: reward.proofData?.uploadId,
+            vehicleId: reward.proofData?.vehicleId,
+            vehicleName: reward.metadata?.vehicleName,
+            cycleId: reward.cycleId,
+            submissionId: reward.submissionId,
+            processingTime: Date.now() - startTime,
+          }
+        );
       }
 
       // Send to blockchain
+      const distributionResult =
+        await this.vechainService.distributeRewards(batchData);
+      const processingTime = Date.now() - startTime;
 
-      const txHash = await this.vechainService.distributeRewards(batchData);
+      // Calculate new balance
+      const totalRewardAmount = rewards.reduce(
+        (sum, reward) => sum + reward.amount,
+        0
+      );
+      const newBalance = currentBalance + totalRewardAmount;
+
+      // Update user balance
+      await this.updateUserB3trBalance(userId, totalRewardAmount);
 
       // Update rewards with transaction hash
       for (const reward of rewards) {
         reward.blockchainData = {
           ...reward.blockchainData,
-          txHash,
+          txHash: distributionResult,
           sentAt: new Date(),
         };
         await this.rewardRepository.save(reward);
       }
 
+      // Log successful distribution for each reward
+      for (const reward of rewards) {
+        await this.historyService.createRewardDistributionHistory(
+          userId,
+          reward.amount,
+          currentBalance,
+          newBalance,
+          {
+            txHash: distributionResult.txid,
+            batchCount: distributionResult.batchCount,
+            totalUsers: distributionResult.totalUsers,
+            totalDistributed: distributionResult.totalDistributed,
+            rewardType: reward.type,
+            source: reward.metadata?.source || "odometer_upload",
+            carbonSaved: reward.carbonSaved,
+            milesDriven: reward.milesDriven,
+            uploadId: reward.proofData?.uploadId,
+            vehicleId: reward.proofData?.vehicleId,
+            vehicleName: reward.metadata?.vehicleName,
+            cycleId: reward.cycleId,
+            submissionId: reward.submissionId,
+            blockchainNetwork: "testnet", // Default to testnet for now
+            contractAddress: this.vechainService.getContractAddress() || "",
+            processingTime,
+          }
+        );
+
+        // Log processing completion
+        await this.historyService.createRewardProcessingStatusHistory(
+          userId,
+          reward.amount,
+          "completed",
+          {
+            rewardType: reward.type,
+            source: reward.metadata?.source || "odometer_upload",
+            uploadId: reward.proofData?.uploadId,
+            vehicleId: reward.proofData?.vehicleId,
+            vehicleName: reward.metadata?.vehicleName,
+            cycleId: reward.cycleId,
+            submissionId: reward.submissionId,
+            processingTime,
+          }
+        );
+      }
+
       this.logger.log(
-        `Processed ${rewards.length} rewards for user ${userId}: ${txHash}`
+        `Processed ${rewards.length} rewards for user ${userId}: ${distributionResult.txid}`
       );
     } catch (error) {
+      const processingTime = Date.now() - startTime;
       this.logger.error(`Failed to process rewards for user ${userId}:`, error);
 
-      // Mark rewards as failed
+      // Mark rewards as failed and log failures
       for (const reward of rewards) {
         reward.status = RewardStatus.FAILED;
         reward.blockchainStatus = BlockchainStatus.FAILED;
@@ -504,6 +585,46 @@ export class RewardService {
           lastRetryAt: new Date(),
         };
         await this.rewardRepository.save(reward);
+
+        // Log distribution failure
+        await this.historyService.createRewardDistributionFailureHistory(
+          userId,
+          reward.amount,
+          error.message,
+          {
+            rewardType: reward.type,
+            source: reward.metadata?.source || "odometer_upload",
+            carbonSaved: reward.carbonSaved,
+            milesDriven: reward.milesDriven,
+            uploadId: reward.proofData?.uploadId,
+            vehicleId: reward.proofData?.vehicleId,
+            vehicleName: reward.metadata?.vehicleName,
+            cycleId: reward.cycleId,
+            submissionId: reward.submissionId,
+            retryCount: reward.blockchainData?.retryCount || 0,
+            lastRetryAt: reward.blockchainData?.lastRetryAt,
+            blockchainNetwork: "testnet", // Default to testnet for now
+            contractAddress: this.vechainService.getContractAddress() || "",
+          }
+        );
+
+        // Log processing failure
+        await this.historyService.createRewardProcessingStatusHistory(
+          userId,
+          reward.amount,
+          "failed",
+          {
+            rewardType: reward.type,
+            source: reward.metadata?.source || "odometer_upload",
+            uploadId: reward.proofData?.uploadId,
+            vehicleId: reward.proofData?.vehicleId,
+            vehicleName: reward.metadata?.vehicleName,
+            cycleId: reward.cycleId,
+            submissionId: reward.submissionId,
+            processingTime,
+            errorMessage: error.message,
+          }
+        );
       }
     }
   }
@@ -587,6 +708,27 @@ export class RewardService {
 
               // Update user's B3TR balance when reward is confirmed
               await this.updateUserB3trBalance(reward.user.id, reward.amount);
+
+              // Log transaction confirmation
+              await this.historyService.createTransactionConfirmationHistory(
+                reward.user.id,
+                txid,
+                {
+                  blockNumber: transactionDetails.blockNumber,
+                  confirmations: transactionDetails.confirmations,
+                  gasUsed: transactionDetails.gasUsed,
+                  gasPrice: transactionDetails.gasPrice,
+                  status: transactionDetails.status,
+                  rewardAmount: reward.amount,
+                  rewardType: reward.type,
+                  source: reward.metadata?.source || "odometer_upload",
+                  blockchainNetwork: "testnet", // Default to testnet for now
+                  contractAddress:
+                    this.vechainService.getContractAddress() || "",
+                  processingTime:
+                    Date.now() - (reward.createdAt?.getTime() || Date.now()),
+                }
+              );
 
               this.logger.log(
                 `Reward ${reward.id} confirmed on blockchain with transaction details`
@@ -770,6 +912,27 @@ export class RewardService {
       reward.failedAt = null;
       reward.failureReason = null;
       await this.rewardRepository.save(reward);
+
+      // Log retry attempt
+      const retryCount = (reward.blockchainData?.retryCount || 0) + 1;
+      await this.historyService.createRewardRetryHistory(
+        reward.user.id,
+        reward.amount,
+        retryCount,
+        {
+          rewardType: reward.type,
+          source: reward.metadata?.source || "odometer_upload",
+          carbonSaved: reward.carbonSaved,
+          milesDriven: reward.milesDriven,
+          uploadId: reward.proofData?.uploadId,
+          vehicleId: reward.proofData?.vehicleId,
+          vehicleName: reward.metadata?.vehicleName,
+          cycleId: reward.cycleId,
+          submissionId: reward.submissionId,
+          blockchainNetwork: "testnet", // Default to testnet for now
+          contractAddress: this.vechainService.getContractAddress() || "",
+        }
+      );
 
       this.logger.log(`Reward ${rewardId} queued for retry`);
     } catch (error) {
@@ -962,11 +1125,11 @@ export class RewardService {
     milesDriven: number,
     carbonSaved: number
   ): number {
-    // Base reward: 0.1 B3TR per mile
-    const baseReward = milesDriven * 0.1;
+    // Base reward: 0.01 B3TR per mile
+    const baseReward = milesDriven * 0.01;
 
     // Carbon bonus: 0.01 B3TR per kg CO2 saved
-    const carbonBonus = (carbonSaved / 1000) * 0.01;
+    const carbonBonus = (carbonSaved / 1000) * 0.001;
 
     // Total reward
     const totalReward = baseReward + carbonBonus;

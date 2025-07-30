@@ -748,4 +748,437 @@ export class HistoryService {
       previousValue: 0,
     });
   }
+
+  /**
+   * Create reward distribution history for batch processing
+   */
+  async createRewardDistributionHistory(
+    userId: string,
+    rewardAmount: number,
+    previousBalance: number,
+    newBalance: number,
+    distributionData: {
+      txHash: string;
+      batchCount: number;
+      totalUsers: number;
+      totalDistributed: number;
+      rewardType: string;
+      source: string;
+      carbonSaved?: number;
+      milesDriven?: number;
+      uploadId?: string;
+      vehicleId?: string;
+      vehicleName?: string;
+      cycleId?: number;
+      submissionId?: number;
+      blockchainNetwork: string;
+      contractAddress: string;
+      gasUsed?: number;
+      gasPrice?: string;
+      blockNumber?: number;
+      confirmations?: number;
+      processingTime?: number;
+    }
+  ): Promise<void> {
+    await this.createHistory({
+      userId,
+      type: HistoryType.REWARD_EARNED,
+      category: HistoryCategory.REWARDS,
+      title: "B3TR Tokens Distributed",
+      description: `Successfully distributed ${rewardAmount.toFixed(2)} B3TR tokens via blockchain`,
+      data: {
+        rewardAmount,
+        rewardType: distributionData.rewardType,
+        previousBalance,
+        newBalance,
+        transactionType: "distributed",
+        txHash: distributionData.txHash,
+        batchCount: distributionData.batchCount,
+        totalUsers: distributionData.totalUsers,
+        totalDistributed: distributionData.totalDistributed,
+        source: distributionData.source,
+        carbonSaved: distributionData.carbonSaved,
+        milesDriven: distributionData.milesDriven,
+        uploadId: distributionData.uploadId,
+        vehicleId: distributionData.vehicleId,
+        vehicleName: distributionData.vehicleName,
+        cycleId: distributionData.cycleId,
+        submissionId: distributionData.submissionId,
+        blockchainData: {
+          network: distributionData.blockchainNetwork,
+          contractAddress: distributionData.contractAddress,
+          gasUsed: distributionData.gasUsed,
+          gasPrice: distributionData.gasPrice,
+          blockNumber: distributionData.blockNumber,
+          confirmations: distributionData.confirmations,
+          processingTime: distributionData.processingTime,
+        },
+        actionUrl: `/rewards/transaction/${distributionData.txHash}`,
+        deepLink: `/rewards/details`,
+        tags: ["blockchain", "distribution", "b3tr"],
+      },
+      value: rewardAmount,
+      previousValue: previousBalance,
+    });
+  }
+
+  /**
+   * Create reward distribution failure history
+   */
+  async createRewardDistributionFailureHistory(
+    userId: string,
+    rewardAmount: number,
+    failureReason: string,
+    distributionData: {
+      rewardType: string;
+      source: string;
+      carbonSaved?: number;
+      milesDriven?: number;
+      uploadId?: string;
+      vehicleId?: string;
+      vehicleName?: string;
+      cycleId?: number;
+      submissionId?: number;
+      retryCount?: number;
+      lastRetryAt?: Date;
+      blockchainNetwork: string;
+      contractAddress: string;
+    }
+  ): Promise<void> {
+    await this.createHistory({
+      userId,
+      type: HistoryType.SYSTEM_EVENT,
+      category: HistoryCategory.REWARDS,
+      title: "Reward Distribution Failed",
+      description: `Failed to distribute ${rewardAmount.toFixed(2)} B3TR tokens: ${failureReason}`,
+      data: {
+        rewardAmount,
+        rewardType: distributionData.rewardType,
+        transactionType: "failed",
+        failureReason,
+        source: distributionData.source,
+        carbonSaved: distributionData.carbonSaved,
+        milesDriven: distributionData.milesDriven,
+        uploadId: distributionData.uploadId,
+        vehicleId: distributionData.vehicleId,
+        vehicleName: distributionData.vehicleName,
+        cycleId: distributionData.cycleId,
+        submissionId: distributionData.submissionId,
+        retryCount: distributionData.retryCount,
+        lastRetryAt: distributionData.lastRetryAt,
+        blockchainData: {
+          network: distributionData.blockchainNetwork,
+          contractAddress: distributionData.contractAddress,
+        },
+        actionUrl: "/support",
+        deepLink: "/support",
+        tags: ["blockchain", "failure", "b3tr"],
+      },
+      value: 0,
+      previousValue: rewardAmount,
+    });
+  }
+
+  /**
+   * Create reward retry history
+   */
+  async createRewardRetryHistory(
+    userId: string,
+    rewardAmount: number,
+    retryCount: number,
+    distributionData: {
+      rewardType: string;
+      source: string;
+      carbonSaved?: number;
+      milesDriven?: number;
+      uploadId?: string;
+      vehicleId?: string;
+      vehicleName?: string;
+      cycleId?: number;
+      submissionId?: number;
+      blockchainNetwork: string;
+      contractAddress: string;
+    }
+  ): Promise<void> {
+    await this.createHistory({
+      userId,
+      type: HistoryType.SYSTEM_EVENT,
+      category: HistoryCategory.REWARDS,
+      title: "Reward Distribution Retry",
+      description: `Retrying distribution of ${rewardAmount.toFixed(2)} B3TR tokens (attempt ${retryCount})`,
+      data: {
+        rewardAmount,
+        rewardType: distributionData.rewardType,
+        transactionType: "retry",
+        retryCount,
+        source: distributionData.source,
+        carbonSaved: distributionData.carbonSaved,
+        milesDriven: distributionData.milesDriven,
+        uploadId: distributionData.uploadId,
+        vehicleId: distributionData.vehicleId,
+        vehicleName: distributionData.vehicleName,
+        cycleId: distributionData.cycleId,
+        submissionId: distributionData.submissionId,
+        blockchainData: {
+          network: distributionData.blockchainNetwork,
+          contractAddress: distributionData.contractAddress,
+        },
+        actionUrl: "/support",
+        deepLink: "/support",
+        tags: ["blockchain", "retry", "b3tr"],
+      },
+      value: rewardAmount,
+      previousValue: 0,
+    });
+  }
+
+  /**
+   * Create batch reward distribution history
+   */
+  async createBatchRewardDistributionHistory(
+    batchData: Array<{
+      userId: string;
+      rewardAmount: number;
+      previousBalance: number;
+      newBalance: number;
+      rewardType: string;
+      source: string;
+      carbonSaved?: number;
+      milesDriven?: number;
+      uploadId?: string;
+      vehicleId?: string;
+      vehicleName?: string;
+    }>,
+    batchInfo: {
+      txHash: string;
+      batchCount: number;
+      totalUsers: number;
+      totalDistributed: number;
+      blockchainNetwork: string;
+      contractAddress: string;
+      gasUsed?: number;
+      gasPrice?: string;
+      blockNumber?: number;
+      confirmations?: number;
+      processingTime?: number;
+    }
+  ): Promise<void> {
+    // Create individual history entries for each user in the batch
+    for (const userData of batchData) {
+      await this.createRewardDistributionHistory(
+        userData.userId,
+        userData.rewardAmount,
+        userData.previousBalance,
+        userData.newBalance,
+        {
+          ...batchInfo,
+          rewardType: userData.rewardType,
+          source: userData.source,
+          carbonSaved: userData.carbonSaved,
+          milesDriven: userData.milesDriven,
+          uploadId: userData.uploadId,
+          vehicleId: userData.vehicleId,
+          vehicleName: userData.vehicleName,
+        }
+      );
+    }
+
+    // Create a system-level batch history entry for admins
+    await this.createHistory({
+      userId: "system", // System-level entry
+      type: HistoryType.SYSTEM_EVENT,
+      category: HistoryCategory.REWARDS,
+      title: "Batch Reward Distribution Completed",
+      description: `Successfully distributed ${batchInfo.totalDistributed.toFixed(2)} B3TR tokens to ${batchInfo.totalUsers} users in ${batchInfo.batchCount} batches`,
+      data: {
+        batchInfo: {
+          txHash: batchInfo.txHash,
+          batchCount: batchInfo.batchCount,
+          totalUsers: batchInfo.totalUsers,
+          totalDistributed: batchInfo.totalDistributed,
+          averagePerUser: batchInfo.totalDistributed / batchInfo.totalUsers,
+        },
+        blockchainData: {
+          network: batchInfo.blockchainNetwork,
+          contractAddress: batchInfo.contractAddress,
+          gasUsed: batchInfo.gasUsed,
+          gasPrice: batchInfo.gasPrice,
+          blockNumber: batchInfo.blockNumber,
+          confirmations: batchInfo.confirmations,
+          processingTime: batchInfo.processingTime,
+        },
+        userBreakdown: batchData.map((user) => ({
+          userId: user.userId,
+          rewardAmount: user.rewardAmount,
+          rewardType: user.rewardType,
+          source: user.source,
+        })),
+        actionUrl: `/admin/rewards/batch/${batchInfo.txHash}`,
+        deepLink: `/admin/rewards`,
+        tags: ["blockchain", "batch", "distribution", "b3tr"],
+      },
+      value: batchInfo.totalDistributed,
+      previousValue: 0,
+    });
+  }
+
+  /**
+   * Create blockchain transaction confirmation history
+   */
+  async createTransactionConfirmationHistory(
+    userId: string,
+    txHash: string,
+    confirmationData: {
+      blockNumber: number;
+      confirmations: number;
+      gasUsed: number;
+      gasPrice: string;
+      status: "success" | "failed" | "pending";
+      rewardAmount: number;
+      rewardType: string;
+      source: string;
+      blockchainNetwork: string;
+      contractAddress: string;
+      processingTime?: number;
+    }
+  ): Promise<void> {
+    const statusText =
+      confirmationData.status === "success"
+        ? "confirmed"
+        : confirmationData.status === "failed"
+          ? "failed"
+          : "pending";
+
+    await this.createHistory({
+      userId,
+      type: HistoryType.SYSTEM_EVENT,
+      category: HistoryCategory.REWARDS,
+      title: `Transaction ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}`,
+      description: `Blockchain transaction ${statusText} for ${confirmationData.rewardAmount.toFixed(2)} B3TR tokens`,
+      data: {
+        txHash,
+        rewardAmount: confirmationData.rewardAmount,
+        rewardType: confirmationData.rewardType,
+        transactionType: "confirmation",
+        source: confirmationData.source,
+        blockchainData: {
+          network: confirmationData.blockchainNetwork,
+          contractAddress: confirmationData.contractAddress,
+          blockNumber: confirmationData.blockNumber,
+          confirmations: confirmationData.confirmations,
+          gasUsed: confirmationData.gasUsed,
+          gasPrice: confirmationData.gasPrice,
+          status: confirmationData.status,
+          processingTime: confirmationData.processingTime,
+        },
+        actionUrl: `/rewards/transaction/${txHash}`,
+        deepLink: `/rewards/details`,
+        tags: ["blockchain", "confirmation", "b3tr"],
+      },
+      value: confirmationData.rewardAmount,
+      previousValue: 0,
+    });
+  }
+
+  /**
+   * Create reward processing status update history
+   */
+  async createRewardProcessingStatusHistory(
+    userId: string,
+    rewardAmount: number,
+    status: "pending" | "processing" | "completed" | "failed",
+    statusData: {
+      rewardType: string;
+      source: string;
+      uploadId?: string;
+      vehicleId?: string;
+      vehicleName?: string;
+      cycleId?: number;
+      submissionId?: number;
+      processingTime?: number;
+      errorMessage?: string;
+    }
+  ): Promise<void> {
+    const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+
+    await this.createHistory({
+      userId,
+      type: HistoryType.SYSTEM_EVENT,
+      category: HistoryCategory.REWARDS,
+      title: `Reward Processing ${statusText}`,
+      description: `Reward processing status updated to ${status} for ${rewardAmount.toFixed(2)} B3TR tokens`,
+      data: {
+        rewardAmount,
+        rewardType: statusData.rewardType,
+        transactionType: "status_update",
+        status,
+        source: statusData.source,
+        uploadId: statusData.uploadId,
+        vehicleId: statusData.vehicleId,
+        vehicleName: statusData.vehicleName,
+        cycleId: statusData.cycleId,
+        submissionId: statusData.submissionId,
+        processingTime: statusData.processingTime,
+        errorMessage: statusData.errorMessage,
+        actionUrl: status === "completed" ? "/dashboard" : "/support",
+        deepLink: status === "completed" ? "/dashboard" : "/support",
+        tags: ["processing", "status", "b3tr"],
+      },
+      value: rewardAmount,
+      previousValue: 0,
+    });
+  }
+
+  /**
+   * Create upload linking history
+   */
+  async createUploadLinkingHistory(
+    userId: string,
+    uploadId: string,
+    uploadData: {
+      finalMileage?: number;
+      carbonSaved?: number;
+      mileageDifference?: number;
+      vehicleId?: string;
+      vehicleName?: string;
+      uploadDate?: Date;
+      processingTime?: number;
+      ocrConfidence?: number;
+      imageHash?: string;
+      status: string;
+      isApproved: boolean;
+      validationStatus: string;
+    }
+  ): Promise<void> {
+    await this.createHistory({
+      userId,
+      type: HistoryType.UPLOAD_LINKED,
+      category: HistoryCategory.UPLOAD,
+      title: "Upload Linked to Account",
+      description: `Successfully linked odometer upload to your account`,
+      data: {
+        activity: "upload_linked",
+        timestamp: new Date().toISOString(),
+        userId: userId,
+        uploadId: uploadId,
+        finalMileage: uploadData.finalMileage,
+        carbonSaved: uploadData.carbonSaved,
+        mileageDifference: uploadData.mileageDifference,
+        vehicleId: uploadData.vehicleId,
+        vehicleName: uploadData.vehicleName,
+        uploadDate: uploadData.uploadDate,
+        processingTime: uploadData.processingTime,
+        ocrConfidence: uploadData.ocrConfidence,
+        imageHash: uploadData.imageHash,
+        status: uploadData.status,
+        isApproved: uploadData.isApproved,
+        validationStatus: uploadData.validationStatus,
+        actionUrl: `/uploads/${uploadId}`,
+        deepLink: `/uploads/${uploadId}`,
+        tags: ["upload", "linking", "odometer"],
+      },
+      value: uploadData.finalMileage || 0,
+      previousValue: 0,
+    });
+  }
 }

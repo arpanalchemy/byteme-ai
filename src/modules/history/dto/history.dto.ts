@@ -11,8 +11,15 @@ import {
 
 export enum HistoryType {
   VEHICLE_UPLOAD = "vehicle_upload",
+  UPLOAD_LINKED = "upload_linked",
   REWARD_EARNED = "reward_earned",
   REWARD_SPENT = "reward_spent",
+  REWARD_DISTRIBUTED = "reward_distributed",
+  REWARD_DISTRIBUTION_FAILED = "reward_distribution_failed",
+  REWARD_DISTRIBUTION_RETRY = "reward_distribution_retry",
+  TRANSACTION_CONFIRMED = "transaction_confirmed",
+  TRANSACTION_FAILED = "transaction_failed",
+  BATCH_DISTRIBUTION_COMPLETED = "batch_distribution_completed",
   BADGE_EARNED = "badge_earned",
   CHALLENGE_JOINED = "challenge_joined",
   CHALLENGE_COMPLETED = "challenge_completed",

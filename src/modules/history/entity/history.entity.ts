@@ -12,8 +12,15 @@ import { User } from "../../users/entity/user.entity";
 
 export enum HistoryType {
   VEHICLE_UPLOAD = "vehicle_upload",
+  UPLOAD_LINKED = "upload_linked",
   REWARD_EARNED = "reward_earned",
   REWARD_SPENT = "reward_spent",
+  REWARD_DISTRIBUTED = "reward_distributed",
+  REWARD_DISTRIBUTION_FAILED = "reward_distribution_failed",
+  REWARD_DISTRIBUTION_RETRY = "reward_distribution_retry",
+  TRANSACTION_CONFIRMED = "transaction_confirmed",
+  TRANSACTION_FAILED = "transaction_failed",
+  BATCH_DISTRIBUTION_COMPLETED = "batch_distribution_completed",
   BADGE_EARNED = "badge_earned",
   CHALLENGE_JOINED = "challenge_joined",
   CHALLENGE_COMPLETED = "challenge_completed",
@@ -293,10 +300,24 @@ export class History {
     switch (this.type) {
       case HistoryType.VEHICLE_UPLOAD:
         return "📸";
+      case HistoryType.UPLOAD_LINKED:
+        return "🔗";
       case HistoryType.REWARD_EARNED:
         return "💰";
       case HistoryType.REWARD_SPENT:
         return "💸";
+      case HistoryType.REWARD_DISTRIBUTED:
+        return "✅";
+      case HistoryType.REWARD_DISTRIBUTION_FAILED:
+        return "❌";
+      case HistoryType.REWARD_DISTRIBUTION_RETRY:
+        return "🔄";
+      case HistoryType.TRANSACTION_CONFIRMED:
+        return "🔗";
+      case HistoryType.TRANSACTION_FAILED:
+        return "🚫";
+      case HistoryType.BATCH_DISTRIBUTION_COMPLETED:
+        return "📦";
       case HistoryType.BADGE_EARNED:
         return "🏆";
       case HistoryType.CHALLENGE_JOINED:

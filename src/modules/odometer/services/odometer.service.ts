@@ -598,64 +598,10 @@ export class OdometerService {
 
           // Create reward if upload is approved and user is authenticated
           if (upload.isApproved && upload.finalMileage > 0) {
-            try {
-              const vehicle = upload.vehicle
-                ? await this.vehicleRepository.findOne({
-                    where: { id: upload.vehicle.id },
-                  })
-                : null;
-
-              const vehicleName =
-                vehicle?.customName ||
-                vehicle?.displayName ||
-                "Unknown Vehicle";
-
-              await this.rewardService.createUploadReward(
-                upload.user.id,
-                upload.id,
-                upload.finalMileage,
-                upload.carbonSaved || 0,
-                upload.imageHash,
-                {
-                  vehicleId: upload.vehicle?.id,
-                  vehicleName,
-                  previousMileage: upload.mileageDifference
-                    ? upload.finalMileage - upload.mileageDifference
-                    : undefined,
-                  mileageDifference: upload.mileageDifference,
-                  ocrConfidence: upload.ocrConfidenceScore,
-                  processingTime: upload.processingTimeMs,
-                  uploadDate: upload.processedAt,
-                  // These would be set when blockchain integration is complete
-                  // cycleId: undefined,
-                  // submissionId: undefined,
-                }
-              );
-              this.logger.log(
-                `Reward created for upload ${upload.id} with comprehensive data`
-              );
-
-              // Update user statistics after successful reward creation
-              if (upload.user) {
-                await this.updateUserStatistics(
-                  upload.user.id,
-                  upload.finalMileage || 0,
-                  upload.carbonSaved || 0
-                );
-              }
-            } catch (rewardError) {
-              this.logger.error(
-                `Failed to create reward for upload ${upload.id}: ${rewardError.message}`
-              );
-              // Don't throw error as reward creation failure shouldn't fail the upload
-            }
+            await this.handleRewardCreationAndStats(upload.user.id, upload, vehicleName);
           } else if (upload.user && upload.isApproved) {
             // Update user statistics for approved uploads even if no reward is created
-            await this.updateUserStatistics(
-              upload.user.id,
-              upload.finalMileage || 0,
-              upload.carbonSaved || 0
-            );
+            await this.handleUserStatisticsUpdate(upload.user.id, upload);
           }
         } catch (historyError) {
           this.logger.error(
@@ -828,15 +774,115 @@ export class OdometerService {
         throw new BadRequestException("Upload is already linked to a user");
       }
 
+      // Get vehicle information for history logging
+      const vehicle = upload.vehicle
+        ? await this.vehicleRepository.findOne({
+            where: { id: upload.vehicle.id },
+          })
+        : null;
+
+      const vehicleName =
+        vehicle?.customName || vehicle?.displayName || "Unknown Vehicle";
+
+      // Link upload to user
       upload.user = { id: userId } as any;
       await this.odometerUploadRepository.save(upload);
 
-      this.logger.log(`Upload ${uploadId} linked to user ${userId}`);
+      // Create comprehensive history entry for upload linking
+      await this.historyService.createUploadLinkingHistory(userId, uploadId, {
+        finalMileage: upload.finalMileage,
+        carbonSaved: upload.carbonSaved,
+        mileageDifference: upload.mileageDifference,
+        vehicleId: upload.vehicle?.id,
+        vehicleName: vehicleName,
+        uploadDate: upload.processedAt,
+        processingTime: upload.processingTimeMs,
+        ocrConfidence: upload.ocrConfidenceScore,
+        imageHash: upload.imageHash,
+        status: upload.status,
+        isApproved: upload.isApproved,
+        validationStatus: upload.validationStatus,
+      });
+
+      this.logger.log(
+        `Upload ${uploadId} linked to user ${userId} with history logging`
+      );
+
+      // If upload is approved and has valid mileage, create reward
+      if (upload.isApproved && upload.finalMileage > 0) {
+        await this.handleRewardCreationAndStats(userId, upload, vehicleName);
+      } else if (upload.isApproved) {
+        // Update user statistics for approved uploads even if no reward is created
+        await this.handleUserStatisticsUpdate(userId, upload);
+      }
+
       return { message: "Upload linked to user successfully" };
     } catch (error) {
       this.logger.error(`Failed to link upload to user: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * Common function to handle reward creation and user statistics update
+   */
+  private async handleRewardCreationAndStats(
+    userId: string,
+    upload: OdometerUpload,
+    vehicleName: string
+  ): Promise<void> {
+    try {
+      await this.rewardService.createUploadReward(
+        userId,
+        upload.id,
+        upload.finalMileage,
+        upload.carbonSaved || 0,
+        upload.imageHash,
+        {
+          vehicleId: upload.vehicle?.id,
+          vehicleName,
+          previousMileage: upload.mileageDifference
+            ? upload.finalMileage - upload.mileageDifference
+            : undefined,
+          mileageDifference: upload.mileageDifference,
+          ocrConfidence: upload.ocrConfidenceScore,
+          processingTime: upload.processingTimeMs,
+          uploadDate: upload.processedAt,
+          // These would be set when blockchain integration is complete
+          // cycleId: undefined,
+          // submissionId: undefined,
+        }
+      );
+      this.logger.log(
+        `Reward created for upload ${upload.id} with comprehensive data`
+      );
+
+      // Update user statistics after successful reward creation
+      await this.updateUserStatistics(
+        userId,
+        upload.finalMileage || 0,
+        upload.carbonSaved || 0
+      );
+    } catch (rewardError) {
+      this.logger.error(
+        `Failed to create reward for upload ${upload.id}: ${rewardError.message}`
+      );
+      // Don't throw error as reward creation failure shouldn't fail the upload
+    }
+  }
+
+  /**
+   * Common function to handle user statistics update for approved uploads
+   */
+  private async handleUserStatisticsUpdate(
+    userId: string,
+    upload: OdometerUpload
+  ): Promise<void> {
+    await this.updateUserStatistics(
+      userId,
+      upload.finalMileage || 0,
+      upload.carbonSaved || 0
+    );
   }
 
   /**

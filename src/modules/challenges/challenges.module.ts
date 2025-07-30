@@ -14,6 +14,7 @@ import { OdometerUpload } from "../odometer/entity/odometer-upload.entity";
 import { Reward } from "../rewards/entity/reward.entity";
 import { RewardService } from "../rewards/services/reward.service";
 import { VeChainService } from "../../common/blockchain/vechain.service";
+import { HistoryModule } from "../history/history.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { VeChainService } from "../../common/blockchain/vechain.service";
       OdometerUpload,
       Reward,
     ]),
+    HistoryModule,
   ],
   controllers: [
     ChallengeController,
