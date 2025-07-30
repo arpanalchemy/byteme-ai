@@ -909,9 +909,7 @@ export class VeChainService {
           }
 
           // Determine transaction status
-          status = receiptData.outputs?.[0]?.contractAddress
-            ? "success"
-            : "failed";
+          status = receiptData.reverted ? "failed" : "success";
         }
 
         // Parse transaction data

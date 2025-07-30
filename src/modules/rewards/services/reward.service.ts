@@ -642,6 +642,7 @@ export class RewardService {
         where: {
           blockchainStatus: BlockchainStatus.SENT,
         },
+        relations: ["user"],
         take: 50,
       });
 
@@ -658,10 +659,15 @@ export class RewardService {
               // Get detailed transaction information
               const transactionDetails =
                 await this.vechainService.getTransactionDetails(txid);
-
               // Update reward with transaction details and confirmation
-              reward.status = RewardStatus.COMPLETED;
-              reward.blockchainStatus = BlockchainStatus.CONFIRMED;
+              reward.status =
+                transactionDetails.status === "success"
+                  ? RewardStatus.COMPLETED
+                  : RewardStatus.FAILED;
+              reward.blockchainStatus =
+                transactionDetails.status === "success"
+                  ? BlockchainStatus.CONFIRMED
+                  : BlockchainStatus.FAILED;
               reward.confirmedAt = new Date();
 
               // Store transaction details in metadata
@@ -707,7 +713,7 @@ export class RewardService {
               await this.rewardRepository.save(reward);
 
               // Update user's B3TR balance when reward is confirmed
-              await this.updateUserB3trBalance(reward.user.id, reward.amount);
+              await this.updateUserB3trBalance(reward.user?.id, reward.amount);
 
               // Log transaction confirmation
               await this.historyService.createTransactionConfirmationHistory(
