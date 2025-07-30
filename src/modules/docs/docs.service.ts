@@ -3,13 +3,28 @@ import { readFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
 import * as matter from "gray-matter";
 import hljs from "highlight.js";
+import * as MarkdownIt from "markdown-it";
 
 @Injectable()
 export class DocsService {
   private docsPath = join(process.cwd(), "docs");
+  private md: MarkdownIt;
 
   constructor() {
-    // Marked configuration will be done dynamically
+    // Initialize markdown-it with options
+    this.md = new MarkdownIt({
+      html: true,
+      linkify: true,
+      typographer: true,
+      highlight: function (str, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+          try {
+            return hljs.highlight(str, { language: lang }).value;
+          } catch (__) {}
+        }
+        return ""; // use external default escaping
+      },
+    });
   }
 
   getDocsList() {
@@ -39,21 +54,18 @@ export class DocsService {
 
   async getDocContent(filename: string) {
     const filePath = join(this.docsPath, `${filename}.md`);
+    console.log("[DocsService] Looking for doc file at:", filePath);
 
     if (!existsSync(filePath)) {
+      console.error("[DocsService] File does not exist:", filePath);
       throw new Error("Document not found");
     }
 
     const content = readFileSync(filePath, "utf-8");
     const { data: frontMatter, content: markdown } = matter(content);
 
-    // Dynamic import for marked
-    const { marked } = await import("marked");
-    marked.setOptions({
-      gfm: true,
-      breaks: true,
-    });
-    const html = marked(markdown);
+    // Use markdown-it to render markdown to HTML
+    const html = this.md.render(markdown);
 
     return {
       frontMatter,
@@ -80,5 +92,34 @@ export class DocsService {
       nameMap[filename] ||
       filename.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
     );
+  }
+
+  getEmailSamples() {
+    const mediaPath = join(process.cwd(), "media");
+
+    if (!existsSync(mediaPath)) {
+      return [];
+    }
+
+    const files = readdirSync(mediaPath, { withFileTypes: true });
+    return files
+      .filter((file) => file.isFile() && file.name.endsWith(".png"))
+      .map((file) => {
+        const filename = file.name;
+        const title = this.getEmailSampleTitle(filename);
+        return {
+          filename,
+          title,
+        };
+      })
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  private getEmailSampleTitle(filename: string): string {
+    // Remove file extension and convert to title case
+    return filename
+      .replace(/\.[^/.]+$/, "") // Remove file extension
+      .replace(/-/g, " ") // Replace hyphens with spaces
+      .replace(/\b\w/g, (l) => l.toUpperCase()); // Convert to title case
   }
 }

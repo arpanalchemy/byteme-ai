@@ -59,16 +59,24 @@ export class DocsController {
             }
             .nav a { 
               display: inline-block; 
-              margin-right: 0px; 
+              margin-right: 8px; 
+              margin-bottom: 8px;
               color: #007bff; 
               text-decoration: none; 
-              padding: 8px 16px;
-              border-radius: 4px;
-              transition: background-color 0.2s;
+              padding: 10px 16px;
+              border-radius: 6px;
+              transition: all 0.2s ease;
+              border: 1px solid #e9ecef;
+              background-color: white;
+              font-weight: 500;
             }
             .nav a:hover { 
-              background-color: #e9ecef;
+              background-color: #007bff;
+              color: white;
               text-decoration: none;
+              border-color: #007bff;
+              transform: translateY(-1px);
+              box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
             }
             .content { 
               padding: 30px; 
@@ -164,6 +172,7 @@ export class DocsController {
               <a href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Components</a>
               <a href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a>
               <a href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a>
+              <a href="/docs/email-samples">📧 Email Samples</a>
             </div>
             <div class="content">
               <h2>Welcome to Drive & Earn Documentation</h2>
@@ -190,7 +199,7 @@ export class DocsController {
                     <p>Click to view the complete documentation for this section.</p>
                     <a href="/docs/${doc.name}">View Documentation →</a>
                   </div>
-                `,
+                `
                   )
                   .join("")}
               </div>
@@ -204,7 +213,7 @@ export class DocsController {
                   .map(
                     (doc) => `
                   <a href="/docs/${doc.name}">${doc.displayName}</a>
-                `,
+                `
                   )
                   .join("")}
               </div>
@@ -226,8 +235,7 @@ export class DocsController {
   @Get("healthcheck")
   async getHealthCheck(@Res() res: Response) {
     try {
-      // Fetch health check data using dynamic import
-      const fetch = (await import("node-fetch")).default;
+      // Use built-in fetch API instead of node-fetch
       const healthResponse = await fetch("http://localhost:3000/healthcheck");
       const healthData = (await healthResponse.json()) as {
         status: string;
@@ -280,16 +288,24 @@ export class DocsController {
             }
             .nav a { 
               display: inline-block; 
-              margin-right: 0px; 
+              margin-right: 8px; 
+              margin-bottom: 8px;
               color: #007bff; 
               text-decoration: none; 
-              padding: 8px 16px;
-              border-radius: 4px;
-              transition: background-color 0.2s;
+              padding: 10px 16px;
+              border-radius: 6px;
+              transition: all 0.2s ease;
+              border: 1px solid #e9ecef;
+              background-color: white;
+              font-weight: 500;
             }
             .nav a:hover { 
-              background-color: #e9ecef;
+              background-color: #007bff;
+              color: white;
               text-decoration: none;
+              border-color: #007bff;
+              transform: translateY(-1px);
+              box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
             }
             .content { 
               padding: 30px; 
@@ -376,7 +392,8 @@ export class DocsController {
               <h1>💚 System Health Check</h1>
             </div>
             <div class="breadcrumb">
-            → Health Check
+            <a href="/docs" class="back-link">← Back to Documentation</a>
+            / Health Check
             </div>
             <div class="nav">
               <a href="/api">📚 API Docs</a>
@@ -387,6 +404,7 @@ export class DocsController {
               <a href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Components</a>
               <a href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a>
               <a href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a>
+              <a href="/docs/email-samples">📧 Email Samples</a>
             </div>
             <div class="content">
               <div class="status-card">
@@ -444,8 +462,163 @@ export class DocsController {
     }
   }
 
+  @Get("email-samples")
+  async getEmailSamples(@Res() res: Response) {
+    try {
+      const emailSamples = this.docsService.getEmailSamples();
+
+      const html = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Drive & Earn - Email Samples</title>
+          <style>
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+              margin: 0; 
+              padding: 20px; 
+              background: #f5f5f5; 
+              line-height: 1.6;
+            }
+            .container { 
+              max-width: 1200px; 
+              margin: 0 auto; 
+              background: white; 
+              border-radius: 8px; 
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            }
+            .header { 
+              padding: 30px; 
+              border-bottom: 1px solid #eee; 
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              border-radius: 8px 8px 0 0;
+            }
+            .header h1 { 
+              margin: 0; 
+              font-size: 2.5em;
+              font-weight: 300;
+            }
+            .header p {
+              margin: 10px 0 0 0;
+              opacity: 0.9;
+              font-size: 1.1em;
+            }
+            .content { 
+              padding: 30px; 
+            }
+            .email-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+              gap: 30px;
+              margin: 30px 0;
+            }
+            .email-card {
+              background: #f8f9fa;
+              border: 1px solid #e9ecef;
+              border-radius: 8px;
+              padding: 20px;
+              transition: transform 0.2s, box-shadow 0.2s;
+            }
+            .email-card:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+            .email-card h3 {
+              margin: 0 0 15px 0;
+              color: #333;
+              font-size: 1.3em;
+            }
+            .email-card img {
+              width: 100%;
+              height: auto;
+              border-radius: 4px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .back-link {
+              display: inline-block;
+              margin-bottom: 20px;
+              color: #007bff;
+              text-decoration: none;
+              font-weight: 500;
+            }
+            .back-link:hover {
+              text-decoration: underline;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>📧 Email Samples</h1>
+              <p>Visual examples of email templates used in the Drive & Earn platform</p>
+            </div>
+            <div class="content">
+              <a href="/docs" class="back-link">← Back to Documentation</a>
+              
+              <div class="email-grid">
+                ${emailSamples
+                  .map(
+                    (sample) => `
+                  <div class="email-card">
+                    <h3>${sample.title}</h3>
+                    <img src="/docs/email-samples/${sample.filename}" alt="${sample.title}" />
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      res.status(HttpStatus.OK).send(html);
+    } catch (error) {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        error: "Failed to get email samples",
+        message: error.message,
+      });
+    }
+  }
+
+  @Get("email-samples/:filename")
+  async getEmailSampleImage(
+    @Param("filename") filename: string,
+    @Res() res: Response
+  ) {
+    try {
+      const filePath = join(process.cwd(), "media", filename);
+
+      if (!existsSync(filePath)) {
+        return res.status(HttpStatus.NOT_FOUND).json({
+          error: "Email sample not found",
+          message: `File ${filename} does not exist`,
+        });
+      }
+
+      res.sendFile(filePath);
+    } catch (error) {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        error: "Failed to serve email sample",
+        message: error.message,
+      });
+    }
+  }
+
   @Get(":filename")
   async getDoc(@Param("filename") filename: string, @Res() res: Response) {
+    // Prevent reserved/static pages from being handled as markdown docs
+    const reserved = ["email-samples", "healthcheck"];
+    if (reserved.includes(filename)) {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        message: "Document not found",
+        statusCode: HttpStatus.NOT_FOUND,
+      });
+    }
     try {
       const doc = await this.docsService.getDocContent(filename);
 
@@ -491,16 +664,24 @@ export class DocsController {
             }
             .nav a { 
               display: inline-block; 
-              margin-right: 0px; 
+              margin-right: 8px; 
+              margin-bottom: 8px;
               color: #007bff; 
               text-decoration: none; 
-              padding: 8px 16px;
-              border-radius: 4px;
-              transition: background-color 0.2s;
+              padding: 10px 16px;
+              border-radius: 6px;
+              transition: all 0.2s ease;
+              border: 1px solid #e9ecef;
+              background-color: white;
+              font-weight: 500;
             }
             .nav a:hover { 
-              background-color: #e9ecef;
+              background-color: #007bff;
+              color: white;
               text-decoration: none;
+              border-color: #007bff;
+              transform: translateY(-1px);
+              box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
             }
             .content { 
               padding: 30px; 
@@ -588,7 +769,8 @@ export class DocsController {
               <h1>${doc.displayName}</h1>
             </div>
             <div class="breadcrumb">
-            → ${doc.displayName}
+            <a href="/docs" class="back-link">← Back to Documentation</a>
+            / ${doc.displayName}
             </div>
             <div class="nav">
               <a href="/api">📚 API Docs</a>
@@ -599,6 +781,7 @@ export class DocsController {
               <a href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Components</a>
               <a href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a>
               <a href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a>
+              <a href="/docs/email-samples">📧 Email Samples</a>
             </div>
             <div class="content">
               ${doc.content}
