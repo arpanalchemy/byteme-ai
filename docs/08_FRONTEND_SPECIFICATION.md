@@ -1,508 +1,340 @@
-# Frontend Specification - ByteMe AI
+# ByteMe AI Frontend
 
-## Overview
+A comprehensive AI-powered platform for sustainable transportation that gamifies environmental consciousness through blockchain technology and advanced OCR capabilities.
 
-The **ByteMe AI** frontend is a modern, responsive web application built with Next.js that provides an AI-powered platform for sustainable transportation. The application offers a comprehensive dashboard for tracking eco-friendly driving practices, carbon savings, and blockchain-based rewards.
+## 🚀 Overview
 
-**Live Website:** [https://bytemeai.netlify.app/](https://bytemeai.netlify.app/)
+ByteMe AI is a Next.js-based web application that encourages sustainable transportation by tracking vehicle odometer readings, calculating carbon savings, and rewarding users with tokens and badges. The platform features both user-facing and admin panels with advanced OCR (Optical Character Recognition) capabilities.
 
-## Technology Stack
+## ✨ Key Features
 
-### Core Framework
+### 🏠 Landing Page
+- **Interactive Hero Section** with animated dashboard-style elements
+- **Real-time Statistics** display (users, vehicles, carbon saved, tokens distributed)
+- **Features Showcase** highlighting platform capabilities
+- **How It Works** section explaining the user journey
+- **Rewards & Gamification** overview
+- **FAQ Section** for common questions
+- **Call-to-Action** sections for user engagement
 
-- **Next.js 14+** - React framework with App Router
-- **TypeScript** - Type-safe JavaScript development
-- **React 18** - Modern React with concurrent features
+### 👤 User Panel
 
-### Styling and UI
+#### 📊 Dashboard
+- **Overview Tab**: User statistics, recent activity, and achievements
+- **Vehicle History**: Track all vehicle uploads and odometer readings
+- **Badges System**: Earn and display achievement badges
+- **Leaderboard**: Compete with other users and view rankings
+- **Token Store**: Manage and spend earned tokens
+- **User Orders**: View purchase history and order status
 
-- **Tailwind CSS** - Utility-first CSS framework
-- **CSS Modules** - Component-scoped styling
-- **Custom CSS Animations** - Advanced visual effects
-- **Responsive Design** - Mobile-first approach
+#### 📸 Odometer Upload System
+- **Dual OCR Technology**: 
+  - Server-side API processing with intelligent fallback
+  - Client-side Tesseract.js OCR for reliability
+  - Advanced image preprocessing for better accuracy
+- **Smart Vehicle Management**:
+  - Vehicle selection for authenticated users
+  - Manual input for anonymous users
+  - Add new vehicles through modal interface
+- **Long Polling API**: Up to 5 retry attempts for reliable data fetching
+- **Real-time Processing Status**: Unified UI showing upload, fetching, and OCR processing states
+- **Error Handling**: Graceful fallback with client-side OCR when API fails
+
+#### 👤 Profile Management
+- **Vehicle Management**: Add, edit, and manage multiple vehicles
+- **User Information**: Update personal details and preferences
+- **Achievement Tracking**: View earned badges and milestones
+
+#### 📜 History
+- **Upload History**: Complete record of all odometer submissions
+- **Processing Status**: Track API and OCR processing results
+- **Carbon Impact**: View environmental contribution over time
+
+#### 🏆 Active Challenges
+- **Current Challenges**: View and participate in ongoing environmental challenges
+- **Challenge Progress**: Track personal progress and achievements
+- **Reward Opportunities**: See available rewards and token earnings
+- **Leaderboard Integration**: Compare performance with other participants
+
+#### 🛒 Store & Shopping
+- **Product Catalog**: Browse products from admin-managed store
+- **Product Categories**: Filter by vehicle types, accessories, and eco-friendly items
+- **Shopping Cart**: Add items and manage cart contents
+- **Secure Checkout**: Complete purchases using earned tokens or traditional payment
+- **Product Reviews**: View and leave reviews for purchased items
+
+#### 📦 Orders Management
+- **Order History**: Complete list of all purchases and transactions
+- **Order Status Tracking**: Real-time updates on order processing, shipping, and delivery
+- **Order Details**: View specific order information, items, and tracking
+- **Order Cancellation**: Cancel pending orders within allowed timeframe
+- **Order Support**: Contact support for order-related issues
+
+### 🔧 Admin Panel
+
+#### 📊 Admin Dashboard
+- **System Analytics**: User growth, vehicle types, upload status charts
+- **Real-time Statistics**: Total users, vehicles, carbon saved, tokens distributed
+- **Performance Metrics**: Weekly rewards, pending uploads, order management
+
+#### 👥 User Management
+- **User List**: View and manage all registered users
+- **User Details**: Individual user profiles and activity
+- **Account Management**: User status and permissions
+
+#### 🚗 Vehicle Management
+- **Vehicle Database**: Comprehensive vehicle information
+- **Type Classification**: Two-wheeler, three-wheeler, four-wheeler support
+- **Registration Tracking**: Number plate and model management
+
+#### 🏆 Challenges & Badges
+- **Challenge Creation**: Design and manage environmental challenges
+- **Challenge Management**: Set duration, goals, and reward structures
+- **Badge System**: Create and award achievement badges
+- **Reward Distribution**: Token and reward management
+- **Participant Tracking**: Monitor user participation and progress
+- **Leaderboard Management**: Manage challenge rankings and statistics
+
+#### 🛒 Store Management
+- **Product Catalog**: Manage store products and inventory
+- **Product Categories**: Organize products by vehicle types and accessories
+- **Order Processing**: Handle user orders and fulfillment
+- **Inventory Control**: Stock management and tracking
+- **Order Status Updates**: Update order processing, shipping, and delivery status
+- **Customer Support**: Manage order-related customer inquiries
+
+#### 🎁 Rewards System
+- **Token Distribution**: Manage reward token allocation
+- **Participant Tracking**: Monitor challenge participation
+- **Reward Analytics**: Distribution statistics and reporting
+
+#### ⚙️ Settings
+- **System Configuration**: Platform settings and preferences
+- **API Management**: Backend service configuration
+- **Security Settings**: Authentication and authorization controls
+
+## 🛠️ Technical Stack
+
+### Frontend Framework
+- **Next.js 15.4.3** with App Router
+- **React 19.1.0** with TypeScript
+- **Tailwind CSS 4** for styling
+- **Framer Motion** for animations
 
 ### State Management
-
-- **React Context API** - Global state management
-- **React Hooks** - Local state and side effects
-- **Custom Hooks** - Reusable logic patterns
-
-### Build and Deployment
-
-- **Vite** - Fast build tool (if used)
-- **Netlify** - Hosting and deployment platform
-- **PWA Support** - Progressive Web App capabilities
-
-## Application Architecture
-
-### File Structure
-
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── layout.tsx         # Root layout component
-│   ├── page.tsx           # Home page
-│   ├── globals.css        # Global styles
-│   └── components/        # Shared components
-├── components/            # Reusable UI components
-│   ├── ui/               # Base UI components
-│   ├── forms/            # Form components
-│   └── layout/           # Layout components
-├── hooks/                # Custom React hooks
-├── lib/                  # Utility functions
-├── types/                # TypeScript type definitions
-└── styles/               # Additional styling
-```
-
-### Component Architecture
-
-- **Atomic Design** - Component hierarchy (atoms, molecules, organisms)
-- **Composition Pattern** - Flexible component composition
-- **Props Interface** - Type-safe component props
-- **Error Boundaries** - Graceful error handling
-
-## Key Features
-
-### 1. Interactive Dashboard
-
-- **Real-time Data Visualization** - Live metrics and statistics
-- **Animated Elements** - Smooth transitions and micro-interactions
-- **Responsive Grid Layout** - Adaptive to different screen sizes
-- **Dark/Light Theme** - User preference support
-
-### 2. AI-Powered Features
-
-- **Odometer Recognition** - AI-powered image processing
-- **Carbon Footprint Tracking** - Real-time environmental impact
-- **Smart Recommendations** - AI-driven suggestions for eco-friendly driving
-- **Predictive Analytics** - Future carbon savings projections
-
-### 3. Blockchain Integration
-
-- **Wallet Connection** - VeChain wallet integration
-- **Token Management** - B3TR token tracking and transfers
-- **Transaction History** - Blockchain transaction monitoring
-- **Reward Distribution** - Automated reward claiming
-
-### 4. User Experience
-
-- **Progressive Web App** - Offline capabilities and app-like experience
-- **Push Notifications** - Real-time updates and alerts
-- **Accessibility** - WCAG 2.1 compliance
-- **Performance** - Optimized loading and rendering
-
-## Page Structure
-
-### Home Page (`/`)
-
-- **Hero Section** - Platform introduction and value proposition
-- **Feature Showcase** - Key platform capabilities
-- **Call-to-Action** - User registration and onboarding
-- **Testimonials** - User success stories
-
-### Dashboard (`/dashboard`)
-
-- **Overview Cards** - Key metrics and statistics
-- **Activity Feed** - Recent driving activities
-- **Carbon Savings Chart** - Visual progress tracking
-- **Reward Status** - Current token balance and pending rewards
-
-### Upload Page (`/upload`)
-
-- **Image Upload** - Drag-and-drop file interface
-- **AI Processing** - Real-time image analysis
-- **Results Display** - Odometer reading and validation
-- **Confirmation** - Success/error feedback
-
-### Profile Page (`/profile`)
-
-- **User Information** - Personal details and preferences
-- **Vehicle Management** - Registered vehicles
-- **Achievement Badges** - Earned accomplishments
-- **Settings** - Account configuration
-
-### Leaderboard (`/leaderboard`)
-
-- **Global Rankings** - Top performers
-- **Category Filters** - Different ranking criteria
-- **Personal Position** - User's current ranking
-- **Historical Data** - Past performance trends
-
-## Component Library
+- **Redux Toolkit** for global state management
+- **Redux Persist** for state persistence
+- **React Redux** for React integration
 
 ### UI Components
+- **Radix UI** for accessible components
+- **Lucide React** for icons
+- **Shadcn/ui** component library
+- **React Hot Toast** for notifications
 
-#### Button Components
+### OCR & AI
+- **Tesseract.js** for client-side OCR
+- **Advanced Image Preprocessing** for better accuracy
+- **Vehicle-specific Pattern Matching** for odometer extraction
+- **Confidence Scoring** for result validation
 
-```typescript
-interface ButtonProps {
-  variant: "primary" | "secondary" | "outline" | "ghost";
-  size: "sm" | "md" | "lg";
-  disabled?: boolean;
-  loading?: boolean;
-  children: React.ReactNode;
-  onClick?: () => void;
-}
+### Blockchain Integration
+- **VeChain DApp Kit** for blockchain connectivity
+- **Wallet Integration** for token management
+
+### Data Visualization
+- **ApexCharts** for analytics and charts
+- **React ApexCharts** for React integration
+
+### Development Tools
+- **ESLint** for code linting
+- **TypeScript** for type safety
+- **PostCSS** for CSS processing
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd byteme-ai-frontend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp env.example env
+   # Edit env file with your configuration
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   # or
+   pnpm dev
+   ```
+
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 📁 Project Structure
+
+```
+byteme-ai-frontend/
+├── app/                          # Next.js App Router
+│   ├── (user)/                   # User panel routes
+│   │   ├── dashboard/            # User dashboard
+│   │   ├── uploads/              # Odometer upload system
+│   │   ├── profile/              # User profile management
+│   │   └── history/              # Upload history
+│   ├── admin/                    # Admin panel routes
+│   │   ├── dashboard/            # Admin analytics
+│   │   ├── users/                # User management
+│   │   ├── products/             # Store management
+│   │   ├── orders/               # Order processing
+│   │   ├── challenges/           # Challenge management
+│   │   ├── badges/               # Badge system
+│   │   ├── rewards/              # Reward distribution
+│   │   └── settings/             # System settings
+│   ├── contact-support/          # Support page
+│   ├── documentation/            # Documentation
+│   └── components/               # App-specific components
+├── components/                   # Reusable components
+│   ├── auth/                     # Authentication components
+│   ├── dashboard/                # Dashboard components
+│   ├── landing/                  # Landing page components
+│   ├── modals/                   # Modal components
+│   ├── rewards/                  # Reward components
+│   ├── store/                    # Store components
+│   └── ui/                       # UI components
+├── lib/                          # Utility libraries
+│   ├── api/                      # API configuration
+│   └── apiHelpers/               # API helper functions
+├── redux/                        # Redux store and slices
+├── public/                       # Static assets
+└── types/                        # TypeScript type definitions
 ```
 
-#### Card Components
+## 📜 Available Scripts
 
-```typescript
-interface CardProps {
-  title?: string;
-  subtitle?: string;
-  children: React.ReactNode;
-  variant?: "default" | "elevated" | "outlined";
-  padding?: "sm" | "md" | "lg";
-}
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
+## 🔧 Environment Variables
+
+Create an `env` file based on `env.example` with the following variables:
+
+```env
+# API Configuration
+NEXT_PUBLIC_API_BASE_URL=your_api_base_url
+NEXT_PUBLIC_API_TIMEOUT=30000
+
+# Blockchain Configuration
+NEXT_PUBLIC_VECHAIN_NETWORK=mainnet
+NEXT_PUBLIC_CONTRACT_ADDRESS=your_contract_address
+
+# OCR Configuration
+NEXT_PUBLIC_OCR_TIMEOUT=30000
+NEXT_PUBLIC_OCR_CONFIDENCE_THRESHOLD=30
+
+# Feature Flags
+NEXT_PUBLIC_ENABLE_CLIENT_OCR=true
+NEXT_PUBLIC_ENABLE_BLOCKCHAIN=true
 ```
 
-#### Form Components
-
-```typescript
-interface InputProps {
-  label?: string;
-  placeholder?: string;
-  type?: "text" | "email" | "password" | "number";
-  error?: string;
-  required?: boolean;
-  disabled?: boolean;
-}
-```
-
-### Layout Components
-
-#### Navigation
-
-- **Header** - Main navigation and branding
-- **Sidebar** - Secondary navigation (if applicable)
-- **Footer** - Links and additional information
-- **Breadcrumbs** - Page hierarchy navigation
-
-#### Grid System
-
-- **Container** - Content width constraints
-- **Row** - Horizontal layout container
-- **Column** - Vertical layout divisions
-- **Responsive Breakpoints** - Mobile, tablet, desktop
-
-## Styling System
-
-### Design Tokens
-
-```css
-:root {
-  /* Colors */
-  --primary: #10b981;
-  --secondary: #3b82f6;
-  --accent: #f59e0b;
-  --success: #22c55e;
-  --warning: #f97316;
-  --error: #ef4444;
-
-  /* Typography */
-  --font-family: "Inter", sans-serif;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-
-  /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-
-  /* Border Radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-}
-```
-
-### Animation Classes
-
-```css
-/* Fade In */
-.fade-in {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-/* Slide Up */
-.slide-up {
-  animation: slideUp 0.4s ease-out;
-}
-
-/* Pulse */
-.pulse {
-  animation: pulse 2s infinite;
-}
-
-/* Float */
-.float {
-  animation: float 3s ease-in-out infinite;
-}
-```
-
-## API Integration
-
-### Backend Communication
-
-- **RESTful APIs** - Standard HTTP methods
-- **GraphQL** - Efficient data fetching (if implemented)
-- **WebSocket** - Real-time updates
-- **Error Handling** - Graceful API failure management
-
-### Authentication
-
-- **JWT Tokens** - Secure authentication
-- **Wallet Integration** - Blockchain wallet connection
-- **Session Management** - Persistent user sessions
-- **Role-based Access** - Different user permissions
-
-### Data Fetching
-
-```typescript
-// Custom hook for API calls
-const useApi = <T>(endpoint: string) => {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchData();
-  }, [endpoint]);
-
-  return { data, loading, error, refetch: fetchData };
-};
-```
-
-## Performance Optimization
-
-### Code Splitting
-
-- **Dynamic Imports** - Lazy loading of components
-- **Route-based Splitting** - Page-level code splitting
-- **Component-level Splitting** - Heavy component optimization
-
-### Image Optimization
-
-- **Next.js Image Component** - Automatic optimization
-- **WebP Format** - Modern image format support
-- **Lazy Loading** - On-demand image loading
-- **Responsive Images** - Different sizes for different devices
-
-### Caching Strategy
-
-- **Service Worker** - Offline caching
-- **Browser Cache** - Static asset caching
-- **API Cache** - Data caching with invalidation
-- **CDN** - Global content delivery
-
-## Accessibility Features
-
-### WCAG 2.1 Compliance
-
-- **Semantic HTML** - Proper HTML structure
-- **ARIA Labels** - Screen reader support
-- **Keyboard Navigation** - Full keyboard accessibility
-- **Color Contrast** - Sufficient color contrast ratios
-
-### Screen Reader Support
-
-```typescript
-// Accessible button component
-const AccessibleButton = ({ children, ...props }) => (
-  <button
-    role="button"
-    aria-label={props['aria-label']}
-    {...props}
-  >
-    {children}
-  </button>
-);
-```
-
-## Progressive Web App (PWA)
-
-### Manifest Configuration
-
-```json
-{
-  "name": "ByteMe AI",
-  "short_name": "ByteMe AI",
-  "description": "AI-powered platform for sustainable transportation",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#10b981",
-  "icons": [
-    {
-      "src": "/favicon.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
-}
-```
-
-### Service Worker Features
-
-- **Offline Support** - Basic functionality without internet
-- **Background Sync** - Sync data when connection returns
-- **Push Notifications** - Real-time updates
-- **App-like Experience** - Native app feel
-
-## Testing Strategy
-
-### Unit Testing
-
-- **Jest** - Test runner and assertion library
-- **React Testing Library** - Component testing utilities
-- **Mock Service Worker** - API mocking
-- **Coverage Reports** - Test coverage tracking
-
-### Integration Testing
-
-- **Cypress** - End-to-end testing
-- **User Flows** - Complete user journey testing
-- **Cross-browser Testing** - Multiple browser support
-- **Mobile Testing** - Responsive design validation
-
-### Performance Testing
-
-- **Lighthouse** - Performance audits
-- **Core Web Vitals** - User experience metrics
-- **Bundle Analysis** - JavaScript bundle optimization
-- **Load Testing** - High-traffic simulation
-
-## Deployment and CI/CD
-
-### Build Process
-
-```bash
-# Development
-npm run dev
-
-# Production build
-npm run build
-
-# Static export (if needed)
-npm run export
-```
-
-### Deployment Pipeline
-
-1. **Code Push** - Git repository trigger
-2. **Automated Testing** - Unit and integration tests
-3. **Build Process** - Production build generation
-4. **Deployment** - Netlify automatic deployment
-5. **Post-deployment** - Health checks and monitoring
-
-### Environment Configuration
-
-```typescript
-// Environment variables
-const config = {
-  apiUrl: process.env.NEXT_PUBLIC_API_URL,
-  blockchainUrl: process.env.NEXT_PUBLIC_BLOCKCHAIN_URL,
-  environment: process.env.NODE_ENV,
-  analytics: process.env.NEXT_PUBLIC_ANALYTICS_ID,
-};
-```
-
-## Monitoring and Analytics
-
-### Performance Monitoring
-
-- **Web Vitals** - Core performance metrics
-- **Error Tracking** - JavaScript error monitoring
-- **User Analytics** - User behavior tracking
-- **Real User Monitoring** - Actual user experience data
-
-### Analytics Integration
-
-```typescript
-// Google Analytics setup
-import { GA_TRACKING_ID } from "../lib/gtag";
-
-export const pageview = (url: string) => {
-  window.gtag("config", GA_TRACKING_ID, {
-    page_location: url,
-  });
-};
-
-export const event = ({
-  action,
-  category,
-  label,
-  value,
-}: {
-  action: string;
-  category: string;
-  label: string;
-  value?: number;
-}) => {
-  window.gtag("event", action, {
-    event_category: category,
-    event_label: label,
-    value: value,
-  });
-};
-```
-
-## Security Considerations
-
-### Frontend Security
-
-- **Content Security Policy** - XSS protection
-- **HTTPS Enforcement** - Secure communication
-- **Input Validation** - Client-side validation
-- **CSRF Protection** - Cross-site request forgery prevention
-
-### Data Protection
-
-- **Local Storage Security** - Sensitive data handling
-- **Session Management** - Secure session handling
-- **API Security** - Secure API communication
-- **Privacy Compliance** - GDPR and privacy regulations
-
-## Future Enhancements
-
-### Planned Features
-
-- **Mobile App** - React Native application
-- **Advanced Analytics** - Machine learning insights
-- **Social Features** - Community and sharing
-- **Gamification** - Enhanced reward systems
-
-### Technical Improvements
-
-- **Micro-frontends** - Modular architecture
-- **Server-side Rendering** - Improved SEO and performance
-- **Real-time Collaboration** - Multi-user features
-- **Advanced Caching** - Intelligent data caching
-
-## Development Guidelines
-
-### Code Standards
-
-- **ESLint** - Code linting and formatting
-- **Prettier** - Code formatting
-- **TypeScript** - Type safety
-- **Conventional Commits** - Standardized commit messages
-
-### Git Workflow
-
-- **Feature Branches** - Isolated feature development
-- **Pull Requests** - Code review process
-- **Automated Checks** - CI/CD pipeline integration
-- **Version Management** - Semantic versioning
+## 🔐 Authentication
+
+The platform supports multiple authentication methods:
+- **Wallet Connection** via VeChain DApp Kit
+- **Traditional Authentication** (if configured)
+- **Guest Mode** for anonymous users
+
+## 📱 Responsive Design
+
+The application is fully responsive and optimized for:
+- Desktop computers
+- Tablets
+- Mobile devices
+- Various screen sizes and orientations
+
+## 🎨 UI/UX Features
+
+- **Dark/Light Theme** support
+- **Smooth Animations** using Framer Motion
+- **Loading States** and skeleton screens
+- **Error Handling** with user-friendly messages
+- **Accessibility** compliant components
+- **Progressive Web App** capabilities
+
+## 🗃️ State Management
+
+The application uses Redux Toolkit for state management with the following slices:
+- **User Slice**: Authentication and user data
+- **Odometer Slice**: Upload processing and OCR results
+- **Admin Slice**: Admin panel state
+- **Modal Slice**: Modal visibility management
+- **Store Slice**: E-commerce functionality
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+1. Connect your GitHub repository to Vercel
+2. Configure environment variables
+3. Deploy automatically on push
+
+### Other Platforms
+The application can be deployed to any platform that supports Next.js:
+- Netlify
+- AWS Amplify
+- DigitalOcean App Platform
+- Self-hosted servers
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For support and questions:
+- Check the documentation at `/documentation`
+- Contact support at `/contact-support`
+- Open an issue on GitHub
+
+## 🗺️ Future Roadmap
+
+- **Mobile App** development
+- **Advanced Analytics** dashboard
+- **Social Features** for community building
+- **Integration** with more blockchain networks
+- **AI-powered** route optimization
+- **Carbon Credit** marketplace
+- **Vehicle-to-Grid** integration
 
 ---
 
-_This specification reflects the current implementation of the ByteMe AI frontend. For the most up-to-date information, refer to the source code and deployment at [https://bytemeai.netlify.app/](https://bytemeai.netlify.app/)._
+**ByteMe AI** - Driving the future of sustainable transportation through technology and gamification.
