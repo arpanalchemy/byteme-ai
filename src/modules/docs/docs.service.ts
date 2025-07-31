@@ -87,6 +87,7 @@ export class DocsService {
       "07_BLOCKCHAIN_CONTRACT": "Blockchain Contract Documentation",
       "08_FRONTEND_SPECIFICATION": "Frontend Specification",
       "09_MOBILE_APP_DOCUMENTATION": "Mobile App Documentation",
+      "10_DASHBOARD_DOCUMENTATION": "Dashboard Documentation",
     };
 
     return (

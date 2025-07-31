@@ -152,6 +152,23 @@ export class DocsController {
             .navbar-nav .dropdown-toggle {
               min-width: 100px;
             }
+            .navbar-nav .mb-2.mb-lg-0 {
+              border-bottom: 1px solid #e9ecef;
+              padding-bottom: 10px;
+              margin-bottom: 10px;
+            }
+            .navbar-nav .mb-2.mb-lg-0:last-child {
+              border-bottom: none;
+              padding-bottom: 0;
+              margin-bottom: 0;
+            }
+            @media (min-width: 992px) {
+              .navbar-nav .mb-2.mb-lg-0 {
+                border-bottom: none;
+                padding-bottom: 0;
+                margin-bottom: 0;
+              }
+            }
             .content { 
               padding: 30px; 
             }
@@ -260,7 +277,8 @@ export class DocsController {
                 </button>
                 
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
-                  <ul class="navbar-nav me-auto">
+                  <!-- First Row: Core Documentation -->
+                  <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle d-flex flex-column align-items-center" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span style="font-size: 1.2em;">🔧</span>
@@ -288,6 +306,15 @@ export class DocsController {
                       </a>
                     </li>
                     
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/10_DASHBOARD_DOCUMENTATION">
+                        📊 Dashboard
+                      </a>
+                    </li>
+                  </ul>
+                  
+                  <!-- Second Row: Frontend & Blockchain -->
+                  <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                       <a class="nav-link" href="/docs/08_FRONTEND_SPECIFICATION">
                         🌐 Frontend Specification
@@ -496,6 +523,23 @@ export class DocsController {
             .navbar-nav .dropdown-toggle {
               min-width: 100px;
             }
+            .navbar-nav .mb-2.mb-lg-0 {
+              border-bottom: 1px solid #e9ecef;
+              padding-bottom: 10px;
+              margin-bottom: 10px;
+            }
+            .navbar-nav .mb-2.mb-lg-0:last-child {
+              border-bottom: none;
+              padding-bottom: 0;
+              margin-bottom: 0;
+            }
+            @media (min-width: 992px) {
+              .navbar-nav .mb-2.mb-lg-0 {
+                border-bottom: none;
+                padding-bottom: 0;
+                margin-bottom: 0;
+              }
+            }
             .content { 
               padding: 30px; 
               line-height: 1.6; 
@@ -603,7 +647,8 @@ export class DocsController {
                 </button>
                 
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
-                  <ul class="navbar-nav me-auto">
+                  <!-- First Row: Core Documentation -->
+                  <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle d-flex flex-column align-items-center" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span style="font-size: 1.2em;">🔧</span>
@@ -631,6 +676,15 @@ export class DocsController {
                       </a>
                     </li>
                     
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/10_DASHBOARD_DOCUMENTATION">
+                        📊 Dashboard
+                      </a>
+                    </li>
+                  </ul>
+                  
+                  <!-- Second Row: Frontend & Blockchain -->
+                  <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                       <a class="nav-link" href="/docs/08_FRONTEND_SPECIFICATION">
                         🌐 Frontend Specification
@@ -1025,6 +1079,23 @@ export class DocsController {
             .navbar-nav .dropdown-toggle {
               min-width: 100px;
             }
+            .navbar-nav .mb-2.mb-lg-0 {
+              border-bottom: 1px solid #e9ecef;
+              padding-bottom: 10px;
+              margin-bottom: 10px;
+            }
+            .navbar-nav .mb-2.mb-lg-0:last-child {
+              border-bottom: none;
+              padding-bottom: 0;
+              margin-bottom: 0;
+            }
+            @media (min-width: 992px) {
+              .navbar-nav .mb-2.mb-lg-0 {
+                border-bottom: none;
+                padding-bottom: 0;
+                margin-bottom: 0;
+              }
+            }
             .content { 
               padding: 30px; 
               line-height: 1.6; 
@@ -1121,7 +1192,8 @@ export class DocsController {
                 </button>
                 
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
-                  <ul class="navbar-nav me-auto">
+                  <!-- First Row: Core Documentation -->
+                  <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle d-flex flex-column align-items-center" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span style="font-size: 1.2em;">🔧</span>
@@ -1149,6 +1221,15 @@ export class DocsController {
                       </a>
                     </li>
                     
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/10_DASHBOARD_DOCUMENTATION">
+                        📊 Dashboard
+                      </a>
+                    </li>
+                  </ul>
+                  
+                  <!-- Second Row: Frontend & Blockchain -->
+                  <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                       <a class="nav-link" href="/docs/08_FRONTEND_SPECIFICATION">
                         🌐 Frontend Specification
