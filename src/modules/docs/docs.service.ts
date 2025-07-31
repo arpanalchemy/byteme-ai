@@ -86,6 +86,7 @@ export class DocsService {
       "06_CURSOR_PROMPTS_AND_SETUP_GUIDE": "Cursor Prompts and Setup Guide",
       "07_BLOCKCHAIN_CONTRACT": "Blockchain Contract Documentation",
       "08_FRONTEND_SPECIFICATION": "Frontend Specification",
+      "09_MOBILE_APP_DOCUMENTATION": "Mobile App Documentation",
     };
 
     return (

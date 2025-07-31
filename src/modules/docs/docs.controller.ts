@@ -20,6 +20,52 @@ export class DocsController {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Drive & Earn - Documentation Hub</title>
+          
+          <!-- SEO Meta Tags -->
+          <meta name="description" content="Complete documentation hub for the Drive & Earn platform - a sustainability-focused blockchain application that rewards eco-friendly driving practices with VeChain-based tokens and AI-powered odometer reading.">
+          <meta name="keywords" content="blockchain, sustainability, electric vehicles, VeChain, AI, OCR, rewards, carbon tracking, smart contracts, documentation">
+          <meta name="author" content="Drive & Earn Platform">
+          <meta name="robots" content="index, follow">
+          
+          <!-- Open Graph Meta Tags for Social Media -->
+          <meta property="og:title" content="Drive & Earn Platform - Documentation Hub">
+          <meta property="og:description" content="Complete documentation for the sustainability-focused blockchain platform that rewards eco-friendly driving practices with VeChain-based tokens and AI-powered odometer reading.">
+          <meta property="og:type" content="website">
+          <meta property="og:url" content="https://byteme-ai.alchemytech.in/docs">
+          <meta property="og:site_name" content="Drive & Earn Platform">
+          <meta property="og:locale" content="en_US">
+          
+          <!-- Twitter Card Meta Tags -->
+          <meta name="twitter:card" content="summary">
+          <meta name="twitter:title" content="Drive & Earn Platform - Documentation Hub">
+          <meta name="twitter:description" content="Complete documentation for the sustainability-focused blockchain platform that rewards eco-friendly driving practices.">
+          <meta name="twitter:site" content="@DriveAndEarn">
+          
+          <!-- Additional SEO Meta Tags -->
+          <meta name="theme-color" content="#667eea">
+          <meta name="msapplication-TileColor" content="#667eea">
+          <link rel="canonical" href="https://byteme-ai.alchemytech.in/docs">
+          
+          <!-- Structured Data for Rich Snippets -->
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Drive & Earn Platform Documentation",
+            "description": "Complete documentation hub for the sustainability-focused blockchain platform",
+            "url": "https://byteme-ai.alchemytech.in/docs",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://byteme-ai.alchemytech.in/docs?search={search_term_string}",
+              "query-input": "required name=search_term_string"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Drive & Earn Platform",
+              "url": "https://byteme-ai.alchemytech.in"
+            }
+          }
+          </script>
           <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
           <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
           <style>
@@ -79,6 +125,32 @@ export class DocsController {
               border-color: #007bff;
               transform: translateY(-1px);
               box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+            }
+            .navbar-nav .nav-link {
+              color: #495057 !important;
+              font-weight: 500;
+              padding: 8px 16px !important;
+              border-radius: 6px;
+              transition: all 0.2s ease;
+              margin: 0 2px;
+            }
+            .navbar-nav .nav-link:hover {
+              color: #007bff !important;
+              background-color: #f8f9fa;
+              transform: translateY(-1px);
+            }
+            .navbar-nav .dropdown-toggle::after {
+              margin-left: 4px;
+            }
+            .navbar-nav .nav-item {
+              margin: 0 4px;
+            }
+            .navbar-nav .nav-link {
+              min-width: 80px;
+              text-align: center;
+            }
+            .navbar-nav .dropdown-toggle {
+              min-width: 100px;
             }
             .content { 
               padding: 30px; 
@@ -190,8 +262,9 @@ export class DocsController {
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
                   <ul class="navbar-nav me-auto">
                     <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🔧 Backend & API
+                      <a class="nav-link dropdown-toggle d-flex flex-column align-items-center" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span style="font-size: 1.2em;">🔧</span>
+                        <span style="font-size: 0.8em; text-align: center;">Backend<br>& API</span>
                       </a>
                       <ul class="dropdown-menu" aria-labelledby="backendDropdown">
                         <li><a class="dropdown-item" href="/api">📚 API Documentation</a></li>
@@ -203,32 +276,34 @@ export class DocsController {
                       </ul>
                     </li>
                     
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="workflowDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🔄 Workflows & Processes
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/02_DETAILED_PROJECT_WORKFLOW">
+                        🔄 Project Workflow
                       </a>
-                      <ul class="dropdown-menu" aria-labelledby="workflowDropdown">
-                        <li><a class="dropdown-item" href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Project Workflow</a></li>
-                        <li><a class="dropdown-item" href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a></li>
-                      </ul>
                     </li>
                     
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="frontendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🌐 Frontend & UI
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">
+                        📝 Setup Guide
                       </a>
-                      <ul class="dropdown-menu" aria-labelledby="frontendDropdown">
-                        <li><a class="dropdown-item" href="/docs/08_FRONTEND_SPECIFICATION">🎨 Frontend Spec</a></li>
-                      </ul>
                     </li>
                     
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="blockchainDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        ⛓️ Blockchain & Smart Contracts
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/08_FRONTEND_SPECIFICATION">
+                        🌐 Frontend Specification
                       </a>
-                      <ul class="dropdown-menu" aria-labelledby="blockchainDropdown">
-                        <li><a class="dropdown-item" href="/docs/07_BLOCKCHAIN_CONTRACT">📄 Contract Docs</a></li>
-                      </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/09_MOBILE_APP_DOCUMENTATION">
+                        📱 Mobile App Documentation
+                      </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/07_BLOCKCHAIN_CONTRACT">
+                        ⛓️ Blockchain Contract
+                      </a>
                     </li>
                   </ul>
                 </div>
@@ -315,6 +390,31 @@ export class DocsController {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Health Check - Drive & Earn</title>
+          
+          <!-- SEO Meta Tags -->
+          <meta name="description" content="System health check and status monitoring for the Drive & Earn platform. Real-time system metrics, uptime monitoring, and performance indicators.">
+          <meta name="keywords" content="health check, system status, monitoring, uptime, performance, Drive & Earn, blockchain platform">
+          <meta name="author" content="Drive & Earn Platform">
+          <meta name="robots" content="noindex, nofollow">
+          
+          <!-- Open Graph Meta Tags for Social Media -->
+          <meta property="og:title" content="System Health Check - Drive & Earn Platform">
+          <meta property="og:description" content="Real-time system health monitoring and status for the Drive & Earn blockchain platform.">
+          <meta property="og:type" content="website">
+          <meta property="og:url" content="https://byteme-ai.alchemytech.in/docs/healthcheck">
+          <meta property="og:site_name" content="Drive & Earn Platform">
+          <meta property="og:locale" content="en_US">
+          
+          <!-- Twitter Card Meta Tags -->
+          <meta name="twitter:card" content="summary">
+          <meta name="twitter:title" content="System Health Check - Drive & Earn Platform">
+          <meta name="twitter:description" content="Real-time system health monitoring and status for the Drive & Earn blockchain platform.">
+          <meta name="twitter:site" content="@DriveAndEarn">
+          
+          <!-- Additional SEO Meta Tags -->
+          <meta name="theme-color" content="#28a745">
+          <meta name="msapplication-TileColor" content="#28a745">
+          <link rel="canonical" href="https://byteme-ai.alchemytech.in/docs/healthcheck">
           <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
           <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
           <style>
@@ -369,6 +469,32 @@ export class DocsController {
               border-color: #007bff;
               transform: translateY(-1px);
               box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+            }
+            .navbar-nav .nav-link {
+              color: #495057 !important;
+              font-weight: 500;
+              padding: 8px 16px !important;
+              border-radius: 6px;
+              transition: all 0.2s ease;
+              margin: 0 2px;
+            }
+            .navbar-nav .nav-link:hover {
+              color: #007bff !important;
+              background-color: #f8f9fa;
+              transform: translateY(-1px);
+            }
+            .navbar-nav .dropdown-toggle::after {
+              margin-left: 4px;
+            }
+            .navbar-nav .nav-item {
+              margin: 0 4px;
+            }
+            .navbar-nav .nav-link {
+              min-width: 80px;
+              text-align: center;
+            }
+            .navbar-nav .dropdown-toggle {
+              min-width: 100px;
             }
             .content { 
               padding: 30px; 
@@ -479,8 +605,9 @@ export class DocsController {
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
                   <ul class="navbar-nav me-auto">
                     <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🔧 Backend & API
+                      <a class="nav-link dropdown-toggle d-flex flex-column align-items-center" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span style="font-size: 1.2em;">🔧</span>
+                        <span style="font-size: 0.8em; text-align: center;">Backend<br>& API</span>
                       </a>
                       <ul class="dropdown-menu" aria-labelledby="backendDropdown">
                         <li><a class="dropdown-item" href="/api">📚 API Documentation</a></li>
@@ -492,32 +619,34 @@ export class DocsController {
                       </ul>
                     </li>
                     
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="workflowDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🔄 Workflows & Processes
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/02_DETAILED_PROJECT_WORKFLOW">
+                        🔄 Project Workflow
                       </a>
-                      <ul class="dropdown-menu" aria-labelledby="workflowDropdown">
-                        <li><a class="dropdown-item" href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Project Workflow</a></li>
-                        <li><a class="dropdown-item" href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a></li>
-                      </ul>
                     </li>
                     
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="frontendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🌐 Frontend & UI
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">
+                        📝 Setup Guide
                       </a>
-                      <ul class="dropdown-menu" aria-labelledby="frontendDropdown">
-                        <li><a class="dropdown-item" href="/docs/08_FRONTEND_SPECIFICATION">🎨 Frontend Spec</a></li>
-                      </ul>
                     </li>
                     
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="blockchainDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        ⛓️ Blockchain & Smart Contracts
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/08_FRONTEND_SPECIFICATION">
+                        🌐 Frontend Specification
                       </a>
-                      <ul class="dropdown-menu" aria-labelledby="blockchainDropdown">
-                        <li><a class="dropdown-item" href="/docs/07_BLOCKCHAIN_CONTRACT">📄 Contract Docs</a></li>
-                      </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/09_MOBILE_APP_DOCUMENTATION">
+                        📱 Mobile App Documentation
+                      </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/07_BLOCKCHAIN_CONTRACT">
+                        ⛓️ Blockchain Contract
+                      </a>
                     </li>
                   </ul>
                 </div>
@@ -747,6 +876,73 @@ export class DocsController {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>${doc.displayName} - Drive & Earn</title>
+          
+          <!-- SEO Meta Tags -->
+          <meta name="description" content="${doc.displayName} - Complete documentation for the Drive & Earn platform. Learn about blockchain integration, AI-powered OCR, sustainability rewards, and VeChain-based token distribution.">
+          <meta name="keywords" content="blockchain, sustainability, electric vehicles, VeChain, AI, OCR, rewards, carbon tracking, smart contracts, documentation, ${doc.displayName.toLowerCase()}">
+          <meta name="author" content="Drive & Earn Platform">
+          <meta name="robots" content="index, follow">
+          
+          <!-- Open Graph Meta Tags for Social Media -->
+          <meta property="og:title" content="${doc.displayName} - Drive & Earn Platform">
+          <meta property="og:description" content="${doc.displayName} - Complete documentation for the sustainability-focused blockchain platform that rewards eco-friendly driving practices.">
+          <meta property="og:type" content="article">
+          <meta property="og:url" content="https://byteme-ai.alchemytech.in/docs/${filename}">
+          <meta property="og:site_name" content="Drive & Earn Platform">
+          <meta property="og:locale" content="en_US">
+          <meta property="article:section" content="Documentation">
+          <meta property="article:tag" content="blockchain, sustainability, documentation">
+          
+          <!-- Twitter Card Meta Tags -->
+          <meta name="twitter:card" content="summary">
+          <meta name="twitter:title" content="${doc.displayName} - Drive & Earn Platform">
+          <meta name="twitter:description" content="${doc.displayName} - Complete documentation for the sustainability-focused blockchain platform.">
+          <meta name="twitter:site" content="@DriveAndEarn">
+          
+          <!-- Additional SEO Meta Tags -->
+          <meta name="theme-color" content="#667eea">
+          <meta name="msapplication-TileColor" content="#667eea">
+          <link rel="canonical" href="https://byteme-ai.alchemytech.in/docs/${filename}">
+          
+          <!-- Structured Data for Rich Snippets -->
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "TechArticle",
+            "headline": "${doc.displayName}",
+            "description": "${doc.displayName} - Complete documentation for the Drive & Earn platform",
+            "url": "https://byteme-ai.alchemytech.in/docs/${filename}",
+            "author": {
+              "@type": "Organization",
+              "name": "Drive & Earn Platform"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Drive & Earn Platform",
+              "url": "https://byteme-ai.alchemytech.in"
+            },
+            "datePublished": "2024-01-01",
+            "dateModified": "2024-12-31",
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": "https://byteme-ai.alchemytech.in/docs/${filename}"
+            },
+            "about": [
+              {
+                "@type": "Thing",
+                "name": "Blockchain Technology"
+              },
+              {
+                "@type": "Thing", 
+                "name": "Sustainability"
+              },
+              {
+                "@type": "Thing",
+                "name": "Electric Vehicles"
+              }
+            ]
+          }
+          </script>
           <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
           <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
@@ -802,6 +998,32 @@ export class DocsController {
               border-color: #007bff;
               transform: translateY(-1px);
               box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+            }
+            .navbar-nav .nav-link {
+              color: #495057 !important;
+              font-weight: 500;
+              padding: 8px 16px !important;
+              border-radius: 6px;
+              transition: all 0.2s ease;
+              margin: 0 2px;
+            }
+            .navbar-nav .nav-link:hover {
+              color: #007bff !important;
+              background-color: #f8f9fa;
+              transform: translateY(-1px);
+            }
+            .navbar-nav .dropdown-toggle::after {
+              margin-left: 4px;
+            }
+            .navbar-nav .nav-item {
+              margin: 0 4px;
+            }
+            .navbar-nav .nav-link {
+              min-width: 80px;
+              text-align: center;
+            }
+            .navbar-nav .dropdown-toggle {
+              min-width: 100px;
             }
             .content { 
               padding: 30px; 
@@ -901,8 +1123,9 @@ export class DocsController {
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
                   <ul class="navbar-nav me-auto">
                     <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🔧 Backend & API
+                      <a class="nav-link dropdown-toggle d-flex flex-column align-items-center" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span style="font-size: 1.2em;">🔧</span>
+                        <span style="font-size: 0.8em; text-align: center;">Backend<br>& API</span>
                       </a>
                       <ul class="dropdown-menu" aria-labelledby="backendDropdown">
                         <li><a class="dropdown-item" href="/api">📚 API Documentation</a></li>
@@ -914,32 +1137,34 @@ export class DocsController {
                       </ul>
                     </li>
                     
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="workflowDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🔄 Workflows & Processes
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/02_DETAILED_PROJECT_WORKFLOW">
+                        🔄 Project Workflow
                       </a>
-                      <ul class="dropdown-menu" aria-labelledby="workflowDropdown">
-                        <li><a class="dropdown-item" href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Project Workflow</a></li>
-                        <li><a class="dropdown-item" href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a></li>
-                      </ul>
                     </li>
                     
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="frontendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        🌐 Frontend & UI
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">
+                        📝 Setup Guide
                       </a>
-                      <ul class="dropdown-menu" aria-labelledby="frontendDropdown">
-                        <li><a class="dropdown-item" href="/docs/08_FRONTEND_SPECIFICATION">🎨 Frontend Spec</a></li>
-                      </ul>
                     </li>
                     
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle" href="#" id="blockchainDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        ⛓️ Blockchain & Smart Contracts
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/08_FRONTEND_SPECIFICATION">
+                        🌐 Frontend Specification
                       </a>
-                      <ul class="dropdown-menu" aria-labelledby="blockchainDropdown">
-                        <li><a class="dropdown-item" href="/docs/07_BLOCKCHAIN_CONTRACT">📄 Contract Docs</a></li>
-                      </ul>
+                    </li>
+                    
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/09_MOBILE_APP_DOCUMENTATION">
+                        📱 Mobile App Documentation
+                      </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                      <a class="nav-link" href="/docs/07_BLOCKCHAIN_CONTRACT">
+                        ⛓️ Blockchain Contract
+                      </a>
                     </li>
                   </ul>
                 </div>
@@ -965,3 +1190,4 @@ export class DocsController {
     }
   }
 }
+ 

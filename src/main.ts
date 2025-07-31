@@ -2,10 +2,12 @@ import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
+import { join } from "path";
+import { NestExpressApplication } from "@nestjs/platform-express";
 
 async function bootstrap() {
   try {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
     // Enable CORS with specific origin
     app.enableCors({
@@ -48,6 +50,11 @@ async function bootstrap() {
     app.use("/api-json", (req, res) => {
       res.setHeader("Content-Type", "application/json");
       res.send(document);
+    });
+
+    // Serve static files (sitemap.xml, robots.txt)
+    app.useStaticAssets(join(__dirname, "..", "public"), {
+      prefix: "/",
     });
 
     const port = process.env.PORT || 3000;
