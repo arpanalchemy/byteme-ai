@@ -580,3 +580,359 @@ interface GlobalAnalytics {
 - **Indexing Strategy**: Proper database indexing for analytics queries
 
 This comprehensive deep dive into the core components provides technical stakeholders with detailed understanding of the platform's architecture, enabling effective development, maintenance, and enhancement of the Drive & Earn system.
+
+## 7. Calculation Logic and Business Rules
+
+### Purpose
+
+This section documents the mathematical formulas, business rules, and assumptions used throughout the platform for calculating carbon savings, rewards, and other metrics.
+
+### Carbon Savings Calculation
+
+#### Distance-Based Carbon Calculation
+
+The platform calculates carbon savings based on the distance traveled and vehicle type using emission factors.
+
+```typescript
+interface CarbonCalculation {
+  distance: number; // Distance in kilometers
+  vehicleType: VehicleType; // Type of vehicle
+  emissionFactor: number; // CO2 emissions per km for vehicle type
+  carbonSaved: number; // Calculated carbon savings
+}
+
+// Emission factors (grams CO2 per kilometer)
+const EMISSION_FACTORS = {
+  SCOOTER: 0, // Electric scooters have zero emissions
+  BIKE: 0, // Electric bikes have zero emissions
+  CAR: 120, // Average car emissions
+  SUV: 180, // SUV emissions
+  TRUCK: 250, // Truck emissions
+  MOTORCYCLE: 103, // Motorcycle emissions
+  BUS: 105, // Bus emissions
+  TRAIN: 41, // Train emissions
+  WALKING: 0, // Walking has zero emissions
+  CYCLING: 0, // Cycling has zero emissions
+};
+
+function calculateCarbonSaved(distance: number, vehicleType: VehicleType): number {
+  const emissionFactor = EMISSION_FACTORS[vehicleType];
+  return distance * emissionFactor;
+}
+```
+
+#### Alternative Transportation Calculation
+
+When users choose alternative transportation methods, carbon savings are calculated as the difference between conventional and sustainable options.
+
+```typescript
+function calculateAlternativeTransportSavings(
+  distance: number,
+  conventionalMethod: VehicleType,
+  sustainableMethod: VehicleType
+): number {
+  const conventionalEmissions = distance * EMISSION_FACTORS[conventionalMethod];
+  const sustainableEmissions = distance * EMISSION_FACTORS[sustainableMethod];
+  return conventionalEmissions - sustainableEmissions;
+}
+```
+
+### Reward Calculation Logic
+
+#### Base Reward Calculation
+
+Rewards are calculated based on carbon savings and user tier multipliers.
+
+```typescript
+interface RewardCalculation {
+  carbonSaved: number; // Carbon saved in grams
+  userTier: UserTier; // User's current tier
+  baseRewardRate: number; // Base reward rate per gram of CO2
+  tierMultiplier: number; // Tier-based multiplier
+  totalReward: number; // Final reward amount
+}
+
+const BASE_REWARD_RATE = 0.001; // B3TR tokens per gram of CO2 saved
+const TIER_MULTIPLIERS = {
+  BRONZE: 1.0,
+  SILVER: 1.2,
+  GOLD: 1.5,
+  PLATINUM: 2.0,
+  DIAMOND: 2.5,
+};
+
+function calculateReward(carbonSaved: number, userTier: UserTier): number {
+  const tierMultiplier = TIER_MULTIPLIERS[userTier];
+  return carbonSaved * BASE_REWARD_RATE * tierMultiplier;
+}
+```
+
+#### Streak Bonus Calculation
+
+Users receive additional rewards for maintaining consistent upload streaks.
+
+```typescript
+interface StreakBonus {
+  currentStreak: number; // Current consecutive days
+  baseReward: number; // Base reward amount
+  streakMultiplier: number; // Streak-based multiplier
+  bonusReward: number; // Additional bonus reward
+}
+
+const STREAK_MULTIPLIERS = {
+  7: 1.1, // 10% bonus for 7-day streak
+  14: 1.25, // 25% bonus for 14-day streak
+  30: 1.5, // 50% bonus for 30-day streak
+  60: 2.0, // 100% bonus for 60-day streak
+  90: 3.0, // 200% bonus for 90-day streak
+};
+
+function calculateStreakBonus(baseReward: number, currentStreak: number): number {
+  let maxMultiplier = 1.0;
+  
+  for (const [days, multiplier] of Object.entries(STREAK_MULTIPLIERS)) {
+    if (currentStreak >= parseInt(days)) {
+      maxMultiplier = Math.max(maxMultiplier, multiplier);
+    }
+  }
+  
+  return baseReward * (maxMultiplier - 1.0); // Only the bonus portion
+}
+```
+
+### Mileage Validation Logic
+
+#### Progressive Mileage Validation
+
+The system validates that new mileage readings are progressive and reasonable.
+
+```typescript
+interface MileageValidation {
+  previousMileage: number; // Previous recorded mileage
+  newMileage: number; // New mileage reading
+  maxDailyDistance: number; // Maximum reasonable daily distance
+  isValid: boolean; // Validation result
+  reason?: string; // Reason for rejection if invalid
+}
+
+const MAX_DAILY_DISTANCES = {
+  SCOOTER: 100, // Maximum 100km per day for scooters
+  BIKE: 150, // Maximum 150km per day for bikes
+  CAR: 500, // Maximum 500km per day for cars
+  SUV: 600, // Maximum 600km per day for SUVs
+  TRUCK: 800, // Maximum 800km per day for trucks
+};
+
+function validateMileage(
+  previousMileage: number,
+  newMileage: number,
+  vehicleType: VehicleType
+): MileageValidation {
+  const distance = newMileage - previousMileage;
+  const maxDailyDistance = MAX_DAILY_DISTANCES[vehicleType];
+  
+  if (newMileage <= previousMileage) {
+    return {
+      previousMileage,
+      newMileage,
+      maxDailyDistance,
+      isValid: false,
+      reason: "New mileage must be greater than previous mileage"
+    };
+  }
+  
+  if (distance > maxDailyDistance) {
+    return {
+      previousMileage,
+      newMileage,
+      maxDailyDistance,
+      isValid: false,
+      reason: `Distance exceeds maximum daily limit of ${maxDailyDistance}km for ${vehicleType}`
+    };
+  }
+  
+  return {
+    previousMileage,
+    newMileage,
+    maxDailyDistance,
+    isValid: true
+  };
+}
+```
+
+### Tier Advancement Logic
+
+#### Tier Calculation Based on Metrics
+
+User tiers are calculated based on total distance, upload frequency, and carbon savings.
+
+```typescript
+interface TierRequirements {
+  tier: UserTier;
+  minTotalDistance: number; // Minimum total distance in km
+  minTotalUploads: number; // Minimum total uploads
+  minCarbonSaved: number; // Minimum carbon saved in grams
+  minStreakDays: number; // Minimum consecutive days
+}
+
+const TIER_REQUIREMENTS: TierRequirements[] = [
+  {
+    tier: "BRONZE",
+    minTotalDistance: 0,
+    minTotalUploads: 0,
+    minCarbonSaved: 0,
+    minStreakDays: 0,
+  },
+  {
+    tier: "SILVER",
+    minTotalDistance: 100,
+    minTotalUploads: 10,
+    minCarbonSaved: 12000, // 12kg CO2
+    minStreakDays: 7,
+  },
+  {
+    tier: "GOLD",
+    minTotalDistance: 500,
+    minTotalUploads: 50,
+    minCarbonSaved: 60000, // 60kg CO2
+    minStreakDays: 14,
+  },
+  {
+    tier: "PLATINUM",
+    minTotalDistance: 1000,
+    minTotalUploads: 100,
+    minCarbonSaved: 120000, // 120kg CO2
+    minStreakDays: 30,
+  },
+  {
+    tier: "DIAMOND",
+    minTotalDistance: 2000,
+    minTotalUploads: 200,
+    minCarbonSaved: 240000, // 240kg CO2
+    minStreakDays: 60,
+  },
+];
+
+function calculateUserTier(userStats: UserStats): UserTier {
+  for (let i = TIER_REQUIREMENTS.length - 1; i >= 0; i--) {
+    const requirement = TIER_REQUIREMENTS[i];
+    
+    if (
+      userStats.totalKilometers >= requirement.minTotalDistance &&
+      userStats.totalUploads >= requirement.minTotalUploads &&
+      userStats.totalCarbonSaved >= requirement.minCarbonSaved &&
+      userStats.currentStreak >= requirement.minStreakDays
+    ) {
+      return requirement.tier;
+    }
+  }
+  
+  return "BRONZE";
+}
+```
+
+### Leaderboard Scoring Logic
+
+#### Weekly Score Calculation
+
+Leaderboard scores are calculated based on multiple factors with weighted importance.
+
+```typescript
+interface LeaderboardScore {
+  userId: string;
+  weeklyDistance: number; // Distance traveled this week
+  weeklyCarbonSaved: number; // Carbon saved this week
+  weeklyStreak: number; // Current streak days
+  weeklyUploads: number; // Number of uploads this week
+  consistencyBonus: number; // Bonus for consistent daily uploads
+  totalScore: number; // Final calculated score
+}
+
+const SCORE_WEIGHTS = {
+  distance: 0.4, // 40% weight for distance
+  carbonSaved: 0.3, // 30% weight for carbon savings
+  streak: 0.2, // 20% weight for streak
+  uploads: 0.1, // 10% weight for upload frequency
+};
+
+function calculateLeaderboardScore(userStats: WeeklyUserStats): number {
+  const distanceScore = userStats.weeklyDistance * SCORE_WEIGHTS.distance;
+  const carbonScore = userStats.weeklyCarbonSaved * SCORE_WEIGHTS.carbonSaved;
+  const streakScore = userStats.weeklyStreak * 100 * SCORE_WEIGHTS.streak;
+  const uploadScore = userStats.weeklyUploads * 10 * SCORE_WEIGHTS.uploads;
+  
+  // Consistency bonus for daily uploads
+  const consistencyBonus = userStats.weeklyStreak >= 7 ? 500 : 0;
+  
+  return distanceScore + carbonScore + streakScore + uploadScore + consistencyBonus;
+}
+```
+
+## 8. Current Flow Assumptions
+
+### Platform Assumptions
+
+#### User Behavior Assumptions
+
+1. **Upload Frequency**: Users upload odometer readings daily or every few days
+2. **Image Quality**: Users provide clear, readable odometer images
+3. **Honest Reporting**: Users report accurate mileage readings
+4. **Consistent Usage**: Users maintain regular vehicle usage patterns
+5. **Device Availability**: Users have access to smartphones for photo capture
+
+#### Technical Assumptions
+
+1. **Image Processing**: AI can accurately extract mileage from most odometer images
+2. **Network Connectivity**: Users have stable internet for uploads
+3. **Storage Capacity**: Sufficient storage for image processing and storage
+4. **Processing Speed**: Real-time or near-real-time image processing
+5. **Data Accuracy**: GPS and timestamp data are accurate
+
+#### Business Assumptions
+
+1. **Token Value**: B3TR tokens have stable or appreciating value
+2. **User Motivation**: Users are motivated by environmental impact and rewards
+3. **Platform Growth**: Steady user acquisition and retention
+4. **Regulatory Compliance**: Platform complies with relevant regulations
+5. **Partnership Stability**: External partnerships remain stable
+
+#### Environmental Assumptions
+
+1. **Emission Factors**: Current emission factors accurately represent real-world emissions
+2. **Carbon Impact**: Calculated carbon savings represent actual environmental impact
+3. **Vehicle Efficiency**: Assumed vehicle efficiency remains consistent
+4. **Alternative Transport**: Users have access to sustainable transportation options
+5. **Infrastructure**: Supporting infrastructure for sustainable transport exists
+
+#### Blockchain Assumptions
+
+1. **Network Stability**: VeChain network remains stable and accessible
+2. **Transaction Costs**: VTHO costs remain reasonable for regular transactions
+3. **Smart Contract Security**: Smart contracts are secure and function as intended
+4. **Wallet Integration**: Wallet integration remains seamless
+5. **Token Distribution**: Reward distribution mechanisms work reliably
+
+### Risk Mitigation Strategies
+
+#### Technical Risks
+
+- **Image Processing Failures**: Fallback to manual verification
+- **Network Issues**: Offline mode with sync when connectivity returns
+- **Data Loss**: Regular backups and redundancy
+- **Performance Issues**: Scalable architecture and caching
+
+#### Business Risks
+
+- **Token Volatility**: Diversified reward mechanisms
+- **User Churn**: Engagement features and community building
+- **Regulatory Changes**: Flexible compliance framework
+- **Competition**: Continuous innovation and user experience improvement
+
+#### Environmental Risks
+
+- **Inaccurate Calculations**: Regular review and update of emission factors
+- **Greenwashing Concerns**: Transparent calculation methods and verification
+- **Impact Measurement**: Third-party verification of environmental impact
+- **Scalability**: Ensuring platform growth doesn't compromise accuracy
+
+This comprehensive documentation of calculation logic and assumptions provides transparency and enables stakeholders to understand the mathematical foundations of the platform's reward and impact measurement systems.

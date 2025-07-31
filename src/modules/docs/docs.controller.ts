@@ -20,6 +20,8 @@ export class DocsController {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Drive & Earn - Documentation Hub</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+          <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
           <style>
             body { 
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
@@ -160,20 +162,78 @@ export class DocsController {
         <body>
           <div class="container">
             <div class="header">
-              <h1>Drive & Earn Platform</h1>
-              <p>Complete documentation hub for the sustainability-focused blockchain platform</p>
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h1>Drive & Earn Platform</h1>
+                  <p>Complete documentation hub for the sustainability-focused blockchain platform</p>
+                </div>
+                <div class="header-actions">
+                  <a href="/docs/healthcheck" class="btn btn-success btn-sm me-2">
+                    <i class="fas fa-heartbeat"></i> Health Check
+                  </a>
+                  <a href="/api" class="btn btn-primary btn-sm">
+                    <i class="fas fa-book"></i> API Docs
+                  </a>
+                </div>
+              </div>
             </div>
-            <div class="nav">
-              <a href="/api">📚 API Docs</a>
-              <a href="/docs/healthcheck">💚 Health Check</a>
-              <a href="/docs/01_PROJECT_TECH_STACK">🏗️ Tech Stack</a>
-              <a href="/docs/03_MODULAR_ARCHITECTURE_OVERVIEW">🏛️ Architecture</a>
-              <a href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Workflows</a>
-              <a href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Components</a>
-              <a href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a>
-              <a href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a>
-              <a href="/docs/email-samples">📧 Email Samples</a>
-            </div>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+              <div class="container-fluid">
+                <a class="navbar-brand" href="/docs">
+                  <strong>Drive & Earn</strong> Docs
+                </a>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                  <ul class="navbar-nav me-auto">
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        🔧 Backend & API
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="backendDropdown">
+                        <li><a class="dropdown-item" href="/api">📚 API Documentation</a></li>
+                        <li><a class="dropdown-item" href="/docs/01_PROJECT_TECH_STACK">🏗️ Tech Stack</a></li>
+                        <li><a class="dropdown-item" href="/docs/03_MODULAR_ARCHITECTURE_OVERVIEW">🏛️ Architecture</a></li>
+                        <li><a class="dropdown-item" href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Core Components</a></li>
+                        <li><a class="dropdown-item" href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a></li>
+                        <li><a class="dropdown-item" href="/docs/email-samples">📧 Email Templates</a></li>
+                      </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="workflowDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        🔄 Workflows & Processes
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="workflowDropdown">
+                        <li><a class="dropdown-item" href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Project Workflow</a></li>
+                        <li><a class="dropdown-item" href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a></li>
+                      </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="frontendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        🌐 Frontend & UI
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="frontendDropdown">
+                        <li><a class="dropdown-item" href="/docs/08_FRONTEND_SPECIFICATION">🎨 Frontend Spec</a></li>
+                      </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="blockchainDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        ⛓️ Blockchain & Smart Contracts
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="blockchainDropdown">
+                        <li><a class="dropdown-item" href="/docs/07_BLOCKCHAIN_CONTRACT">📄 Contract Docs</a></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </nav>
             <div class="content">
               <h2>Welcome to Drive & Earn Documentation</h2>
               <p>This platform combines blockchain technology with sustainability initiatives to reward eco-friendly driving practices.</p>
@@ -219,6 +279,7 @@ export class DocsController {
               </div>
             </div>
           </div>
+          <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         </body>
         </html>
       `;
@@ -254,6 +315,8 @@ export class DocsController {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Health Check - Drive & Earn</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+          <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
           <style>
             body { 
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
@@ -389,23 +452,77 @@ export class DocsController {
         <body>
           <div class="container">
             <div class="header">
-              <h1>💚 System Health Check</h1>
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h1>💚 System Health Check</h1>
+                </div>
+                                <div class="header-actions">
+                  <a href="/docs" class="btn btn-light btn-sm me-2">
+                    <i class="fas fa-home"></i> Back to Docs
+                  </a>
+                  <a href="/api" class="btn btn-primary btn-sm">
+                    <i class="fas fa-book"></i> API Docs
+                  </a>
+                </div>
+              </div>
             </div>
-            <div class="breadcrumb">
-            <a href="/docs" class="back-link">← Back to Documentation</a>
-            / Health Check
-            </div>
-            <div class="nav">
-              <a href="/api">📚 API Docs</a>
-              <a href="/docs/healthcheck">💚 Health Check</a>
-              <a href="/docs/01_PROJECT_TECH_STACK">🏗️ Tech Stack</a>
-              <a href="/docs/03_MODULAR_ARCHITECTURE_OVERVIEW">🏛️ Architecture</a>
-              <a href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Workflows</a>
-              <a href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Components</a>
-              <a href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a>
-              <a href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a>
-              <a href="/docs/email-samples">📧 Email Samples</a>
-            </div>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+              <div class="container-fluid">
+                <a class="navbar-brand" href="/docs">
+                  <strong>Drive & Earn</strong> Docs
+                </a>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                  <ul class="navbar-nav me-auto">
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        🔧 Backend & API
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="backendDropdown">
+                        <li><a class="dropdown-item" href="/api">📚 API Documentation</a></li>
+                        <li><a class="dropdown-item" href="/docs/01_PROJECT_TECH_STACK">🏗️ Tech Stack</a></li>
+                        <li><a class="dropdown-item" href="/docs/03_MODULAR_ARCHITECTURE_OVERVIEW">🏛️ Architecture</a></li>
+                        <li><a class="dropdown-item" href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Core Components</a></li>
+                        <li><a class="dropdown-item" href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a></li>
+                        <li><a class="dropdown-item" href="/docs/email-samples">📧 Email Templates</a></li>
+                      </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="workflowDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        🔄 Workflows & Processes
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="workflowDropdown">
+                        <li><a class="dropdown-item" href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Project Workflow</a></li>
+                        <li><a class="dropdown-item" href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a></li>
+                      </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="frontendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        🌐 Frontend & UI
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="frontendDropdown">
+                        <li><a class="dropdown-item" href="/docs/08_FRONTEND_SPECIFICATION">🎨 Frontend Spec</a></li>
+                      </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="blockchainDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        ⛓️ Blockchain & Smart Contracts
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="blockchainDropdown">
+                        <li><a class="dropdown-item" href="/docs/07_BLOCKCHAIN_CONTRACT">📄 Contract Docs</a></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </nav>
             <div class="content">
               <div class="status-card">
                 <span class="status-indicator"></span>
@@ -449,6 +566,7 @@ export class DocsController {
               </div>
             </div>
           </div>
+          <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         </body>
         </html>
       `;
@@ -629,6 +747,8 @@ export class DocsController {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>${doc.displayName} - Drive & Earn</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+          <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
           <style>
             body { 
@@ -768,25 +888,68 @@ export class DocsController {
             <div class="header">
               <h1>${doc.displayName}</h1>
             </div>
-            <div class="breadcrumb">
-            <a href="/docs" class="back-link">← Back to Documentation</a>
-            / ${doc.displayName}
-            </div>
-            <div class="nav">
-              <a href="/api">📚 API Docs</a>
-              <a href="/docs/healthcheck">💚 Health Check</a>
-              <a href="/docs/01_PROJECT_TECH_STACK">🏗️ Tech Stack</a>
-              <a href="/docs/03_MODULAR_ARCHITECTURE_OVERVIEW">🏛️ Architecture</a>
-              <a href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Workflows</a>
-              <a href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Components</a>
-              <a href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a>
-              <a href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a>
-              <a href="/docs/email-samples">📧 Email Samples</a>
-            </div>
+                        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+              <div class="container-fluid">
+                <a class="navbar-brand" href="/docs">
+                  <strong>Drive & Earn</strong> Docs
+                </a>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                  <ul class="navbar-nav me-auto">
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="backendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        🔧 Backend & API
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="backendDropdown">
+                        <li><a class="dropdown-item" href="/api">📚 API Documentation</a></li>
+                        <li><a class="dropdown-item" href="/docs/01_PROJECT_TECH_STACK">🏗️ Tech Stack</a></li>
+                        <li><a class="dropdown-item" href="/docs/03_MODULAR_ARCHITECTURE_OVERVIEW">🏛️ Architecture</a></li>
+                        <li><a class="dropdown-item" href="/docs/04_CORE_COMPONENTS_DEEP_DIVE">🧩 Core Components</a></li>
+                        <li><a class="dropdown-item" href="/docs/05_AI_AND_EXTERNAL_SERVICES_INTEGRATION">🔗 Integrations</a></li>
+                        <li><a class="dropdown-item" href="/docs/email-samples">📧 Email Templates</a></li>
+                      </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="workflowDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        🔄 Workflows & Processes
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="workflowDropdown">
+                        <li><a class="dropdown-item" href="/docs/02_DETAILED_PROJECT_WORKFLOW">🔄 Project Workflow</a></li>
+                        <li><a class="dropdown-item" href="/docs/06_CURSOR_PROMPTS_AND_SETUP_GUIDE">📝 Setup Guide</a></li>
+                      </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="frontendDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        🌐 Frontend & UI
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="frontendDropdown">
+                        <li><a class="dropdown-item" href="/docs/08_FRONTEND_SPECIFICATION">🎨 Frontend Spec</a></li>
+                      </ul>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="blockchainDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        ⛓️ Blockchain & Smart Contracts
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="blockchainDropdown">
+                        <li><a class="dropdown-item" href="/docs/07_BLOCKCHAIN_CONTRACT">📄 Contract Docs</a></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </nav>
             <div class="content">
               ${doc.content}
             </div>
           </div>
+          <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
           <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
           <script>hljs.highlightAll();</script>
         </body>
